@@ -1,88 +1,56 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 import plist from "https://cdn.jsdelivr.net/npm/plist@3.1.0/dist/plist.min.js";
 
-// ⚙️ Firebase init
-const firebaseConfig = {
-  apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
-  authDomain: "ipa-panel.firebaseapp.com",
-  projectId: "ipa-panel",
-  storageBucket: "ipa-panel.firebasestorage.app",
-  messagingSenderId: "239982196215",
-  appId: "1:239982196215:web:9de387c51952da428daaf2"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const storage = getStorage(app);
-
-signInAnonymously(auth).then(() => console.log("✅ Firebase Anonymous Auth OK"));
-
-const ipaInput = document.getElementById("ipaFile");
-const p12Input = document.getElementById("p12File");
-const mobileInput = document.getElementById("mobileFile");
-const passInput = document.getElementById("p12pass");
-const signBtn = document.getElementById("signBtn");
+const signRemoteBtn = document.getElementById("signRemoteBtn");
+const ipaUrlInput = document.getElementById("ipaUrl");
 const progress = document.getElementById("progress");
 const installDiv = document.getElementById("installLink");
 
-// 🧾 Обработка подписи
-signBtn.onclick = async () => {
-  if (!ipaInput.files.length || !p12Input.files.length || !mobileInput.files.length)
-    return alert("Выбери все файлы (.ipa, .p12, .mobileprovision)");
+// 🌐 URL твоего FastAPI сервера
+const SIGNER_API = "https://ursa-signer.yourdomain.com/sign";
 
-  progress.innerText = "⏳ Подписываем IPA...";
+signRemoteBtn.onclick = async () => {
+  const ipaUrl = ipaUrlInput.value.trim();
+  if (!ipaUrl) return alert("Введите ссылку на .ipa (например, с Gofile)");
 
-  // Собираем formData
-  const formData = new FormData();
-  formData.append("ipa", ipaInput.files[0]);
-  formData.append("p12", p12Input.files[0]);
-  formData.append("mobileprovision", mobileInput.files[0]);
-  formData.append("password", passInput.value);
+  progress.innerText = "⏳ Подписываем IPA, подожди...";
+  installDiv.innerHTML = "";
 
   try {
-    // Отправляем файлы на твой FastAPI сервер
-    const response = await fetch("http://localhost:8000/sign", {
+    const response = await fetch(SIGNER_API, {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ downloadUrl: ipaUrl }),
     });
 
-    if (!response.ok) throw new Error("Ошибка при подписи");
+    if (!response.ok) throw new Error("Ошибка сервера при подписи");
 
-    const blob = await response.blob();
-    const uid = auth.currentUser?.uid || "demo";
+    const data = await response.json();
 
-    // Загружаем готовый IPA в Firebase
-    const ipaRef = ref(storage, `signed/${uid}/signed_${Date.now()}.ipa`);
-    await uploadBytes(ipaRef, blob);
-    const ipaURL = await getDownloadURL(ipaRef);
+    if (data.status !== "ok") throw new Error("Ошибка: " + (data.message || "неизвестная"));
 
-    // Создаём manifest.plist
-    const manifest = {
+    // создаём plist для itms-services
+    const plistObj = {
       items: [{
-        assets: [{ kind: "software-package", url: ipaURL }],
+        assets: [{ kind: "software-package", url: data.signedUrl }],
         metadata: {
-          "bundle-identifier": "com.ursa.signed." + uid,
+          "bundle-identifier": "com.ursa.signed.app",
           "bundle-version": "1.0",
           kind: "software",
-          title: ipaInput.files[0].name.replace(".ipa", "")
+          title: data.name || "URSA App"
         }
       }]
     };
-    const plistText = plist.build(manifest);
-    const plistBlob = new Blob([plistText], { type: "text/xml" });
-    const plistRef = ref(storage, `signed/${uid}/manifest_${Date.now()}.plist`);
-    await uploadBytes(plistRef, plistBlob);
-    const plistURL = await getDownloadURL(plistRef);
 
-    const installURL = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistURL)}`;
+    const plistText = plist.build(plistObj);
+    const blob = new Blob([plistText], { type: "text/xml" });
+    const plistUrl = URL.createObjectURL(blob);
+    const installUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
 
-    progress.innerText = "✅ Подписано!";
-    installDiv.innerHTML = `<a href="${installURL}" class="btn">⬇️ Установить через itms-services</a>`;
-    console.log("✅ Install link:", installURL);
+    progress.innerText = "✅ Готово! IPA подписан.";
+    installDiv.innerHTML = `<a href="${installUrl}" class="btn">⬇️ Установить через itms-services</a>`;
   } catch (err) {
     console.error(err);
-    progress.innerText = "❌ Ошибка подписи";
+    progress.innerText = "❌ Ошибка при подписи IPA";
   }
 };
 
