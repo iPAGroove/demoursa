@@ -1,61 +1,36 @@
-import plist from "https://cdn.jsdelivr.net/npm/plist@3.1.0/dist/plist.min.js";
+// signer.js — интеграция сайта с URSA Signer API
 
-const signRemoteBtn = document.getElementById("signRemoteBtn");
-const ipaUrlInput = document.getElementById("ipaUrl");
-const progress = document.getElementById("progress");
-const installDiv = document.getElementById("installLink");
+const SIGNER_API = "http://127.0.0.1:8000/sign_remote"; // 💡 замени на свой хост, если вынесешь на сервер
 
-// 🌐 URL твоего FastAPI сервера
-const SIGNER_API = "https://ursa-signer.yourdomain.com/sign";
-
-signRemoteBtn.onclick = async () => {
-  const ipaUrl = ipaUrlInput.value.trim();
-  if (!ipaUrl) return alert("Введите ссылку на .ipa (например, с Gofile)");
-
-  progress.innerText = "⏳ Подписываем IPA, подожди...";
-  installDiv.innerHTML = "";
+async function installIPA(app) {
+  const progress = document.createElement("div");
+  progress.style = "margin-top:10px; font-size:14px; opacity:.8;";
+  progress.textContent = "🔄 Подписываем IPA…";
+  const dl = document.getElementById("dl-buttons");
+  dl.innerHTML = "";
+  dl.appendChild(progress);
 
   try {
-    const response = await fetch(SIGNER_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ downloadUrl: ipaUrl }),
-    });
+    // Отправляем ссылку IPA на сервер
+    const form = new FormData();
+    form.append("ipa_url", app.downloadUrl);
 
-    if (!response.ok) throw new Error("Ошибка сервера при подписи");
+    const res = await fetch(SIGNER_API, { method: "POST", body: form });
+    const data = await res.json();
 
-    const data = await response.json();
+    if (!res.ok || !data.install_link) {
+      throw new Error(data.detail || "Ошибка подписи IPA");
+    }
 
-    if (data.status !== "ok") throw new Error("Ошибка: " + (data.message || "неизвестная"));
-
-    // создаём plist для itms-services
-    const plistObj = {
-      items: [{
-        assets: [{ kind: "software-package", url: data.signedUrl }],
-        metadata: {
-          "bundle-identifier": "com.ursa.signed.app",
-          "bundle-version": "1.0",
-          kind: "software",
-          title: data.name || "URSA App"
-        }
-      }]
-    };
-
-    const plistText = plist.build(plistObj);
-    const blob = new Blob([plistText], { type: "text/xml" });
-    const plistUrl = URL.createObjectURL(blob);
-    const installUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(plistUrl)}`;
-
-    progress.innerText = "✅ Готово! IPA подписан.";
-    installDiv.innerHTML = `<a href="${installUrl}" class="btn">⬇️ Установить через itms-services</a>`;
+    progress.textContent = "✅ Готово! Установка начнётся…";
+    setTimeout(() => {
+      window.location.href = data.install_link;
+    }, 800);
   } catch (err) {
-    console.error(err);
-    progress.innerText = "❌ Ошибка при подписи IPA";
+    console.error("Signer error:", err);
+    progress.textContent = "❌ Ошибка: " + err.message;
   }
-};
+}
 
-// 🧭 Переключение вкладок
-document.getElementById("signer-btn").addEventListener("click", () => {
-  document.getElementById("catalog").style.display = "none";
-  document.getElementById("signer").style.display = "block";
-});
+// Экспортируем для app.js
+window.installIPA = installIPA;
