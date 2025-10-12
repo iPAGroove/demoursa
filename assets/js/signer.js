@@ -42,7 +42,7 @@ signBtn.onclick = async () => {
 
   try {
     // Отправляем файлы на твой FastAPI сервер
-    const response = await fetch("https://YOUR-SIGNER-API.com/sign", {
+    const response = await fetch("http://localhost:8000/sign", {
       method: "POST",
       body: formData,
     });
