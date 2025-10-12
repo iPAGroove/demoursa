@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>URSA IPA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="assets/icons/ursa-touch.png" />
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Шрифт -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/ios.css" />
+  <link id="theme-css" rel="stylesheet" href="assets/css/themes/neon.css" />
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand">
+        <span data-text="URSA IPA REPO">URSA IPA</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ПОИСК -->
+  <section class="search-area">
+    <div class="wrap search-wrap">
+      <input id="search" type="search" inputmode="search" placeholder="Поиск по названию, bundleId…" />
+      <button id="theme-toggle" aria-label="Сменить тему">🎨</button>
+    </div>
+  </section>
+
+  <!-- КАТАЛОГ -->
+  <main>
+    <div class="wrap">
+      <div id="catalog" class="catalog" role="list"></div>
+    </div>
+  </main>
+
+  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <nav class="tabbar" id="tabbar" role="tablist">
+    <div class="wrap">
+      <div class="dock">
+        <!-- теперь первым идет Apps -->
+        <button class="nav-btn active" data-tab="apps" role="tab" aria-label="Приложения">
+          <img id="navAppsIcon" src="" alt="">
+          <span class="dot"></span>
+          <span class="sr-only">Приложения</span>
+        </button>
+        <button class="nav-btn" data-tab="games" role="tab" aria-label="Игры">
+          <img id="navGamesIcon" src="" alt="">
+          <span class="dot"></span>
+          <span class="sr-only">Игры</span>
+        </button>
+        <button class="nav-btn" id="lang-btn" aria-label="Language">
+          <img id="navLangIcon" src="" alt="">
+          <span class="dot"></span>
+          <span id="lang-code" class="sr-only">RU</span>
+        </button>
+        <button class="nav-btn" id="help-btn" aria-label="Help">
+          <img id="navHelpIcon" src="" alt="">
+          <span class="dot"></span>
+          <span class="sr-only">Help</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- МОДАЛКА ДЕТАЛЕЙ -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <article class="sheet" role="dialog" aria-modal="true" aria-labelledby="app-title">
+      <button class="close" data-close aria-label="Закрыть">✕</button>
+      <header class="sheet-header">
+        <div class="app-head">
+          <img id="app-icon" class="icon lg" src="" alt="">
+          <div class="head-meta">
+            <h2 id="app-title"></h2>
+            <div id="app-bundle" class="meta"></div>
+            <div id="app-info" class="meta"></div>
+          </div>
+        </div>
+      </header>
+      <section class="sheet-body">
+        <div id="app-desc" class="section"></div>
+      </section>
+      <footer class="sheet-footer">
+        <div id="dl-buttons" class="btns"></div>
+      </footer>
+    </article>
+  </div>
+
+  <!-- HELP-ДИАЛОГ -->
+  <div id="help-modal" class="dialog" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <section class="dialog-card">
+      <header class="dialog-head">
+        <strong>Помощь</strong>
+        <button class="close" data-close aria-label="Закрыть">✕</button>
+      </header>
+      <div class="dialog-body" id="help-body">
+        <p data-i18n="help_p1">Служба подержки скоро будет добавлена</p>
+    </section>
+  </div>
+
+  <!-- JS -->
+  <script src="assets/js/themes.js?v=8"></script>
+  <script src="assets/js/ios.js?v=8"></script>
+  <script type="module" src="assets/js/app.js?v=8"></script>
+</body>
+</html>

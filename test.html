@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Firestore</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // ⚡️ твоя конфигурация
+    const firebaseConfig = {
+      apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
+      authDomain: "ipa-panel.firebaseapp.com",
+      projectId: "ipa-panel",
+      storageBucket: "ipa-panel.firebasestorage.app",
+      messagingSenderId: "239982196215",
+      appId: "1:239982196215:web:9de387c51952da428daaf2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function test() {
+      try {
+        const snap = await getDocs(collection(db, "ursa_ipas"));
+        const out = document.getElementById("out");
+        out.textContent = "Документов: " + snap.size + "\n\n";
+        snap.forEach(doc => {
+          out.textContent += doc.id + " → " + JSON.stringify(doc.data()) + "\n";
+        });
+      } catch (e) {
+        document.getElementById("out").textContent = "Ошибка: " + e.message;
+      }
+    }
+
+    test();
+  </script>
+</head>
+<body>
+  <h1>Тест Firestore → ursa_ipas</h1>
+  <pre id="out">Загрузка...</pre>
+</body>
+</html>
