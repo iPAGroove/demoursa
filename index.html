@@ -37,16 +37,11 @@
 
       <!-- 🔹 ВКЛАДКА SIGNER -->
       <section id="signer" style="display:none; margin-top:24px;">
-        <h2 style="color:var(--accent);text-align:center;margin-bottom:16px;">Signer (Demo)</h2>
+        <h2 style="color:var(--accent);text-align:center;margin-bottom:16px;">URSA SIGNER</h2>
         <div class="card" style="text-align:center;">
-          <p>Загрузи свой .ipa, .p12 и .mobileprovision для подписи и установки.</p>
-
-          <input id="ipaFile" type="file" accept=".ipa" style="margin:10px 0;"><br>
-          <input id="p12File" type="file" accept=".p12" style="margin:10px 0;"><br>
-          <input id="mobileFile" type="file" accept=".mobileprovision" style="margin:10px 0;"><br>
-          <input id="p12pass" type="password" placeholder="Пароль от сертификата (если есть)" style="padding:10px;border-radius:10px;width:80%;background:var(--card);border:1px solid var(--border);color:var(--text);"><br><br>
-
-          <button id="signBtn" class="btn" style="width:80%;margin-top:10px;">Подписать IPA</button>
+          <p>Введите ссылку на IPA (.ipa) — подпись выполняется сервером.</p>
+          <input id="ipaUrl" type="url" placeholder="https://gofile.io/direct/..." style="width:85%;padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--border);color:var(--text);"><br><br>
+          <button id="signRemoteBtn" class="btn" style="width:80%;margin-top:10px;">Подписать IPA по ссылке</button>
           <div id="progress" style="opacity:.8;margin-top:8px;"></div>
           <div id="installLink" style="margin-top:16px;"></div>
         </div>
@@ -58,39 +53,31 @@
   <nav class="tabbar" id="tabbar" role="tablist">
     <div class="wrap">
       <div class="dock">
-        <button class="nav-btn active" data-tab="apps" role="tab" aria-label="Приложения">
-          <img id="navAppsIcon" src="" alt="">
-          <span class="dot"></span>
+        <button class="nav-btn active" data-tab="apps" role="tab">
+          <img id="navAppsIcon" src="" alt=""><span class="dot"></span>
         </button>
-        <button class="nav-btn" data-tab="games" role="tab" aria-label="Игры">
-          <img id="navGamesIcon" src="" alt="">
-          <span class="dot"></span>
+        <button class="nav-btn" data-tab="games" role="tab">
+          <img id="navGamesIcon" src="" alt=""><span class="dot"></span>
         </button>
-        <button class="nav-btn" id="signer-btn" aria-label="Signer">
-          🧾
-          <span class="dot"></span>
-        </button>
-        <button class="nav-btn" id="lang-btn" aria-label="Language">
+        <button class="nav-btn" id="signer-btn" role="tab">🧾<span class="dot"></span></button>
+        <button class="nav-btn" id="lang-btn" role="tab">
           <img id="navLangIcon" src="" alt="">
         </button>
-        <button class="nav-btn" id="help-btn" aria-label="Help">
+        <button class="nav-btn" id="help-btn" role="tab">
           <img id="navHelpIcon" src="" alt="">
         </button>
       </div>
     </div>
   </nav>
 
-  <!-- HELP-ДИАЛОГ -->
+  <!-- HELP -->
   <div id="help-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card">
-      <header class="dialog-head">
-        <strong>Помощь</strong>
+      <header class="dialog-head"><strong>Помощь</strong>
         <button class="close" data-close aria-label="Закрыть">✕</button>
       </header>
-      <div class="dialog-body" id="help-body">
-        <p>Служба поддержки скоро будет добавлена</p>
-      </div>
+      <div class="dialog-body"><p>Служба поддержки скоро будет добавлена</p></div>
     </section>
   </div>
 
@@ -98,6 +85,6 @@
   <script src="assets/js/themes.js?v=8"></script>
   <script src="assets/js/ios.js?v=8"></script>
   <script type="module" src="assets/js/app.js?v=8"></script>
-  <script type="module" src="assets/js/signer.js?v=1"></script>
+  <script type="module" src="assets/js/signer.js?v=2"></script>
 </body>
 </html>
