@@ -167,8 +167,13 @@ function openModal(app) {
     a.href = app.downloadUrl;
     a.target = "_blank";
     a.rel = "noopener";
-    a.textContent = __t("download");
-    dl.appendChild(a);
+    a.textContent = "Install via URSA";
+a.href = "#";
+a.onclick = (e) => {
+  e.preventDefault();
+  installIPA(app);
+};
+dl.appendChild(a);
   }
 
   modal.classList.add("open");
