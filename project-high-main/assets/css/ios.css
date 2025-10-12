@@ -1,0 +1,19 @@
+/* iOS-характерные настройки */
+html, body { -webkit-text-size-adjust: 100%; }
+body {
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+/* iOS “glass” эффект для topbar только если поддерживается */
+@supports ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
+  .topbar {
+    background: rgba(0,0,0,0.15); /* еле заметный тёмный фон */
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    backdrop-filter: blur(8px) saturate(120%);
+  }
+}
+
+/* Только WebKit: уменьшить “bounce” у прокрутки карточек внутри модалок (на будущее) */
+.scroll-y { overflow-y: auto; -webkit-overflow-scrolling: touch; }

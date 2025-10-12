@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>URSA IPA Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand"><span>URSA IPA Admin</span></div>
+    </div>
+  </header>
+
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <main class="wrap">
+    <div class="admin-actions">
+      <button id="add-btn" class="btn blue">+ Добавить IPA</button>
+      <input id="search" type="search" placeholder="Поиск по имени, bundleId, тегам…" />
+    </div>
+    <div id="cards" class="cards"></div>
+  </main>
+
+  <!-- МОДАЛКА -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <div class="modal-card">
+      <header class="modal-head">
+        <strong id="modal-title">Добавить IPA</strong>
+        <button class="close" data-close>✕</button>
+      </header>
+
+      <form id="ipa-form" class="modal-body">
+        <fieldset>
+          <legend>Основное</legend>
+          <div class="field-grid">
+            <label>Name <input type="text" name="name" required></label>
+            <label>Bundle ID <input type="text" name="bundleId" required></label>
+            <label>Version <input type="text" name="version" required></label>
+            <label>Minimal iOS <input type="text" name="minIOS"></label>
+            <label>Size (MB) <input type="number" name="sizeBytes"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Медиа</legend>
+          <label>Icon URL
+            <input type="url" name="iconUrl" id="iconUrl">
+            <img id="icon-preview" class="icon-preview" style="display:none;">
+          </label>
+          <label>Download URL <input type="url" name="downloadUrl"></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Функции мода / Hack Features</legend>
+          <label>Features (RU) <textarea name="features_ru" placeholder="через запятую"></textarea></label>
+          <label>Features (EN) <textarea name="features_en" placeholder="comma separated"></textarea></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Категория</legend>
+          <div>
+            <div class="tag-buttons">
+              <button type="button" class="tag-btn" data-tag="games">Games</button>
+              <button type="button" class="tag-btn" data-tag="apps">Apps</button>
+            </div>
+            <input type="hidden" name="tag" />
+          </div>
+        </fieldset>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn blue">💾 Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
