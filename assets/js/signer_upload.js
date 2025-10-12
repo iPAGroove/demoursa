@@ -1,20 +1,5 @@
-// signer_upload.js — загрузка сертификатов в Firebase (v5.0 Linked Signer Upload)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
-  authDomain:"ipa-panel.firebaseapp.com",
-  projectId:"ipa-panel",
-  storageBucket:"ipa-panel.firebasestorage.app",
-  messagingSenderId:"239982196215",
-  appId:"1:239982196215:web:9de387c51952da428daaf2"
-};
-
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
-const db = getFirestore(app);
+// signer_upload.js — загрузка сертификатов через URSA Cloud Run Proxy (v5.4)
+const UPLOAD_API = "https://ursa-signer-239982196215.europe-west1.run.app/upload_signer";
 
 const form = document.getElementById("signer-form");
 const statusEl = document.getElementById("signer-status");
@@ -33,30 +18,22 @@ form?.addEventListener("submit", async (e) => {
   }
 
   try {
-    const signerId = crypto.randomUUID(); // уникальный ID этого набора
-    const folder = `signer/${signerId}`;
-    const p12Ref = ref(storage, `${folder}/${p12.name}`);
-    const provRef = ref(storage, `${folder}/${prov.name}`);
+    const formData = new FormData();
+    formData.append("p12", p12);
+    formData.append("mobileprovision", prov);
+    formData.append("password", pass);
 
-    await uploadBytes(p12Ref, p12);
-    await uploadBytes(provRef, prov);
+    const resp = await fetch(UPLOAD_API, { method: "POST", body: formData });
+    const json = await resp.json();
 
-    const p12Url = await getDownloadURL(p12Ref);
-    const provUrl = await getDownloadURL(provRef);
+    if (!resp.ok) throw new Error(json.detail || json.error || "Ошибка при загрузке");
 
-    await setDoc(doc(db, "ursa_signers", signerId), {
-      createdAt: new Date().toISOString(),
-      p12Url,
-      provUrl,
-      pass,
-    });
-
-    // сохраняем в localStorage, чтобы сайт знал какой использовать
-    localStorage.setItem("ursa_signer_id", signerId);
+    // сохраняем ID загруженного сертификата
+    localStorage.setItem("ursa_signer_id", json.signer_id);
 
     statusEl.textContent = "✅ Сертификаты загружены!";
   } catch (err) {
     console.error("Signer upload error:", err);
-    statusEl.textContent = "❌ Ошибка: " + err.message;
+    statusEl.textContent = "❌ Ошибка: " + (err.message || err);
   }
 });
