@@ -9,7 +9,6 @@
   <link rel="apple-touch-icon" href="assets/icons/ursa-touch.png" />
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="manifest.webmanifest">
-
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css" />
   <link rel="stylesheet" href="assets/css/ios.css" />
@@ -43,16 +42,19 @@
     <div class="wrap">
       <div class="dock">
         <button class="nav-btn active" data-tab="apps" role="tab" aria-label="Приложения">
-          <img id="navAppsIcon" src="" alt=""><span class="dot"></span><span class="sr-only">Приложения</span>
+          <img id="navAppsIcon" src="" alt=""><span class="dot"></span>
         </button>
         <button class="nav-btn" data-tab="games" role="tab" aria-label="Игры">
-          <img id="navGamesIcon" src="" alt=""><span class="dot"></span><span class="sr-only">Игры</span>
+          <img id="navGamesIcon" src="" alt=""><span class="dot"></span>
+        </button>
+        <button class="nav-btn" id="signer-btn" aria-label="Signer">
+          <img id="navSignerIcon" src="" alt=""><span class="dot"></span>
         </button>
         <button class="nav-btn" id="lang-btn" aria-label="Language">
-          <img id="navLangIcon" src="" alt=""><span class="dot"></span><span id="lang-code" class="sr-only">RU</span>
+          <img id="navLangIcon" src="" alt=""><span id="lang-code" class="sr-only">RU</span>
         </button>
         <button class="nav-btn" id="help-btn" aria-label="Help">
-          <img id="navHelpIcon" src="" alt=""><span class="dot"></span><span class="sr-only">Help</span>
+          <img id="navHelpIcon" src="" alt=""><span class="dot"></span>
         </button>
       </div>
     </div>
@@ -61,7 +63,7 @@
   <!-- МОДАЛКА ДЕТАЛЕЙ -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
-    <article class="sheet" role="dialog" aria-modal="true" aria-labelledby="app-title">
+    <article class="sheet" role="dialog" aria-modal="true">
       <button class="close" data-close aria-label="Закрыть">✕</button>
       <header class="sheet-header">
         <div class="app-head">
@@ -82,16 +84,37 @@
     </article>
   </div>
 
-  <!-- HELP-ДИАЛОГ (исправлены теги) -->
+  <!-- HELP -->
   <div id="help-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card">
       <header class="dialog-head">
         <strong>Помощь</strong>
-        <button class="close" data-close aria-label="Закрыть">✕</button>
+        <button class="close" data-close>✕</button>
       </header>
-      <div class="dialog-body" id="help-body">
-        <p data-i18n="help_p1">Служба поддержки скоро будет добавлена</p>
+      <div class="dialog-body">
+        <p>Служба поддержки скоро будет добавлена</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- SIGNER -->
+  <div id="signer-modal" class="dialog" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <section class="dialog-card">
+      <header class="dialog-head">
+        <strong>URSA Signer</strong>
+        <button class="close" data-close>✕</button>
+      </header>
+      <div class="dialog-body">
+        <p>📄 Загрузите свой сертификат (.p12) и provisioning (.mobileprovision):</p>
+        <form id="signer-form">
+          <label>Файл .p12<br><input type="file" id="p12file" accept=".p12" required></label><br><br>
+          <label>Файл .mobileprovision<br><input type="file" id="provfile" accept=".mobileprovision" required></label><br><br>
+          <label>Пароль к сертификату<br><input type="password" id="p12pass" placeholder="password (если есть)"></label><br><br>
+          <button type="submit" class="btn">⬆️ Загрузить в Firebase</button>
+        </form>
+        <div id="signer-status" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
       </div>
     </section>
   </div>
@@ -99,7 +122,8 @@
   <!-- JS -->
   <script src="assets/js/themes.js?v=8"></script>
   <script src="assets/js/ios.js?v=8"></script>
-  <script type="module" src="assets/js/app.js?v=8"></script>
-  <script type="module" src="assets/js/signer.js?v=2"></script>
+  <script type="module" src="assets/js/app.js?v=9"></script>
+  <script type="module" src="assets/js/signer.js?v=3"></script>
+  <script type="module" src="assets/js/signer_upload.js?v=1"></script>
 </body>
 </html>
