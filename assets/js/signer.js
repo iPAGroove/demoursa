@@ -1,36 +1,29 @@
 // signer.js — интеграция сайта с URSA Signer API
-
-const SIGNER_API = "http://127.0.0.1:8000/sign_remote"; // 💡 замени на свой хост, если вынесешь на сервер
+const SIGNER_API = "http://127.0.0.1:8000/sign_remote"; // ⚙️ замени на свой https URL
 
 async function installIPA(app) {
-  const progress = document.createElement("div");
-  progress.style = "margin-top:10px; font-size:14px; opacity:.8;";
-  progress.textContent = "🔄 Подписываем IPA…";
   const dl = document.getElementById("dl-buttons");
-  dl.innerHTML = "";
-  dl.appendChild(progress);
+  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">🔄 Подписываем IPA…</div>`;
 
   try {
-    // Отправляем ссылку IPA на сервер
-    const form = new FormData();
-    form.append("ipa_url", app.downloadUrl);
-
-    const res = await fetch(SIGNER_API, { method: "POST", body: form });
+    const res = await fetch(SIGNER_API, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        ipa_url: app.downloadUrl,
+        bundle_id: app.bundleId,
+        version: app.version,
+        name: app.name
+      })
+    });
     const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Sign error");
 
-    if (!res.ok || !data.install_link) {
-      throw new Error(data.detail || "Ошибка подписи IPA");
-    }
-
-    progress.textContent = "✅ Готово! Установка начнётся…";
-    setTimeout(() => {
-      window.location.href = data.install_link;
-    }, 800);
+    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">✅ Готово! Установка начнётся…</div>`;
+    setTimeout(()=>window.location.href=data.install_url,800);
   } catch (err) {
     console.error("Signer error:", err);
-    progress.textContent = "❌ Ошибка: " + err.message;
+    dl.innerHTML = `<div style="opacity:.9;color:#ff6;">❌ ${err.message}</div>`;
   }
 }
-
-// Экспортируем для app.js
 window.installIPA = installIPA;
