@@ -9,7 +9,6 @@
   <link rel="apple-touch-icon" href="assets/icons/ursa-touch.png" />
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="manifest.webmanifest">
-
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/base.css" />
   <link rel="stylesheet" href="assets/css/ios.css" />
@@ -19,9 +18,7 @@
   <!-- ШАПКА -->
   <header class="topbar">
     <div class="wrap">
-      <div class="brand">
-        <span data-text="URSA IPA REPO">URSA IPA</span>
-      </div>
+      <div class="brand"><span data-text="URSA IPA REPO">URSA IPA</span></div>
     </div>
   </header>
 
@@ -38,18 +35,19 @@
     <div class="wrap">
       <div id="catalog" class="catalog" role="list"></div>
 
-      <!-- 🔹 СЕКЦИЯ SIGNER -->
+      <!-- 🔹 ВКЛАДКА SIGNER -->
       <section id="signer" style="display:none; margin-top:24px;">
         <h2 style="color:var(--accent);text-align:center;margin-bottom:16px;">Signer (Demo)</h2>
         <div class="card" style="text-align:center;">
-          <p>Загрузи свой .ipa, .p12 и .mobileprovision для подписи.</p>
+          <p>Загрузи свой .ipa, .p12 и .mobileprovision для подписи и установки.</p>
 
           <input id="ipaFile" type="file" accept=".ipa" style="margin:10px 0;"><br>
           <input id="p12File" type="file" accept=".p12" style="margin:10px 0;"><br>
           <input id="mobileFile" type="file" accept=".mobileprovision" style="margin:10px 0;"><br>
           <input id="p12pass" type="password" placeholder="Пароль от сертификата (если есть)" style="padding:10px;border-radius:10px;width:80%;background:var(--card);border:1px solid var(--border);color:var(--text);"><br><br>
 
-          <button id="signBtn" class="btn" style="width:80%;margin-top:10px;">Подписать и установить</button>
+          <button id="signBtn" class="btn" style="width:80%;margin-top:10px;">Подписать IPA</button>
+          <div id="progress" style="opacity:.8;margin-top:8px;"></div>
           <div id="installLink" style="margin-top:16px;"></div>
         </div>
       </section>
@@ -60,12 +58,12 @@
   <nav class="tabbar" id="tabbar" role="tablist">
     <div class="wrap">
       <div class="dock">
-        <button class="nav-btn active" data-tab="apps" aria-label="Приложения">
-          <img id="navAppsIcon" src="">
+        <button class="nav-btn active" data-tab="apps" role="tab" aria-label="Приложения">
+          <img id="navAppsIcon" src="" alt="">
           <span class="dot"></span>
         </button>
-        <button class="nav-btn" data-tab="games" aria-label="Игры">
-          <img id="navGamesIcon" src="">
+        <button class="nav-btn" data-tab="games" role="tab" aria-label="Игры">
+          <img id="navGamesIcon" src="" alt="">
           <span class="dot"></span>
         </button>
         <button class="nav-btn" id="signer-btn" aria-label="Signer">
@@ -73,10 +71,10 @@
           <span class="dot"></span>
         </button>
         <button class="nav-btn" id="lang-btn" aria-label="Language">
-          <img id="navLangIcon" src="">
+          <img id="navLangIcon" src="" alt="">
         </button>
         <button class="nav-btn" id="help-btn" aria-label="Help">
-          <img id="navHelpIcon" src="">
+          <img id="navHelpIcon" src="" alt="">
         </button>
       </div>
     </div>
