@@ -37,7 +37,8 @@ const I18N = {
     download: "Загрузить IPA",
     hack_features: "Функции мода",
     not_found: "Ничего не найдено",
-    empty: "Пока нет приложений"
+    empty: "Пока нет приложений",
+    load_error: "Не удалось загрузить каталог. Проверь Firestore rules/домен."
   },
   en: {
     search_ph: "Search by name, bundleId, tags…",
@@ -48,32 +49,28 @@ const I18N = {
     download: "Download IPA",
     hack_features: "Hack Features",
     not_found: "Nothing found",
-    empty: "No apps yet"
+    empty: "No apps yet",
+    load_error: "Failed to load catalog. Check Firestore rules/authorized domain."
   }
 };
 
-let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").slice(0, 2)).toLowerCase();
+let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").slice(0,2)).toLowerCase();
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
 // ===== HELPERS =====
-function prettyBytes(num) {
-  if (!num) return "";
-  const mb = num / 1000000;
-  return `${mb.toFixed(0)} MB`;
-}
-function escapeHTML(s) {
-  return (s || "").replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#39;"
-  }[m]));
-}
+const prettyBytes = (num) => !num ? "" : `${(num/1e6).toFixed(0)} MB`;
+const escapeHTML = (s) => (s||"").replace(/[&<>"']/g,(m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
 
 // === НОРМАЛИЗАЦИЯ Firestore-документа ===
 function normalize(doc) {
+  // tags → нормализуем в массив со строчными значениями
+  let tags = [];
+  if (Array.isArray(doc.tags)) tags = doc.tags;
+  else if (doc.tags) tags = String(doc.tags).split(",").map(s=>s.trim());
+  tags = tags.map(t => String(t||"").toLowerCase());
+  if (!tags.length) tags = ["apps"]; // дефолт, чтобы карточки не терялись
+
   return {
     id: doc.ID || doc.id || "",
     name: doc.NAME || doc.name || "",
@@ -86,11 +83,7 @@ function normalize(doc) {
     features: doc.features || "",
     features_ru: doc.features_ru || "",
     features_en: doc.features_en || "",
-    tags: Array.isArray(doc.tags)
-      ? doc.tags
-      : doc.tags
-      ? String(doc.tags).split(",").map((s) => s.trim())
-      : []
+    tags
   };
 }
 
@@ -103,41 +96,37 @@ function renderCatalog(apps) {
     return;
   }
 
-  apps.forEach((app) => {
+  for (const app of apps) {
     const el = document.createElement("article");
     el.className = "card";
     el.setAttribute("role", "listitem");
     el.tabIndex = 0;
-
     el.innerHTML = `
       <div class="row">
         <img class="icon" src="${app.iconUrl}" alt="">
         <div>
-          <h3>${app.name}</h3>
-          <div class="meta">${app.bundleId || ""}</div>
+          <h3>${escapeHTML(app.name)}</h3>
+          <div class="meta">${escapeHTML(app.bundleId || "")}</div>
           <div class="meta">
-            v${app.version}
-            ${app.minIOS ? ` · iOS ≥ ${app.minIOS}` : ""}
+            v${escapeHTML(app.version || "")}
+            ${app.minIOS ? ` · iOS ≥ ${escapeHTML(app.minIOS)}` : ""}
             ${app.sizeBytes ? ` · ${prettyBytes(app.sizeBytes)}` : ""}
           </div>
         </div>
       </div>
     `;
-
     const open = () => openModal(app);
     el.addEventListener("click", open);
-    el.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") open();
-    });
+    el.addEventListener("keypress", (e) => e.key === "Enter" && open());
     catalog.appendChild(el);
-  });
+  }
 }
 
 // ===== MODAL =====
 const modal = document.getElementById("modal");
 
 function openModal(app) {
-  document.getElementById("app-icon").src = app.iconUrl;
+  document.getElementById("app-icon").src = app.iconUrl || "";
   document.getElementById("app-title").textContent = app.name || "";
   document.getElementById("app-bundle").textContent = app.bundleId || "";
   document.getElementById("app-info").textContent =
@@ -145,20 +134,13 @@ function openModal(app) {
     (app.minIOS ? ` · iOS ≥ ${app.minIOS}` : "") +
     (app.sizeBytes ? ` · ${prettyBytes(app.sizeBytes)}` : "");
 
-  // 🔹 локализация описания
-  let feats = "";
-  if (lang === "ru" && app.features_ru) feats = app.features_ru;
-  else if (lang === "en" && app.features_en) feats = app.features_en;
-  else feats = app.features;
-
-  const featList = feats ? feats.split(",").map((f) => f.trim()) : [];
-
+  let feats = lang === "ru" ? (app.features_ru || app.features) : (app.features_en || app.features);
+  const featList = feats ? feats.split(",").map(f=>f.trim()).filter(Boolean) : [];
   document.getElementById("app-desc").innerHTML = featList.length
     ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
-       <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
+       <ul class="bullets">${featList.map(f=>`<li>${escapeHTML(f)}`).join("")}</ul>`
     : "";
 
-  // 🔹 кнопка загрузки
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = "";
   if (app.downloadUrl) {
@@ -167,13 +149,8 @@ function openModal(app) {
     a.href = app.downloadUrl;
     a.target = "_blank";
     a.rel = "noopener";
-    a.textContent = "Install via URSA";
-a.href = "#";
-a.onclick = (e) => {
-  e.preventDefault();
-  installIPA(app);
-};
-dl.appendChild(a);
+    a.textContent = __t("download");
+    dl.appendChild(a);
   }
 
   modal.classList.add("open");
@@ -190,13 +167,11 @@ function closeModal() {
 modal.addEventListener("click", (e) => {
   if (e.target.hasAttribute("data-close") || e.target === modal) closeModal();
 });
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
-});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
 // ===== MAIN =====
 document.addEventListener("DOMContentLoaded", async () => {
-  // иконки
+  // иконки (локальные — не протухают)
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navHelpIcon").src = ICONS.help;
@@ -204,55 +179,63 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
-  document.getElementById("lang-code").textContent = lang.toUpperCase();
+  const langCode = document.getElementById("lang-code");
+  if (langCode) langCode.textContent = lang.toUpperCase();
 
-  // 🔹 по умолчанию — вкладка "apps"
   let state = { all: [], q: "", tab: "apps" };
+
   try {
     const snap = await getDocs(collection(db, "ursa_ipas"));
     state.all = snap.docs.map((d) => normalize(d.data()));
+    console.log(`Loaded ${state.all.length} items from Firestore`);
   } catch (err) {
     console.error("Ошибка загрузки Firestore:", err);
+    // видимый алерт на странице
+    const catalog = document.getElementById("catalog");
+    catalog.innerHTML = `<div style="padding:18px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elev);">
+      <div style="font-weight:700;color:#ffb4b4;margin-bottom:6px">Firestore Error</div>
+      <div style="opacity:.85">${__t("load_error")}</div>
+    </div>`;
+    return;
   }
 
   function apply() {
     const q = state.q.trim().toLowerCase();
 
-    const list = state.all.filter((app) => {
-      if (q) {
-        // 🔍 поиск по всем приложениям
-        return (
-          (app.name || "").toLowerCase().includes(q) ||
-          (app.bundleId || "").toLowerCase().includes(q) ||
-          (app.features || "").toLowerCase().includes(q) ||
-          app.tags.some((t) => (t || "").toLowerCase().includes(q))
-        );
-      } else {
-        // 📂 фильтрация по вкладке
-        return state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps");
-      }
-    });
+    let list = state.all;
+    if (q) {
+      list = list.filter((app) =>
+        (app.name||"").toLowerCase().includes(q) ||
+        (app.bundleId||"").toLowerCase().includes(q) ||
+        (app.features||"").toLowerCase().includes(q) ||
+        app.tags.some((t)=>(t||"").toLowerCase().includes(q))
+      );
+    } else {
+      // если тегов нет — показываем всё; иначе фильтруем по вкладке
+      list = list.filter((app) =>
+        !app.tags?.length ? true :
+        (state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps"))
+      );
+    }
 
     if (!list.length) {
       document.getElementById("catalog").innerHTML =
         `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("not_found")}</div>`;
-    } else renderCatalog(list);
+    } else {
+      renderCatalog(list);
+    }
   }
 
-  search.addEventListener("input", () => {
-    state.q = search.value;
-    apply();
-  });
+  search.addEventListener("input", () => { state.q = search.value; apply(); });
 
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
     const pill = e.target.closest(".nav-btn[data-tab]");
-    if (pill) {
-      state.tab = pill.dataset.tab;
-      bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-      pill.classList.add("active");
-      apply();
-    }
+    if (!pill) return;
+    state.tab = pill.dataset.tab;
+    bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+    pill.classList.add("active");
+    apply();
   });
 
   document.getElementById("lang-btn").addEventListener("click", () => {
@@ -263,19 +246,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const help = document.getElementById("help-modal");
   document.getElementById("help-btn").addEventListener("click", () => {
-    help.classList.add("open");
-    help.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
+    help.classList.add("open"); help.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden";
   });
   help.addEventListener("click", (e) => {
     if (e.target.hasAttribute("data-close") || e.target === help) {
-      help.classList.remove("open");
-      help.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
+      help.classList.remove("open"); help.setAttribute("aria-hidden","true"); document.body.style.overflow="";
     }
   });
 
-  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+  document.getElementById("theme-toggle").addEventListener("click", window.toggleTheme || (()=>{}));
 
   apply();
 });
