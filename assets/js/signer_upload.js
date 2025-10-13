@@ -25,27 +25,27 @@ async function uploadSigner() {
 
   try {
     const user = auth.currentUser;
-    if (!user) throw new Error("Not signed in");
+    if (!user) throw new Error("Не выполнен вход");
 
     const uid = user.uid;
     const folder = `signers/${uid}/`;
     const p12Ref = ref(storage, folder + p12File.name);
     const provRef = ref(storage, folder + provFile.name);
 
-    // 🔼 Загружаем оба файла в Firebase Storage
+    // 🔼 Загружаем файлы в Storage
     await uploadBytes(p12Ref, p12File);
     await uploadBytes(provRef, provFile);
 
-    // Получаем download URL’ы
+    // 🔹 Получаем download URL’ы
     const [p12Url, provUrl] = await Promise.all([
       getDownloadURL(p12Ref),
       getDownloadURL(provRef)
     ]);
 
-    // 🧩 Пытаемся вытащить CN (Common Name) из p12 локально
+    // 🧩 Пробуем вытащить CN (Common Name)
     const cn = await extractCommonName(p12File);
 
-    // Записываем документ в Firestore
+    // 🔹 Пишем в Firestore
     const signerRef = doc(db, "ursa_signers", uid);
     await setDoc(signerRef, {
       p12Url,
@@ -55,10 +55,10 @@ async function uploadSigner() {
       certCN: cn || "—"
     });
 
-    // ✅ Обновляем локальное состояние и интерфейс без перезагрузки
+    // ✅ Обновляем локально
     localStorage.setItem("ursa_signer_id", uid);
     localStorage.setItem("ursa_cert_account", cn || "—");
-    localStorage.setItem("ursa_cert_exp", new Date(Date.now() + 31536000000).toISOString()); // +1 год
+    localStorage.setItem("ursa_cert_exp", new Date(Date.now() + 31536000000).toISOString());
 
     document.querySelector("#cert-state").textContent = "✅ Загружен";
     document.querySelector("#cert-account").textContent = cn || "—";
@@ -66,7 +66,7 @@ async function uploadSigner() {
     status.textContent = "✅ Успешно загружено!";
     status.style.opacity = "1";
 
-    // 🔄 Мгновенно обновляем профиль, если открыт
+    // 🔄 Обновляем профиль без перезагрузки
     if (typeof window.openSettings === "function") {
       setTimeout(() => window.openSettings(), 400);
     }
@@ -86,7 +86,7 @@ async function uploadSigner() {
   }
 }
 
-// === Извлекает CN (Common Name) из бинаря .p12 локально ===
+// === Извлекает CN (Common Name) из бинаря .p12 ===
 async function extractCommonName(file) {
   try {
     const buffer = await file.arrayBuffer();
@@ -99,7 +99,7 @@ async function extractCommonName(file) {
   }
 }
 
-// === Подключение кнопки ===
+// === Подключаем кнопку ===
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("uploadBtn");
   if (btn) btn.addEventListener("click", uploadSigner);
