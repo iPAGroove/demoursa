@@ -1,10 +1,6 @@
-// URSA IPA — Full UI + Install Integration (v5.7 Stable CORS-Safe)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import {
-  initializeFirestore,
-  collection,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+// URSA IPA — Full UI + Install Integration (v5.9 Unified Firestore Instance)
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 
 // === Firebase Config ===
 const firebaseConfig = {
@@ -16,14 +12,10 @@ const firebaseConfig = {
   appId: "1:239982196215:web:9de387c51952da428daaf2"
 };
 
-// === Init Firebase (CORS-safe) ===
-const app = initializeApp(firebaseConfig);
-const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,   // отключает WebChannel
-  useFetchStreams: false,
-  ignoreUndefinedProperties: true
-});
-console.log("✅ Firestore initialized in long-polling mode (CORS-safe)");
+// === Shared instance ===
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+console.log("✅ Firestore connected via existing instance");
 
 // === Signer API ===
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
