@@ -1,4 +1,4 @@
-// URSA Signer Upload — Firebase + Live Profile Update (v4.24 Fix Submit + Smooth UI)
+// URSA Signer Upload — Firebase + Live Profile Update (v4.25 Stable)
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -8,8 +8,7 @@ const storage = getStorage();
 const auth = getAuth();
 
 async function uploadSigner(event) {
-  // 🚫 отменяем стандартный submit формы
-  if (event) event.preventDefault();
+  event.preventDefault();
 
   const p12File = document.getElementById("fileP12").files[0];
   const provFile = document.getElementById("fileProv").files[0];
@@ -28,14 +27,14 @@ async function uploadSigner(event) {
 
   try {
     const user = auth.currentUser;
-    if (!user) throw new Error("Не выполнен вход");
+    if (!user) throw new Error("Не выполнен вход через Google");
 
     const uid = user.uid;
     const folder = `signers/${uid}/`;
     const p12Ref = ref(storage, folder + p12File.name);
     const provRef = ref(storage, folder + provFile.name);
 
-    // 🔼 Загружаем файлы
+    // Загрузка в Firebase Storage
     await uploadBytes(p12Ref, p12File);
     await uploadBytes(provRef, provFile);
 
@@ -45,7 +44,7 @@ async function uploadSigner(event) {
       getDownloadURL(provRef)
     ]);
 
-    // 🧩 Пробуем извлечь CN
+    // Извлекаем CN (Common Name)
     const cn = await extractCommonName(p12File);
 
     // Записываем документ в Firestore
@@ -58,23 +57,22 @@ async function uploadSigner(event) {
       certCN: cn || "—"
     });
 
-    // ✅ Локальное обновление UI
+    // Локальные данные
     localStorage.setItem("ursa_signer_id", uid);
     localStorage.setItem("ursa_cert_account", cn || "—");
     localStorage.setItem("ursa_cert_exp", new Date(Date.now() + 31536000000).toISOString());
 
     document.querySelector("#cert-state").textContent = "✅ Загружен";
     document.querySelector("#cert-account").textContent = cn || "—";
-
     status.textContent = "✅ Успешно загружено!";
     status.style.opacity = "1";
 
-    // 🔄 Обновляем профиль (если открыт)
+    // Обновляем профиль
     if (typeof window.openSettings === "function") {
       setTimeout(() => window.openSettings(), 400);
     }
 
-    // ⏱ Закрываем модалку
+    // Закрываем модалку через 2 секунды
     const signerModal = document.getElementById("signer-modal");
     setTimeout(() => {
       signerModal?.classList.remove("open");
@@ -89,12 +87,11 @@ async function uploadSigner(event) {
   }
 }
 
-// === Извлекает CN (Common Name) из бинаря .p12 ===
+// === Извлечение Common Name из .p12 ===
 async function extractCommonName(file) {
   try {
     const buffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    const text = new TextDecoder().decode(bytes);
+    const text = new TextDecoder().decode(new Uint8Array(buffer));
     const match = text.match(/CN=([^,\n]+)/);
     return match ? match[1].trim() : null;
   } catch {
@@ -102,11 +99,8 @@ async function extractCommonName(file) {
   }
 }
 
-// === Подключение кнопки ===
+// === Инициализация ===
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("uploadBtn");
-  if (btn) btn.addEventListener("click", uploadSigner);
-  // 💡 Перехватываем submit формы, если он есть
-  const form = btn?.closest("form");
+  const form = document.getElementById("signer-form");
   if (form) form.addEventListener("submit", uploadSigner);
 });
