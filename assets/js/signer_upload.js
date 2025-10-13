@@ -1,4 +1,4 @@
-// signer_upload.js — загрузка сертификатов через URSA Cloud Run Proxy (v5.4)
+// signer_upload.js — загрузка сертификатов (v5.4)
 const UPLOAD_API = "https://ursa-signer-239982196215.europe-west1.run.app/upload_signer";
 
 const form = document.getElementById("signer-form");
@@ -25,12 +25,9 @@ form?.addEventListener("submit", async (e) => {
 
     const resp = await fetch(UPLOAD_API, { method: "POST", body: formData });
     const json = await resp.json();
-
     if (!resp.ok) throw new Error(json.detail || json.error || "Ошибка при загрузке");
 
-    // сохраняем ID загруженного сертификата
     localStorage.setItem("ursa_signer_id", json.signer_id);
-
     statusEl.textContent = "✅ Сертификаты загружены!";
   } catch (err) {
     console.error("Signer upload error:", err);
