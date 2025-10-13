@@ -1,6 +1,10 @@
-// URSA IPA — Full UI + Install Integration (v5.6 Stable CORS-Safe)
+// URSA IPA — Full UI + Install Integration (v5.7 Stable CORS-Safe)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  initializeFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 // === Firebase Config ===
 const firebaseConfig = {
@@ -12,19 +16,14 @@ const firebaseConfig = {
   appId: "1:239982196215:web:9de387c51952da428daaf2"
 };
 
-// === Init Firebase ===
+// === Init Firebase (CORS-safe) ===
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// 🔧 Firestore CORS-fix for GitHub Pages
-try {
-  db._freezeSettings();
-  db._settings.forceLongPolling = true;
-  db._settings.ignoreUndefinedProperties = true;
-  console.log("✅ Firestore long-polling mode enabled (CORS safe)");
-} catch (e) {
-  console.warn("⚠️ Firestore settings patch skipped:", e);
-}
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,   // отключает WebChannel
+  useFetchStreams: false,
+  ignoreUndefinedProperties: true
+});
+console.log("✅ Firestore initialized in long-polling mode (CORS-safe)");
 
 // === Signer API ===
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
@@ -144,6 +143,7 @@ async function installIPA(app) {
   }
 }
 window.installIPA = installIPA;
+
 // === App modal ===
 const modal = document.getElementById("modal");
 function openModal(app) {
@@ -154,7 +154,6 @@ function openModal(app) {
     app.minIOS ? ` · iOS ≥ ${app.minIOS}` : ""
   }${app.sizeBytes ? ` · ${prettyBytes(app.sizeBytes)}` : ""}`;
 
-  // features
   let feats = "";
   if (lang === "ru" && app.features_ru) feats = app.features_ru;
   else if (lang === "en" && app.features_en) feats = app.features_en;
@@ -210,9 +209,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     state.all = snap.docs.map((d) => normalize(d.data()));
   } catch (err) {
     console.error("Firestore:", err);
-    document.getElementById("catalog").innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t(
-      "load_error"
-    )}</div>`;
+    document.getElementById("catalog").innerHTML =
+      `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
   }
 
   function apply() {
@@ -229,9 +227,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps");
     });
     if (!list.length) {
-      document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(
-        q ? "not_found" : "empty"
-      )}</div>`;
+      document.getElementById("catalog").innerHTML =
+        `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(q ? "not_found" : "empty")}</div>`;
     } else {
       renderCatalog(list);
     }
