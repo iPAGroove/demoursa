@@ -1,4 +1,4 @@
-// URSA Signer Upload — Firebase + Live Profile Update (v4.22)
+// URSA Signer Upload — Firebase + Live Profile Update (v4.23 AutoClose + Smooth UI)
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -20,7 +20,8 @@ async function uploadSigner() {
   }
 
   btn.disabled = true;
-  status.textContent = "⏳ Загрузка…";
+  status.style.opacity = ".8";
+  status.textContent = "⏳ Загрузка сертификата…";
 
   try {
     const user = auth.currentUser;
@@ -31,18 +32,20 @@ async function uploadSigner() {
     const p12Ref = ref(storage, folder + p12File.name);
     const provRef = ref(storage, folder + provFile.name);
 
-    // Загружаем оба файла
+    // 🔼 Загружаем оба файла в Firebase Storage
     await uploadBytes(p12Ref, p12File);
     await uploadBytes(provRef, provFile);
 
-    // Получаем URL’ы
-    const p12Url = await getDownloadURL(p12Ref);
-    const provUrl = await getDownloadURL(provRef);
+    // Получаем download URL’ы
+    const [p12Url, provUrl] = await Promise.all([
+      getDownloadURL(p12Ref),
+      getDownloadURL(provRef)
+    ]);
 
     // 🧩 Пытаемся вытащить CN (Common Name) из p12 локально
     const cn = await extractCommonName(p12File);
 
-    // Записываем в Firestore
+    // Записываем документ в Firestore
     const signerRef = doc(db, "ursa_signers", uid);
     await setDoc(signerRef, {
       p12Url,
@@ -52,29 +55,43 @@ async function uploadSigner() {
       certCN: cn || "—"
     });
 
-    // ✅ Обновляем локальное состояние (UI без перезагрузки)
+    // ✅ Обновляем локальное состояние и интерфейс без перезагрузки
     localStorage.setItem("ursa_signer_id", uid);
     localStorage.setItem("ursa_cert_account", cn || "—");
-    localStorage.setItem("ursa_cert_exp", new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString()); // пример: +1 год
+    localStorage.setItem("ursa_cert_exp", new Date(Date.now() + 31536000000).toISOString()); // +1 год
+
     document.querySelector("#cert-state").textContent = "✅ Загружен";
     document.querySelector("#cert-account").textContent = cn || "—";
 
-    status.textContent = "✅ Загрузлено в Firebase";
+    status.textContent = "✅ Успешно загружено!";
+    status.style.opacity = "1";
+
+    // 🔄 Мгновенно обновляем профиль, если открыт
+    if (typeof window.openSettings === "function") {
+      setTimeout(() => window.openSettings(), 400);
+    }
+
+    // ⏱ Закрываем модалку через 2 секунды
+    const signerModal = document.getElementById("signer-modal");
+    setTimeout(() => {
+      signerModal?.classList.remove("open");
+      signerModal?.setAttribute("aria-hidden", "true");
+    }, 2000);
   } catch (err) {
     console.error("Upload error:", err);
-    status.textContent = "❌ Firestore create failed: " + err.message;
+    status.style.opacity = "1";
+    status.textContent = "❌ Ошибка: " + (err.message || "Upload failed");
   } finally {
     btn.disabled = false;
   }
 }
 
-// === Вытаскивает CN из p12 (без внешних либ)
+// === Извлекает CN (Common Name) из бинаря .p12 локально ===
 async function extractCommonName(file) {
   try {
     const buffer = await file.arrayBuffer();
     const bytes = new Uint8Array(buffer);
     const text = new TextDecoder().decode(bytes);
-    // Пробуем вытащить CN из строки (обычно "CN=" где-то рядом)
     const match = text.match(/CN=([^,\n]+)/);
     return match ? match[1].trim() : null;
   } catch {
@@ -82,5 +99,8 @@ async function extractCommonName(file) {
   }
 }
 
-// === Слушатель кнопки ===
-document.getElementById("uploadBtn").addEventListener("click", uploadSigner);
+// === Подключение кнопки ===
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("uploadBtn");
+  if (btn) btn.addEventListener("click", uploadSigner);
+});
