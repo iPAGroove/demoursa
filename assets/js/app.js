@@ -1,7 +1,8 @@
-// URSA IPA — Firestore + i18n + темы + VIP статус
+// URSA IPA — Firestore + i18n + темы + VIP статус + Settings
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+// === Firebase config ===
 const firebaseConfig = {
   apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
   authDomain: "ipa-panel.firebaseapp.com",
@@ -10,23 +11,21 @@ const firebaseConfig = {
   messagingSenderId: "239982196215",
   appId: "1:239982196215:web:9de387c51952da428daaf2"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== ICONS =====
+// === ICONS ===
 const ICONS = {
   games: "https://store-eu-par-3.gofile.io/download/direct/22931df3-7659-4095-8dd0-a7eadb14e1e6/IMG_9678.PNG",
   apps:  "https://store5.gofile.io/download/direct/9a5cf9e9-9b82-4ce4-9cc9-ce63b857dcaf/%D0%BA%D0%BE%D0%BF%D0%B8.png",
-  help:  "https://store-eu-par-3.gofile.io/download/direct/084828b1-4e8e-47d3-bcd0-48c12b99a49c/%D0%B2%D0%BE%D0%BF%D1%80%D0%BE%D1%81.png",
-  signer:"https://store10.gofile.io/download/direct/3335936d-a58c-48bd-8686-21988ca6a23d/IMG_9617.png",
   lang: {
     ru:"https://store-eu-par-3.gofile.io/download/direct/79e2512c-552c-4e1a-9b47-0cf1bcbfe556/IMG_9679.PNG",
     en:"https://store-eu-par-3.gofile.io/download/direct/79e2512c-552c-4e1a-9b47-0cf1bcbfe556/IMG_9679.PNG"
-  }
+  },
+  settings:"https://cdn-icons-png.flaticon.com/512/3524/3524659.png"
 };
 
-// ===== i18n =====
+// === i18n ===
 const I18N = {
   ru:{ search_ph:"Поиск по названию, bundleId…", download:"Установить", hack_features:"Функции мода", not_found:"Ничего не найдено", empty:"Пока нет приложений", load_error:"Ошибка Firestore" },
   en:{ search_ph:"Search by name or bundleId…", download:"Install", hack_features:"Hack Features", not_found:"Nothing found", empty:"No apps yet", load_error:"Firestore error" }
@@ -38,6 +37,7 @@ window.__t=(k)=>(I18N[lang]&&I18N[lang][k])||k;
 const prettyBytes=(num)=>!num?"":`${(num/1e6).toFixed(0)} MB`;
 const escapeHTML=(s)=>(s||"").replace(/[&<>"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 
+// === Normalize Firestore doc ===
 function normalize(doc){
   let tags=Array.isArray(doc.tags)?doc.tags:(doc.tags?String(doc.tags).split(",").map(s=>s.trim()):["apps"]);
   tags=tags.map(t=>t.toLowerCase());
@@ -49,6 +49,7 @@ function normalize(doc){
   };
 }
 
+// === Catalog renderer ===
 function renderCatalog(apps){
   const c=document.getElementById("catalog");
   if(!apps.length){c.innerHTML=`<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;return;}
@@ -69,6 +70,7 @@ function renderCatalog(apps){
   }
 }
 
+// === Modal ===
 const modal=document.getElementById("modal");
 function openModal(app){
   document.getElementById("app-icon").src=app.iconUrl;
@@ -98,12 +100,13 @@ function openModal(app){
 function closeModal(){modal.classList.remove("open");modal.setAttribute("aria-hidden","true");document.body.style.overflow="";}
 modal.addEventListener("click",(e)=>{if(e.target.hasAttribute("data-close"))closeModal();});
 
+// === MAIN ===
 document.addEventListener("DOMContentLoaded",async()=>{
   document.getElementById("navGamesIcon").src=ICONS.games;
   document.getElementById("navAppsIcon").src=ICONS.apps;
-  document.getElementById("navHelpIcon").src=ICONS.help;
-  document.getElementById("navSignerIcon").src=ICONS.signer;
   document.getElementById("navLangIcon").src=ICONS.lang[lang];
+  document.getElementById("navSettingsIcon").src=ICONS.settings;
+
   const search=document.getElementById("search");
   search.placeholder=__t("search_ph");
 
@@ -114,11 +117,33 @@ document.addEventListener("DOMContentLoaded",async()=>{
   } catch {
     document.getElementById("catalog").innerHTML=`<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
   }
+});
 
-  // SIGNER modal
-  const signerModal=document.getElementById("signer-modal");
-  document.getElementById("signer-btn").addEventListener("click",()=>{
-    signerModal.classList.add("open");signerModal.setAttribute("aria-hidden","false");
-  });
-  signerModal.addEventListener("click",(e)=>{if(e.target.hasAttribute("data-close")){signerModal.classList.remove("open");signerModal.setAttribute("aria-hidden","true");}});
+// === SETTINGS MODAL ===
+const settingsModal = document.getElementById("settings-modal");
+document.getElementById("settings-btn").addEventListener("click", () => {
+  settingsModal.classList.add("open");
+  settingsModal.setAttribute("aria-hidden", "false");
+
+  const info = document.getElementById("user-info");
+  const email = localStorage.getItem("ursa_email");
+  const status = localStorage.getItem("ursa_status") || "free";
+  const signer = localStorage.getItem("ursa_signer_id") ? "✅ Загружен" : "❌ Нет";
+
+  if (email) {
+    info.innerHTML = `
+      <p><b>📧 Почта:</b> ${email}</p>
+      <p><b>💎 Статус:</b> ${status === "vip" ? "⭐ VIP" : "Free"}</p>
+      <p><b>🔏 Сертификат:</b> ${signer}</p>
+    `;
+  } else {
+    info.innerHTML = `<p>Вы не авторизованы. Войдите через Google.</p>`;
+  }
+});
+
+settingsModal.addEventListener("click", (e) => {
+  if (e.target.hasAttribute("data-close")) {
+    settingsModal.classList.remove("open");
+    settingsModal.setAttribute("aria-hidden", "true");
+  }
 });
