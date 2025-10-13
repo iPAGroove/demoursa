@@ -1,61 +1,41 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+const UPLOAD_API = "https://ursa-signer-239982196215.europe-west1.run.app/upload_signer";
+const form = document.getElementById("signer-form");
+const statusEl = document.getElementById("signer-status");
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
-  authDomain: "ipa-panel.firebaseapp.com",
-  projectId: "ipa-panel"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+form?.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  statusEl.textContent="⏳ Загружаем сертификаты…";
 
-document.getElementById("auth-action")?.addEventListener("click", async ()=>{
-  const user = auth.currentUser;
-  if(user){ await signOut(auth); return; }
-  const provider = new GoogleAuthProvider();
+  const p12=document.getElementById("p12file").files[0];
+  const prov=document.getElementById("provfile").files[0];
+  const pass=document.getElementById("p12pass").value || "";
+  if(!p12 || !prov){ statusEl.textContent="⚠️ Укажите оба файла"; return; }
+
   try{
-    const res = await signInWithPopup(auth, provider);
-    const u = res.user;
-    const ref = doc(db,"users",u.uid);
-    const snap = await getDoc(ref);
-    if(!snap.exists()){
-      await setDoc(ref,{
-        uid: u.uid,email:u.email,name:u.displayName,photo:u.photoURL,
-        status:"free",created_at:new Date().toISOString()
-      });
-    }
-  }catch(e){ alert("Ошибка авторизации: "+e.message); }
-});
+    const fd=new FormData();
+    fd.append("p12", p12);
+    fd.append("mobileprovision", prov);
+    fd.append("password", pass);
+    const resp=await fetch(UPLOAD_API,{method:"POST",body:fd});
+    const json=await resp.json();
+    if(!resp.ok) throw new Error(json.detail||json.error||"Ошибка при загрузке");
 
-onAuthStateChanged(auth, async (user)=>{
-  const nameEl=document.getElementById("user-name");
-  const emailEl=document.getElementById("user-email");
-  const statusEl=document.getElementById("user-status");
-  const photoEl=document.getElementById("user-photo");
-  const loginBtn=document.getElementById("auth-action");
-  const logoutBtn=document.getElementById("logout");
+    localStorage.setItem("ursa_signer_id", json.signer_id);
+    if(json.account) localStorage.setItem("ursa_cert_account", json.account);
+    if(json.expires) localStorage.setItem("ursa_cert_exp", json.expires);
 
-  if(user){
-    const ref = doc(db,"users",user.uid);
-    const snap = await getDoc(ref);
-    const status = snap.exists()? (snap.data().status || "free") : "free";
-
-    nameEl.textContent=user.displayName||"Без имени";
-    emailEl.textContent=user.email;
-    statusEl.textContent=status==="vip"?"⭐ VIP":"Free";
-    statusEl.style.background=status==="vip"?"gold":"var(--accent)";
-    photoEl.src=user.photoURL;
-    loginBtn.hidden=true;
-    logoutBtn.hidden=false;
-  }else{
-    nameEl.textContent="Гость";
-    emailEl.textContent="–";
-    statusEl.textContent="Free";
-    photoEl.src="assets/icons/avatar.png";
-    loginBtn.hidden=false;
-    logoutBtn.hidden=true;
+    updateCertInfo();
+    statusEl.textContent="✅ Сертификаты загружены!";
+  }catch(err){
+    console.error(err);
+    statusEl.textContent="❌ Ошибка: "+(err.message||err);
   }
 });
-document.getElementById("logout")?.addEventListener("click",()=>signOut(auth));
+
+function updateCertInfo(){
+  document.getElementById("cert-state").textContent = localStorage.getItem("ursa_signer_id")?"✅ Загружен":"❌ Не загружен";
+  document.getElementById("cert-account").textContent = localStorage.getItem("ursa_cert_account") || "—";
+  const exp = localStorage.getItem("ursa_cert_exp");
+  document.getElementById("cert-exp").textContent = exp ? new Date(exp).toLocaleDateString("ru-RU") : "—";
+}
+document.addEventListener("DOMContentLoaded", updateCertInfo);
