@@ -13,12 +13,17 @@
   <link rel="stylesheet" href="assets/css/base.css" />
   <link rel="stylesheet" href="assets/css/ios.css" />
   <link id="theme-css" rel="stylesheet" href="assets/css/themes/neon.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <!-- ШАПКА -->
   <header class="topbar">
-    <div class="wrap">
+    <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;">
       <div class="brand"><span data-text="URSA IPA REPO">URSA IPA</span></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img id="user-photo" class="user-avatar" hidden>
+        <button id="login-btn" class="btn small">Войти</button>
+      </div>
     </div>
   </header>
 
@@ -84,20 +89,6 @@
     </article>
   </div>
 
-  <!-- HELP -->
-  <div id="help-modal" class="dialog" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <section class="dialog-card">
-      <header class="dialog-head">
-        <strong>Помощь</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="dialog-body">
-        <p>Служба поддержки скоро будет добавлена</p>
-      </div>
-    </section>
-  </div>
-
   <!-- SIGNER -->
   <div id="signer-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
@@ -119,11 +110,26 @@
     </section>
   </div>
 
+  <!-- HELP -->
+  <div id="help-modal" class="dialog" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <section class="dialog-card">
+      <header class="dialog-head">
+        <strong>Помощь</strong>
+        <button class="close" data-close>✕</button>
+      </header>
+      <div class="dialog-body">
+        <p>Служба поддержки скоро будет добавлена</p>
+      </div>
+    </section>
+  </div>
+
   <!-- JS -->
   <script src="assets/js/themes.js?v=8"></script>
   <script src="assets/js/ios.js?v=8"></script>
-  <script type="module" src="assets/js/app.js?v=9"></script>
-  <script type="module" src="assets/js/signer.js?v=3"></script>
-  <script type="module" src="assets/js/signer_upload.js?v=1"></script>
+  <script type="module" src="assets/js/auth.js?v=1"></script>
+  <script type="module" src="assets/js/app.js?v=10"></script>
+  <script type="module" src="assets/js/signer.js?v=4"></script>
+  <script type="module" src="assets/js/signer_upload.js?v=2"></script>
 </body>
 </html>
