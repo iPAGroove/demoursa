@@ -1,4 +1,4 @@
-// URSA IPA — Firestore + i18n + темы
+// URSA IPA — Firestore + i18n + темы + VIP статус
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ICONS
+// ===== ICONS =====
 const ICONS = {
   games: "https://store-eu-par-3.gofile.io/download/direct/22931df3-7659-4095-8dd0-a7eadb14e1e6/IMG_9678.PNG",
   apps:  "https://store5.gofile.io/download/direct/9a5cf9e9-9b82-4ce4-9cc9-ce63b857dcaf/%D0%BA%D0%BE%D0%BF%D0%B8.png",
@@ -26,9 +26,9 @@ const ICONS = {
   }
 };
 
-// i18n
+// ===== i18n =====
 const I18N = {
-  ru:{ search_ph:"Поиск по названию, bundleId…", download:"Install", hack_features:"Функции мода", not_found:"Ничего не найдено", empty:"Пока нет приложений", load_error:"Ошибка Firestore" },
+  ru:{ search_ph:"Поиск по названию, bundleId…", download:"Установить", hack_features:"Функции мода", not_found:"Ничего не найдено", empty:"Пока нет приложений", load_error:"Ошибка Firestore" },
   en:{ search_ph:"Search by name or bundleId…", download:"Install", hack_features:"Hack Features", not_found:"Nothing found", empty:"No apps yet", load_error:"Firestore error" }
 };
 let lang=(localStorage.getItem("ursa_lang")||(navigator.language||"ru").slice(0,2)).toLowerCase();
@@ -44,7 +44,8 @@ function normalize(doc){
   return {
     id:doc.ID||"", name:doc.NAME||"", bundleId:doc["Bundle ID"]||"", version:doc.Version||"",
     minIOS:doc["minimal iOS"]||"", sizeBytes:doc.sizeBytes||0, iconUrl:doc.iconUrl||"",
-    downloadUrl:doc.DownloadUrl||"", features_ru:doc.features_ru||"", features_en:doc.features_en||"", tags
+    downloadUrl:doc.DownloadUrl||"", features_ru:doc.features_ru||"", features_en:doc.features_en||"",
+    vipOnly: !!doc.vipOnly, tags
   };
 }
 
@@ -58,7 +59,7 @@ function renderCatalog(apps){
     el.innerHTML=`
       <div class="row">
         <img class="icon" src="${app.iconUrl}" alt="">
-        <div><h3>${escapeHTML(app.name)}</h3>
+        <div><h3>${escapeHTML(app.name)}${app.vipOnly?' <span style="color:#00b3ff">⭐</span>':''}</h3>
           <div class="meta">${escapeHTML(app.bundleId)}</div>
           <div class="meta">v${escapeHTML(app.version)} · ${prettyBytes(app.sizeBytes)}</div>
         </div>
@@ -78,6 +79,11 @@ function openModal(app){
   document.getElementById("app-desc").innerHTML=feats?`<div class="meta">${__t("hack_features")}</div><ul class="bullets"><li>${escapeHTML(feats)}</li></ul>`:"";
   const dl=document.getElementById("dl-buttons");
   dl.innerHTML="";
+  const status=localStorage.getItem("ursa_status")||"free";
+  if(app.vipOnly && status!=="vip"){
+    dl.innerHTML=`<div style="color:#ff6;">🔒 Только для VIP</div>`;
+    return;
+  }
   if(app.downloadUrl){
     const a=document.createElement("button");
     a.className="btn";
@@ -101,9 +107,13 @@ document.addEventListener("DOMContentLoaded",async()=>{
   const search=document.getElementById("search");
   search.placeholder=__t("search_ph");
 
-  const snap=await getDocs(collection(db,"ursa_ipas"));
-  const all=snap.docs.map(d=>normalize(d.data()));
-  renderCatalog(all);
+  try {
+    const snap=await getDocs(collection(db,"ursa_ipas"));
+    const all=snap.docs.map(d=>normalize(d.data()));
+    renderCatalog(all);
+  } catch {
+    document.getElementById("catalog").innerHTML=`<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
+  }
 
   // SIGNER modal
   const signerModal=document.getElementById("signer-modal");
