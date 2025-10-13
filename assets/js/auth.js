@@ -1,7 +1,6 @@
-// URSA Auth + Firestore User Sync (v2.4 — CORS-Safe Unified)
-import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+// URSA Auth (v2.6 unified)
+import { auth, db } from "./firebase.js";
 import {
-  getAuth,
   onAuthStateChanged,
   signInWithPopup,
   signInWithRedirect,
@@ -9,34 +8,9 @@ import {
   signOut,
   getRedirectResult
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import {
-  initializeFirestore,
-  doc,
-  getDoc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-// === Firebase Config ===
-const firebaseConfig = {
-  apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
-  authDomain: "ipa-panel.firebaseapp.com",
-  projectId: "ipa-panel",
-  storageBucket: "ipa-panel.firebasestorage.app",
-  messagingSenderId: "239982196215",
-  appId: "1:239982196215:web:9de387c51952da428daaf2"
-};
-
-// === Init once ===
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// ✅ Firestore (CORS-safe, long-polling)
-const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-  useFetchStreams: false,
-  ignoreUndefinedProperties: true
-});
-console.log("🔥 URSA Auth initialized (Firestore long-polling mode)");
+console.log("🔥 URSA Auth initialized");
 
 // === Wait for user ===
 const waitForAuth = () =>
@@ -50,7 +24,7 @@ const waitForAuth = () =>
     setTimeout(() => resolve(auth.currentUser), 2500);
   });
 
-// === Main Login / Logout ===
+// === Login / Logout ===
 window.ursaAuthAction = async () => {
   const user = auth.currentUser;
   if (user) {
@@ -73,7 +47,6 @@ window.ursaAuthAction = async () => {
   }
 };
 
-// === Redirect Result ===
 getRedirectResult(auth)
   .then(async (res) => {
     if (res && res.user) {
@@ -88,7 +61,6 @@ async function syncUser(u) {
   if (!u) u = await waitForAuth();
   if (!u) return console.error("❌ Auth not ready");
 
-  console.log("✅ Пользователь вошёл:", u.email);
   const ref = doc(db, "users", u.uid);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
