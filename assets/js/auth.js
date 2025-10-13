@@ -1,4 +1,4 @@
-// URSA Auth + Firestore User Sync (v2.3 — stable)
+// URSA Auth + Firestore User Sync (v2.4 — CORS-Safe Unified)
 import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getAuth,
@@ -10,7 +10,7 @@ import {
   getRedirectResult
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore,
+  initializeFirestore,
   doc,
   getDoc,
   setDoc
@@ -29,18 +29,23 @@ const firebaseConfig = {
 // === Init once ===
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
-// 🔧 Firestore fix for GitHub Pages (CORS-safe)
-db._freezeSettings();
-db._settings.ignoreUndefinedProperties = true;
 
-console.log("🔥 URSA Auth initialized");
+// ✅ Firestore (CORS-safe, long-polling)
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  useFetchStreams: false,
+  ignoreUndefinedProperties: true
+});
+console.log("🔥 URSA Auth initialized (Firestore long-polling mode)");
 
 // === Wait for user ===
 const waitForAuth = () =>
-  new Promise(resolve => {
+  new Promise((resolve) => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) { unsub(); resolve(user); }
+      if (user) {
+        unsub();
+        resolve(user);
+      }
     });
     setTimeout(() => resolve(auth.currentUser), 2500);
   });
@@ -76,7 +81,7 @@ getRedirectResult(auth)
       await syncUser(res.user);
     }
   })
-  .catch(err => console.error("Redirect error:", err));
+  .catch((err) => console.error("Redirect error:", err));
 
 // === Firestore Sync ===
 async function syncUser(u) {
@@ -93,7 +98,7 @@ async function syncUser(u) {
       name: u.displayName,
       photo: u.photoURL,
       status: "free",
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     });
   }
 
