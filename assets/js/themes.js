@@ -1,23 +1,14 @@
-(function () {
-  const linkEl = () => document.getElementById("theme-css");
-  const THEMES = {
-    neon: "assets/css/themes/neon.css",
-    mono: "assets/css/themes/mono.css"
-  };
+// простое переключение темы: neon <-> dark
+function toggleTheme(){
+  const link = document.getElementById("theme-css");
+  const cur  = link.getAttribute("href");
+  if(cur.includes("neon")) link.setAttribute("href","assets/css/themes/dark.css");
+  else link.setAttribute("href","assets/css/themes/neon.css");
+  localStorage.setItem("ursa_theme", link.getAttribute("href"));
+}
+window.toggleTheme = toggleTheme;
 
-  function setTheme(name) {
-    localStorage.setItem("ursa_theme", name);
-    linkEl().setAttribute("href", THEMES[name] || THEMES.neon);
-  }
-
-  window.toggleTheme = function () {
-    const cur = localStorage.getItem("ursa_theme") || "neon";
-    setTheme(cur === "neon" ? "mono" : "neon");
-  };
-
-  // init
-  document.addEventListener("DOMContentLoaded", () => {
-    const cur = localStorage.getItem("ursa_theme") || "neon";
-    setTheme(cur);
-  });
-})();
+document.addEventListener("DOMContentLoaded", ()=>{
+  const saved = localStorage.getItem("ursa_theme");
+  if(saved) document.getElementById("theme-css").setAttribute("href", saved);
+});
