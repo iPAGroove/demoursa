@@ -1,8 +1,8 @@
-// URSA IPA — Full UI + Install Integration (v5.5 Ultimate)
+// URSA IPA — Full UI + Install Integration (v5.6 Stable CORS-Safe)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-// === Firebase ===
+// === Firebase Config ===
 const firebaseConfig = {
   apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
   authDomain: "ipa-panel.firebaseapp.com",
@@ -11,8 +11,20 @@ const firebaseConfig = {
   messagingSenderId: "239982196215",
   appId: "1:239982196215:web:9de387c51952da428daaf2"
 };
+
+// === Init Firebase ===
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// 🔧 Firestore CORS-fix for GitHub Pages
+try {
+  db._freezeSettings();
+  db._settings.forceLongPolling = true;
+  db._settings.ignoreUndefinedProperties = true;
+  console.log("✅ Firestore long-polling mode enabled (CORS safe)");
+} catch (e) {
+  console.warn("⚠️ Firestore settings patch skipped:", e);
+}
 
 // === Signer API ===
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
@@ -262,7 +274,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   apply();
 });
 
-// === Profile / Settings Modal ===
+// === Settings Modal ===
 function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const email = localStorage.getItem("ursa_email");
