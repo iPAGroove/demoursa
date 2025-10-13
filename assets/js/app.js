@@ -144,7 +144,6 @@ async function installIPA(app) {
   }
 }
 window.installIPA = installIPA;
-
 // === App modal ===
 const modal = document.getElementById("modal");
 function openModal(app) {
