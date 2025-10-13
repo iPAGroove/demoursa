@@ -1,11 +1,24 @@
-// URSA Signer Upload — Firebase + Live Profile Update (v4.25 Stable)
+// URSA Signer Upload — Firebase + Live Profile Update (v4.26 Unified Config)
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-const db = getFirestore();
-const storage = getStorage();
-const auth = getAuth();
+// === Firebase Config (единый для всех файлов) ===
+const firebaseConfig = {
+  apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
+  authDomain: "ipa-panel.firebaseapp.com",
+  projectId: "ipa-panel",
+  storageBucket: "ipa-panel.firebasestorage.app",
+  messagingSenderId: "239982196215",
+  appId: "1:239982196215:web:9de387c51952da428daaf2"
+};
+
+// === Init Firebase (если не инициализирован) ===
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const auth = getAuth(app);
 
 async function uploadSigner(event) {
   event.preventDefault();
@@ -34,20 +47,20 @@ async function uploadSigner(event) {
     const p12Ref = ref(storage, folder + p12File.name);
     const provRef = ref(storage, folder + provFile.name);
 
-    // Загрузка в Firebase Storage
+    // Загрузка файлов
     await uploadBytes(p12Ref, p12File);
     await uploadBytes(provRef, provFile);
 
-    // Получаем download URL’ы
+    // Получаем ссылки
     const [p12Url, provUrl] = await Promise.all([
       getDownloadURL(p12Ref),
       getDownloadURL(provRef)
     ]);
 
-    // Извлекаем CN (Common Name)
+    // Извлекаем CN
     const cn = await extractCommonName(p12File);
 
-    // Записываем документ в Firestore
+    // Firestore
     const signerRef = doc(db, "ursa_signers", uid);
     await setDoc(signerRef, {
       p12Url,
@@ -67,12 +80,11 @@ async function uploadSigner(event) {
     status.textContent = "✅ Успешно загружено!";
     status.style.opacity = "1";
 
-    // Обновляем профиль
     if (typeof window.openSettings === "function") {
       setTimeout(() => window.openSettings(), 400);
     }
 
-    // Закрываем модалку через 2 секунды
+    // Закрыть модалку
     const signerModal = document.getElementById("signer-modal");
     setTimeout(() => {
       signerModal?.classList.remove("open");
@@ -87,7 +99,7 @@ async function uploadSigner(event) {
   }
 }
 
-// === Извлечение Common Name из .p12 ===
+// === Извлечение Common Name ===
 async function extractCommonName(file) {
   try {
     const buffer = await file.arrayBuffer();
