@@ -42,30 +42,39 @@
     </div>
   </main>
 
-  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <!-- НОВЫЙ НИЖНИЙ БАР -->
   <nav class="tabbar" id="tabbar" role="tablist">
-    <div class="wrap">
-      <div class="dock">
-        <button class="nav-btn active" data-tab="apps" role="tab" aria-label="Приложения">
-          <img id="navAppsIcon" src="" alt=""><span class="dot"></span>
-        </button>
-        <button class="nav-btn" data-tab="games" role="tab" aria-label="Игры">
-          <img id="navGamesIcon" src="" alt=""><span class="dot"></span>
-        </button>
-        <button class="nav-btn" id="signer-btn" aria-label="Signer">
-          <img id="navSignerIcon" src="" alt=""><span class="dot"></span>
-        </button>
-        <button class="nav-btn" id="lang-btn" aria-label="Language">
-          <img id="navLangIcon" src="" alt=""><span id="lang-code" class="sr-only">RU</span>
-        </button>
-        <button class="nav-btn" id="help-btn" aria-label="Help">
-          <img id="navHelpIcon" src="" alt=""><span class="dot"></span>
-        </button>
-      </div>
+    <div class="dock newdock">
+      <button class="nav-btn active" data-tab="apps" aria-label="Apps">
+        <img id="navAppsIcon" src="" alt=""><span class="dot"></span>
+      </button>
+      <button class="nav-btn" data-tab="games" aria-label="Games">
+        <img id="navGamesIcon" src="" alt=""><span class="dot"></span>
+      </button>
+      <button class="nav-btn" data-tab="lang" aria-label="Languages">
+        <img id="navLangIcon" src="" alt=""><span class="dot"></span>
+      </button>
+      <button class="nav-btn" id="settings-btn" aria-label="Settings">
+        <img id="navSettingsIcon" src="" alt=""><span class="dot"></span>
+      </button>
     </div>
   </nav>
 
-  <!-- МОДАЛКА ДЕТАЛЕЙ -->
+  <!-- SETTINGS -->
+  <div id="settings-modal" class="dialog" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <section class="dialog-card">
+      <header class="dialog-head">
+        <strong>Настройки</strong>
+        <button class="close" data-close>✕</button>
+      </header>
+      <div class="dialog-body" id="user-info">
+        <p>⏳ Загрузка данных пользователя…</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- МОДАЛКА ПРИЛОЖЕНИЯ -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <article class="sheet" role="dialog" aria-modal="true">
@@ -110,25 +119,11 @@
     </section>
   </div>
 
-  <!-- HELP -->
-  <div id="help-modal" class="dialog" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <section class="dialog-card">
-      <header class="dialog-head">
-        <strong>Помощь</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="dialog-body">
-        <p>Служба поддержки скоро будет добавлена</p>
-      </div>
-    </section>
-  </div>
-
   <!-- JS -->
   <script src="assets/js/themes.js?v=8"></script>
   <script src="assets/js/ios.js?v=8"></script>
-  <script type="module" src="assets/js/auth.js?v=1"></script>
-  <script type="module" src="assets/js/app.js?v=10"></script>
+  <script type="module" src="assets/js/auth.js?v=2"></script>
+  <script type="module" src="assets/js/app.js?v=11"></script>
   <script type="module" src="assets/js/signer.js?v=4"></script>
   <script type="module" src="assets/js/signer_upload.js?v=2"></script>
 </body>
