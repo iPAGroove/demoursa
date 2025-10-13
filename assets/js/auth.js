@@ -1,4 +1,4 @@
-// auth.js — Google OAuth + Firestore users
+// auth.js — Google OAuth + Firestore users + VIP status
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -49,6 +49,7 @@ onAuthStateChanged(auth, async (user) => {
     const snap = await getDoc(ref);
     const status = snap.exists() ? snap.data().status : "free";
     localStorage.setItem("ursa_status", status);
+    console.log(`👤 Вошёл: ${user.email} [${status}]`);
   } else {
     btn.textContent = "Войти";
     btn.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
