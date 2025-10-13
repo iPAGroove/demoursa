@@ -110,23 +110,35 @@
   </section>
 </div>
 
-  <!-- SIGNER -->
-  <div id="signer-modal" class="dialog" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <section class="dialog-card">
-      <header class="dialog-head"><strong>URSA Signer</strong><button class="close" data-close>✕</button></header>
-      <div class="dialog-body">
-        <p>📄 Загрузите свой сертификат (.p12) и provisioning (.mobileprovision):</p>
-        <form id="signer-form">
-          <label>Файл .p12<br><input type="file" id="p12file" accept=".p12" required></label><br><br>
-          <label>Файл .mobileprovision<br><input type="file" id="provfile" accept=".mobileprovision" required></label><br><br>
-          <label>Пароль к сертификату<br><input type="password" id="p12pass" placeholder="password (если есть)"></label><br><br>
-          <button type="submit" class="btn">⬆️ Загрузить в Firebase</button>
-        </form>
-        <div id="signer-status" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
-      </div>
-    </section>
-  </div>
+ <!-- SIGNER -->
+<div id="signer-modal" class="dialog" aria-hidden="true">
+  <div class="backdrop" data-close></div>
+  <section class="dialog-card">
+    <header class="dialog-head">
+      <strong>URSA Signer</strong>
+      <button class="close" data-close>✕</button>
+    </header>
+    <div class="dialog-body">
+      <p>📄 Загрузите свой сертификат (.p12) и provisioning (.mobileprovision):</p>
+      <form id="signer-form">
+        <label>Файл .p12<br>
+          <input type="file" id="fileP12" accept=".p12" required>
+        </label><br><br>
+
+        <label>Файл .mobileprovision<br>
+          <input type="file" id="fileProv" accept=".mobileprovision" required>
+        </label><br><br>
+
+        <label>Пароль к сертификату<br>
+          <input type="password" id="certPass" placeholder="password (если есть)">
+        </label><br><br>
+
+        <button type="submit" id="uploadBtn" class="btn">⬆️ Загрузить в Firebase</button>
+      </form>
+      <div id="uploadStatus" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
+    </div>
+  </section>
+</div>
 
   <!-- HELP -->
   <div id="help-modal" class="dialog" aria-hidden="true">
