@@ -1,21 +1,6 @@
-// URSA IPA — Full UI + Install Integration (v5.9 Unified Firestore Instance)
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-
-// === Firebase Config ===
-const firebaseConfig = {
-  apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
-  authDomain: "ipa-panel.firebaseapp.com",
-  projectId: "ipa-panel",
-  storageBucket: "ipa-panel.firebasestorage.app",
-  messagingSenderId: "239982196215",
-  appId: "1:239982196215:web:9de387c51952da428daaf2"
-};
-
-// === Shared instance ===
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
-console.log("✅ Firestore connected via existing instance");
+// URSA IPA — Full UI + Install Integration (v6.0 Unified Firebase Instance)
+import { db } from "./firebase.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 // === Signer API ===
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
