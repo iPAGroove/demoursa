@@ -1,4 +1,4 @@
-// URSA IPA — UI + Firestore + i18n + Tabs + New Profile
+// URSA IPA — Full UI + Install Integration (v5.5 Ultimate)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -13,9 +13,9 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-// 🔧 Fix for GitHub Pages Firestore CORS (disable webchannel)
-db._freezeSettings();
-db._settings.ignoreUndefinedProperties = true;
+
+// === Signer API ===
+const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
 
 // === ICONS ===
 const ICONS = {
@@ -32,7 +32,7 @@ const ICONS = {
 const I18N = {
   ru: {
     search_ph: "Поиск по названию, bundleId…",
-    download: "Загрузить IPA",
+    install: "Установить",
     hack_features: "Функции мода",
     not_found: "Ничего не найдено",
     empty: "Пока нет приложений",
@@ -40,7 +40,7 @@ const I18N = {
   },
   en: {
     search_ph: "Search by name or bundleId…",
-    download: "Download IPA",
+    install: "Install",
     hack_features: "Hack Features",
     not_found: "Nothing found",
     empty: "No apps yet",
@@ -107,6 +107,32 @@ function renderCatalog(apps) {
   });
 }
 
+// === Install logic (URSA Signer Cloud Run) ===
+async function installIPA(app) {
+  const dl = document.getElementById("dl-buttons");
+  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">🔄 Подписываем IPA…</div>`;
+
+  try {
+    const signer_id = localStorage.getItem("ursa_signer_id");
+    if (!signer_id) throw new Error("❌ Загрузите свой сертификат в профиле");
+
+    const form = new FormData();
+    form.append("ipa_url", app.downloadUrl);
+    form.append("signer_id", signer_id);
+
+    const res = await fetch(SIGNER_API, { method: "POST", body: form });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.detail || json.error || "Ошибка при подписи IPA");
+
+    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">✅ Готово! Установка начнётся…</div>`;
+    setTimeout(() => (location.href = json.install_link), 900);
+  } catch (err) {
+    console.error("Install error:", err);
+    dl.innerHTML = `<div style="opacity:.9;color:#ff6;">❌ ${err.message || err}</div>`;
+  }
+}
+window.installIPA = installIPA;
+
 // === App modal ===
 const modal = document.getElementById("modal");
 function openModal(app) {
@@ -136,8 +162,8 @@ function openModal(app) {
   } else if (app.downloadUrl) {
     const a = document.createElement("button");
     a.className = "btn";
-    a.textContent = __t("download");
-    a.onclick = () => (window.installIPA ? window.installIPA(app) : (location.href = app.downloadUrl));
+    a.textContent = __t("install");
+    a.onclick = () => installIPA(app);
     dl.appendChild(a);
   }
   modal.classList.add("open");
@@ -249,7 +275,6 @@ function openSettings() {
     ? new Date(localStorage.getItem("ursa_cert_exp")).toLocaleDateString("ru-RU")
     : "—";
 
-  // UI update
   const info = document.getElementById("user-info");
   info.querySelector("#user-photo").src = photo || "assets/icons/avatar.png";
   info.querySelector("#user-name").textContent = name;
