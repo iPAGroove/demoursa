@@ -45,26 +45,18 @@
   <!-- НИЖНЯЯ ПАНЕЛЬ -->
   <nav class="tabbar" id="tabbar" role="tablist">
     <div class="dock newdock">
-      <button class="nav-btn active" data-tab="apps" aria-label="Apps">
-        <img id="navAppsIcon" alt=""><span class="dot"></span>
-      </button>
-      <button class="nav-btn" data-tab="games" aria-label="Games">
-        <img id="navGamesIcon" alt=""><span class="dot"></span>
-      </button>
-      <button class="nav-btn" id="lang-btn" aria-label="Languages">
-        <img id="navLangIcon" alt=""><span class="dot"></span>
-      </button>
-      <button class="nav-btn" id="settings-btn" aria-label="Settings">
-        <img id="navSettingsIcon" alt=""><span class="dot"></span>
-      </button>
+      <button class="nav-btn active" data-tab="apps"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
+      <button class="nav-btn" data-tab="games"><img id="navGamesIcon" alt=""><span class="dot"></span></button>
+      <button class="nav-btn" id="lang-btn"><img id="navLangIcon" alt=""><span class="dot"></span></button>
+      <button class="nav-btn" id="settings-btn"><img id="navSettingsIcon" alt=""><span class="dot"></span></button>
     </div>
   </nav>
 
-  <!-- МОДАЛКА ПРИЛОЖЕНИЯ -->
+  <!-- МОДАЛКИ -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
-    <article class="sheet" role="dialog" aria-modal="true" aria-labelledby="app-title">
-      <button class="close" data-close aria-label="Закрыть">✕</button>
+    <article class="sheet" role="dialog">
+      <button class="close" data-close>✕</button>
       <header class="sheet-header">
         <div class="app-head">
           <img id="app-icon" class="icon lg" src="" alt="">
@@ -75,36 +67,22 @@
           </div>
         </div>
       </header>
-      <section class="sheet-body">
-        <div id="app-desc" class="section"></div>
-      </section>
-      <footer class="sheet-footer">
-        <div id="dl-buttons" class="btns"></div>
-      </footer>
+      <section class="sheet-body"><div id="app-desc" class="section"></div></section>
+      <footer class="sheet-footer"><div id="dl-buttons" class="btns"></div></footer>
     </article>
   </div>
 
-  <!-- SETTINGS (обновлённый Профиль URSA Pro) -->
+  <!-- SETTINGS -->
   <div id="settings-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card profile-card">
-      <header class="dialog-head">
-        <strong>Профиль URSA</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-
+      <header class="dialog-head"><strong>Профиль URSA</strong><button class="close" data-close>✕</button></header>
       <div class="dialog-body" id="user-info">
         <div class="profile-top">
           <img id="user-photo" class="profile-avatar" src="assets/icons/avatar.png">
-          <div class="profile-meta">
-            <h3 id="user-name">Гость</h3>
-            <p id="user-email" class="muted">–</p>
-            <span id="user-status" class="status-badge">Free</span>
-          </div>
+          <div class="profile-meta"><h3 id="user-name">Гость</h3><p id="user-email" class="muted">–</p><span id="user-status" class="status-badge">Free</span></div>
         </div>
-
         <hr>
-
         <div id="cert-info">
           <h4>🔏 Сертификат</h4>
           <p>Состояние: <span id="cert-state">❌ Не загружен</span></p>
@@ -112,9 +90,7 @@
           <p>Действует до: <span id="cert-exp">—</span></p>
           <button id="cert-upload" class="btn small">📤 Загрузить сертификат</button>
         </div>
-
         <hr>
-
         <button id="auth-action" class="btn full">Войти через Google</button>
         <button id="logout" class="btn outline" hidden>Выйти</button>
       </div>
@@ -125,10 +101,7 @@
   <div id="signer-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card">
-      <header class="dialog-head">
-        <strong>URSA Signer</strong>
-        <button class="close" data-close>✕</button>
-      </header>
+      <header class="dialog-head"><strong>URSA Signer</strong><button class="close" data-close>✕</button></header>
       <div class="dialog-body">
         <p>📄 Загрузите свой сертификат (.p12) и provisioning (.mobileprovision):</p>
         <form id="signer-form">
@@ -146,23 +119,16 @@
   <div id="help-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card">
-      <header class="dialog-head">
-        <strong>Помощь</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="dialog-body" id="help-body">
-        <p>Служба поддержки скоро будет добавлена</p>
-      </div>
+      <header class="dialog-head"><strong>Помощь</strong><button class="close" data-close>✕</button></header>
+      <div class="dialog-body"><p>Служба поддержки скоро будет добавлена</p></div>
     </section>
   </div>
 
-    <!-- JS -->
+  <!-- JS -->
   <script src="assets/js/themes.js?v=8"></script>
   <script src="assets/js/ios.js?v=8"></script>
-  <script type="module" src="assets/js/auth.js?v=4"></script>
-  <script type="module" src="assets/js/app.js?v=12"></script>
-  <script type="module" src="assets/js/signer.js?v=4"></script>
-  <script type="module" src="assets/js/signer_upload.js?v=3"></script>
+  <script type="module" src="assets/js/auth.js?v=5"></script>
+  <script type="module" src="assets/js/app.js?v=13"></script>
+  <script type="module" src="assets/js/signer_upload.js?v=4"></script>
 </body>
 </html>
-
