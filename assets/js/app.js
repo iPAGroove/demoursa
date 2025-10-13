@@ -28,7 +28,7 @@ const ICONS = {
 // i18n
 const I18N = {
   ru: { search_ph:"Поиск по названию, bundleId…", download:"Загрузить IPA", hack_features:"Функции мода", not_found:"Ничего не найдено", empty:"Пока нет приложений", load_error:"Ошибка Firestore" },
-  en: { search_ph:"Search by name or bundleId…",  download:"Download IPA",    hack_features:"Hack Features",  not_found:"Nothing found",   empty:"No apps yet",         load_error:"Firestore error" }
+  en: { search_ph:"Search by name or bundleId…",  download:"Download IPA", hack_features:"Hack Features", not_found:"Nothing found", empty:"No apps yet", load_error:"Firestore error" }
 };
 let lang=(localStorage.getItem("ursa_lang")||(navigator.language||"ru").slice(0,2)).toLowerCase();
 if(!I18N[lang]) lang="ru";
@@ -127,20 +127,16 @@ document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeModal(); })
 
 // Main
 document.addEventListener("DOMContentLoaded", async ()=>{
-  // иконки
   document.getElementById("navAppsIcon").src   = ICONS.apps;
   document.getElementById("navGamesIcon").src  = ICONS.games;
   document.getElementById("navLangIcon").src   = ICONS.lang?.[lang] || ICONS.lang.ru;
   document.getElementById("navSettingsIcon").src = ICONS.settings;
 
-  // поиск
   const search=document.getElementById("search");
   search.placeholder=__t("search_ph");
 
-  // состояние
   const state = { all:[], q:"", tab:"apps" };
 
-  // загрузка Firestore
   try{
     const snap = await getDocs(collection(db,"ursa_ipas"));
     state.all = snap.docs.map(d=>normalize(d.data()));
@@ -172,7 +168,6 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 
   search.addEventListener("input", ()=>{ state.q=search.value; apply(); });
 
-  // навбар
   const bar=document.getElementById("tabbar");
   bar.addEventListener("click",(e)=>{
     const btn=e.target.closest(".nav-btn");
@@ -192,7 +187,6 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     }
   });
 
-  // settings close
   const settingsModal=document.getElementById("settings-modal");
   settingsModal.addEventListener("click",(e)=>{
     if(e.target.hasAttribute("data-close")||e.target===settingsModal){
@@ -201,7 +195,6 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     }
   });
 
-  // theme
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
 
   apply();
@@ -214,18 +207,21 @@ function openSettings(){
   const email = localStorage.getItem("ursa_email");
   const status= localStorage.getItem("ursa_status") || "free";
   const signer = localStorage.getItem("ursa_signer_id") ? "✅ Загружен" : "❌ Нет";
+  const account = localStorage.getItem("ursa_cert_account") || "—";
+  const expires = localStorage.getItem("ursa_cert_exp") ? new Date(localStorage.getItem("ursa_cert_exp")).toLocaleDateString("ru-RU") : "—";
   const photo  = localStorage.getItem("ursa_photo");
 
   info.innerHTML = `
     <p><b>📧 Почта:</b> ${email || "—"}</p>
     <p><b>💎 Статус:</b> ${status==="vip"?"⭐ VIP":"Free"}</p>
     <p><b>🔏 Сертификат:</b> ${signer}</p>
+    <p><b>👤 Аккаунт:</b> ${account}</p>
+    <p><b>⏰ Срок действия:</b> ${expires}</p>
     <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
-      <img id="user-photo" class="user-avatar" ${photo?`src="${photo}"`: "hidden"}>
+      <img id="user-photo" class="user-avatar ${status==="vip"?"vip":""}" ${photo?`src="${photo}"`: "hidden"}>
       <button id="auth-action" class="btn small">${email? "Выйти":"Войти через Google"}</button>
     </div>
   `;
-  // повесим обработчик кнопки (auth.js экспортирует window.ursaAuthAction)
   setTimeout(()=>{
     const btn=document.getElementById("auth-action");
     btn?.addEventListener("click", ()=> window.ursaAuthAction && window.ursaAuthAction());
