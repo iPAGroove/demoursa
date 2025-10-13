@@ -1,4 +1,4 @@
-// URSA Auth + Firestore User Sync (v2.1 — fixed initial login timing)
+// URSA Auth + Firestore User Sync (v2.2 — no double login, full stable)
 import { getApps, getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getAuth,
@@ -26,29 +26,24 @@ const firebaseConfig = {
   appId: "1:239982196215:web:9de387c51952da428daaf2"
 };
 
-// === Use single Firebase app across modules ===
+// === Init once ===
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
 console.log("🔥 URSA Auth initialized");
 
-// === Safe delay helper ===
+// Helper to wait for Firebase user to appear
 const waitForAuth = () =>
   new Promise(resolve => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        unsub();
-        resolve(user);
-      }
+      if (user) { unsub(); resolve(user); }
     });
-    setTimeout(() => resolve(auth.currentUser), 2500); // fallback 2.5s
+    setTimeout(() => resolve(auth.currentUser), 2500);
   });
 
-// === Global Auth Action (вход/выход)
+// === Main login action ===
 window.ursaAuthAction = async () => {
   const user = auth.currentUser;
-
   if (user) {
     await signOut(auth);
     console.log("🚪 Вышли из аккаунта");
@@ -59,30 +54,47 @@ window.ursaAuthAction = async () => {
   provider.setCustomParameters({ prompt: "select_account" });
 
   try {
-    console.log("🌐 Открываем Google popup...");
+    console.log("🌐 Пробуем popup вход...");
+    sessionStorage.setItem("ursa_popup_tried", "1");
     const res = await signInWithPopup(auth, provider);
     await syncUser(res.user);
   } catch (err) {
-    console.warn("⚠️ Popup вход не сработал, пробуем redirect...");
-    await signInWithRedirect(auth, provider);
+    // Ошибка popup — пробуем redirect только если ещё не пробовали
+    if (!sessionStorage.getItem("ursa_redirect_pending")) {
+      console.warn("⚠️ Popup не сработал, делаем redirect вход...");
+      sessionStorage.setItem("ursa_redirect_pending", "1");
+      await signInWithRedirect(auth, provider);
+    } else {
+      console.log("↩️ Redirect уже выполнялся, пропускаем");
+    }
   }
 };
 
-// === Redirect fallback
-getRedirectResult(auth).then(async (res) => {
-  if (res && res.user) await syncUser(res.user);
-}).catch((err) => console.error("Redirect error:", err));
+// === Обрабатываем redirect результат только один раз
+if (!sessionStorage.getItem("ursa_redirect_checked")) {
+  getRedirectResult(auth)
+    .then(async (res) => {
+      if (res && res.user) {
+        console.log("✅ Redirect вход успешен");
+        await syncUser(res.user);
+      }
+    })
+    .catch(err => console.error("Redirect error:", err))
+    .finally(() => {
+      sessionStorage.setItem("ursa_redirect_checked", "1");
+      sessionStorage.removeItem("ursa_redirect_pending");
+    });
+}
 
-// === Создание или обновление пользователя в Firestore
+// === Синхронизация с Firestore ===
 async function syncUser(u) {
   if (!u) u = await waitForAuth();
   if (!u) {
-    console.error("❌ Auth token still null, abort Firestore sync");
+    console.error("❌ Auth token not ready, abort Firestore sync");
     return;
   }
 
-  console.log("✅ Вход выполнен:", u.email);
-
+  console.log("✅ Пользователь вошёл:", u.email);
   const ref = doc(db, "users", u.uid);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
@@ -106,23 +118,19 @@ async function syncUser(u) {
   if (typeof window.openSettings === "function") window.openSettings();
 }
 
-// === Отслеживаем состояние
+// === Реакция на изменение состояния ===
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    localStorage.setItem("ursa_email", user.email || "");
-    localStorage.setItem("ursa_photo", user.photoURL || "");
-    localStorage.setItem("ursa_name", user.displayName || "");
-
     const ref = doc(db, "users", user.uid);
     const snap = await getDoc(ref);
     const status = snap.exists() ? (snap.data().status || "free") : "free";
+    localStorage.setItem("ursa_email", user.email || "");
+    localStorage.setItem("ursa_photo", user.photoURL || "");
+    localStorage.setItem("ursa_name", user.displayName || "");
     localStorage.setItem("ursa_status", status);
-    console.log(`👤 Пользователь активен: ${user.email} (${status})`);
+    console.log(`👤 Активен: ${user.email} (${status})`);
   } else {
-    localStorage.removeItem("ursa_email");
-    localStorage.removeItem("ursa_photo");
-    localStorage.removeItem("ursa_name");
-    localStorage.removeItem("ursa_status");
+    localStorage.clear();
     console.log("👋 Пользователь вышел");
   }
 
