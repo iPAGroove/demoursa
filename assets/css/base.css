@@ -295,3 +295,11 @@ h3 { margin: 0 0 2px; font-size: 15px; font-weight: 700; color: #fff; }
 @media (min-width:520px){
   .catalog{ grid-template-columns:repeat(2,1fr); }
 }
+.user-avatar {
+  width:32px; height:32px; border-radius:50%; object-fit:cover;
+  border:1px solid var(--border);
+}
+.btn.small {
+  font-size:13px; padding:6px 10px; border-radius:10px;
+  background:var(--accent); color:#001018; border:0;
+}
