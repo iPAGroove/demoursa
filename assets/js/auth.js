@@ -30,6 +30,9 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// 🔧 Firestore fix for static hosts (GitHub Pages CORS)
+db._freezeSettings();
+db._settings.ignoreUndefinedProperties = true;
 console.log("🔥 URSA Auth initialized");
 
 // Helper to wait for Firebase user to appear
