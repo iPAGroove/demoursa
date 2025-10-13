@@ -13,6 +13,9 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// 🔧 Fix for GitHub Pages Firestore CORS (disable webchannel)
+db._freezeSettings();
+db._settings.ignoreUndefinedProperties = true;
 
 // === ICONS ===
 const ICONS = {
