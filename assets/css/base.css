@@ -427,3 +427,17 @@ font-weight: 600;
 .dialog-head .close:hover {
   background: rgba(0, 179, 255, 0.25);
 }
+.vip-locked {
+  position: relative;
+  filter: blur(1px) brightness(0.8);
+  opacity: 0.8;
+  pointer-events: auto;
+}
+.vip-locked .vip-lock {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 20px;
+  color: #ffcc00;
+  text-shadow: 0 0 6px #000;
+}
