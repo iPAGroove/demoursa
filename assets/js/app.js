@@ -1,6 +1,6 @@
-// URSA IPA — v7.0 Profile + VIP Modal + Dual i18n + Theme Integration
+// URSA IPA — v7.2 Profile + VIP + Direct Install + Signer Upload + i18n + Theme Integration
 import { db } from "./firebase.js";
-import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
 
 const VIP_LINK = "https://t.me/Ursa_ipa";
@@ -34,7 +34,12 @@ const I18N = {
     vip_title: "URSA VIP",
     vip_desc: "VIP открывает доступ к приватным IPA, установке без ограничений и ранним обновлениям.",
     vip_price: "Цена: 4.99 $ / месяц",
-    vip_buy: "💎 Купить VIP"
+    vip_buy: "💎 Купить VIP",
+    cert_state: "Сертификат:",
+    cert_upload: "📤 Загрузить / обновить сертификат",
+    guest: "Гость",
+    download_start: "Загрузка началась…",
+    downloading: "Загрузка IPA…"
   },
   en: {
     search_ph: "Search by name or bundleId…",
@@ -52,7 +57,12 @@ const I18N = {
     vip_title: "URSA VIP",
     vip_desc: "VIP gives access to private IPAs, unlimited installs, and early updates.",
     vip_price: "Price: $4.99 / month",
-    vip_buy: "💎 Get VIP"
+    vip_buy: "💎 Get VIP",
+    cert_state: "Certificate:",
+    cert_upload: "📤 Upload / Update Certificate",
+    guest: "Guest",
+    download_start: "Download started…",
+    downloading: "Downloading IPA…"
   }
 };
 
@@ -88,30 +98,17 @@ function normalize(doc) {
   };
 }
 
-// === Render catalog ===
-function renderCatalog(apps) {
-  const c = document.getElementById("catalog");
-  c.innerHTML = "";
-  if (!apps.length) {
-    c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("empty")}</div>`;
-    return;
-  }
-  apps.forEach((app) => {
-    const el = document.createElement("article");
-    el.className = "card";
-    el.innerHTML = `
-      <div class="row">
-        <img class="icon" src="${app.iconUrl}" alt="">
-        <div>
-          <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
-          <div class="meta">${escapeHTML(app.bundleId || "")}</div>
-          <div class="meta">v${escapeHTML(app.version || "")}${app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
-        </div>
-      </div>`;
-    el.addEventListener("click", () => openModal(app));
-    c.appendChild(el);
-  });
+// === Direct Install (no signer) ===
+async function installIPA(app) {
+  const dl = document.getElementById("dl-buttons");
+  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">⬇️ ${__t("downloading")}</div>
+  <progress max="100" value="60" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
+  setTimeout(() => {
+    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">✅ ${__t("download_start")}</div>`;
+    window.open(app.downloadUrl, "_blank");
+  }, 800);
 }
+window.installIPA = installIPA;
 
 // === App modal ===
 const modal = document.getElementById("modal");
@@ -141,7 +138,7 @@ function openModal(app) {
     const a = document.createElement("button");
     a.className = "btn";
     a.textContent = __t("install");
-    a.onclick = () => (location.href = app.downloadUrl);
+    a.onclick = () => installIPA(app);
     dl.appendChild(a);
   }
 
@@ -165,11 +162,10 @@ document.addEventListener("keydown", (e) => {
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const email = localStorage.getItem("ursa_email");
-  const name =
-  localStorage.getItem("ursa_name") ||
-  (lang === "ru" ? "Гость" : "Guest");
+  const name = localStorage.getItem("ursa_name") || __t("guest");
   const status = localStorage.getItem("ursa_status") || "free";
   const photo = localStorage.getItem("ursa_photo");
+  const signer = localStorage.getItem("ursa_signer_id") ? "✅" : "❌";
 
   const info = document.getElementById("user-info");
   info.querySelector("#user-photo").src = photo || "assets/icons/avatar.png";
@@ -180,13 +176,33 @@ window.openSettings = async function openSettings() {
 
   document.getElementById("profile-title").textContent = __t("profile_title");
   document.getElementById("profile-footer-text").innerHTML = `${__t("acc_status")} <b id="acc-status">${status === "vip" ? "VIP" : "Free"}</b>`;
+
   const authBtn = info.querySelector("#auth-action");
   authBtn.textContent = email ? __t("sign_out") : __t("sign_in");
+  authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
+
   const vipBtn = info.querySelector("#vip-upgrade");
   vipBtn.textContent = __t("upgrade");
-
-  authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
   vipBtn.onclick = () => openVIP();
+
+  // === Cert Upload Button ===
+  let certBtn = document.getElementById("cert-upload");
+  if (!certBtn) {
+    certBtn = document.createElement("button");
+    certBtn.id = "cert-upload";
+    certBtn.className = "btn outline small";
+    certBtn.textContent = __t("cert_upload");
+    info.querySelector(".profile-center").appendChild(certBtn);
+  }
+  certBtn.onclick = () => {
+    const modal = document.getElementById("signer-modal");
+    if (modal) {
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    } else {
+      alert("Signer modal not found!");
+    }
+  };
 
   dlg.classList.add("open");
   dlg.setAttribute("aria-hidden", "false");
@@ -200,7 +216,6 @@ function openVIP() {
   document.getElementById("vip-price").textContent = __t("vip_price");
   document.getElementById("vip-buy").textContent = __t("vip_buy");
   document.getElementById("vip-buy").onclick = () => window.open(VIP_LINK, "_blank");
-
   vip.classList.add("open");
   vip.setAttribute("aria-hidden", "false");
 }
