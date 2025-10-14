@@ -1,9 +1,8 @@
-// URSA IPA — v6.6 Stable (Profile Fix + VIP + AutoCert + Progress + Theme Integration)
+// URSA IPA — v6.7 Final Stable (No Flicker + Profile Fix + VIP + AutoCert + Progress + Theme Integration)
 import { db } from "./firebase.js";
 import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
 
-// === Signer API ===
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
 
 // === ICONS ===
@@ -43,19 +42,16 @@ let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").sl
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
-// === Helpers ===
 const prettyBytes = (n) => (!n ? "" : `${(n / 1e6).toFixed(0)} MB`);
 const escapeHTML = (s) =>
   (s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
-// === Normalize Firestore doc ===
+// === Normalize Firestore ===
 function normalize(doc) {
   const tags = Array.isArray(doc.tags)
     ? doc.tags
     : doc.tags
-    ? String(doc.tags)
-        .split(",")
-        .map((s) => s.trim())
+    ? String(doc.tags).split(",").map((s) => s.trim())
     : [];
   return {
     id: doc.ID || doc.id || "",
@@ -74,7 +70,7 @@ function normalize(doc) {
   };
 }
 
-// === Render catalog ===
+// === Catalog Renderer ===
 function renderCatalog(apps) {
   const c = document.getElementById("catalog");
   c.innerHTML = "";
@@ -99,7 +95,7 @@ function renderCatalog(apps) {
   });
 }
 
-// === Install logic with progress ===
+// === Install logic ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = `<div style="opacity:.8;font-size:14px;">🔄 Подписываем IPA…</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
@@ -132,14 +128,17 @@ function openModal(app) {
   document.getElementById("app-title").textContent = app.name || "";
   document.getElementById("app-bundle").textContent = app.bundleId || "";
   document.getElementById("app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
+
   let feats = "";
   if (lang === "ru" && app.features_ru) feats = app.features_ru;
   else if (lang === "en" && app.features_en) feats = app.features_en;
   else feats = app.features;
+
   const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
   document.getElementById("app-desc").innerHTML = featList.length
     ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div><ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
     : "";
+
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = "";
   const status = localStorage.getItem("ursa_status") || "free";
@@ -152,6 +151,7 @@ function openModal(app) {
     a.onclick = () => installIPA(app);
     dl.appendChild(a);
   }
+
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -168,7 +168,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeModal();
 });
 
-// === Settings Modal (fixed) ===
+// === Settings Modal ===
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const email = localStorage.getItem("ursa_email");
@@ -177,11 +177,8 @@ window.openSettings = async function openSettings() {
   const photo = localStorage.getItem("ursa_photo");
   const signer = localStorage.getItem("ursa_signer_id") ? "✅ Загружен" : "❌ Не загружен";
   const account = localStorage.getItem("ursa_cert_account") || "—";
-  const expires = localStorage.getItem("ursa_cert_exp")
-    ? new Date(localStorage.getItem("ursa_cert_exp")).toLocaleDateString("ru-RU")
-    : "—";
+  const expires = localStorage.getItem("ursa_cert_exp") ? new Date(localStorage.getItem("ursa_cert_exp")).toLocaleDateString("ru-RU") : "—";
 
-  // обновляем DOM напрямую без user-info
   document.getElementById("user-photo").src = photo || "assets/icons/avatar.png";
   document.getElementById("user-name").textContent = name;
   document.getElementById("user-email").textContent = email || "—";
@@ -195,10 +192,15 @@ window.openSettings = async function openSettings() {
   authBtn.textContent = email ? "Выйти" : "Войти через Google";
   authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
 
+  setTimeout(() => {
+    const btn = document.getElementById("auth-action");
+    if (btn) btn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
+  }, 200);
+
   document.getElementById("cert-upload").onclick = () => {
-    const modal = document.getElementById("signer-modal");
-    modal.classList.add("open");
-    modal.setAttribute("aria-hidden", "false");
+    const m = document.getElementById("signer-modal");
+    m.classList.add("open");
+    m.setAttribute("aria-hidden", "false");
   };
 
   document.getElementById("toggle-status").onclick = async () => {
@@ -218,7 +220,6 @@ window.openSettings = async function openSettings() {
 
 // === Main ===
 document.addEventListener("DOMContentLoaded", async () => {
-  // сбрасываем лишние открытия профиля при старте
   const sm = document.getElementById("settings-modal");
   sm.classList.remove("open");
   sm.setAttribute("aria-hidden", "true");
@@ -232,6 +233,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   search.placeholder = __t("search_ph");
 
   const state = { all: [], q: "", tab: "apps" };
+
   try {
     const snap = await getDocs(collection(db, "ursa_ipas"));
     state.all = snap.docs.map((d) => normalize(d.data()));
@@ -243,18 +245,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   function apply() {
     const q = state.q.trim().toLowerCase();
     const list = state.all.filter((app) => {
-      if (q)
-        return (app.name || "").toLowerCase().includes(q) ||
-               (app.bundleId || "").toLowerCase().includes(q) ||
-               (app.features || "").toLowerCase().includes(q) ||
-               app.tags.some((t) => (t || "").toLowerCase().includes(q));
+      if (q) {
+        return (
+          (app.name || "").toLowerCase().includes(q) ||
+          (app.bundleId || "").toLowerCase().includes(q) ||
+          (app.features || "").toLowerCase().includes(q) ||
+          app.tags.some((t) => (t || "").toLowerCase().includes(q))
+        );
+      }
       return state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps");
     });
-    list.length ? renderCatalog(list) :
+    if (!list.length) {
       document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(q ? "not_found" : "empty")}</div>`;
+    } else renderCatalog(list);
   }
 
-  search.addEventListener("input", () => { state.q = search.value; apply(); });
+  search.addEventListener("input", () => {
+    state.q = search.value;
+    apply();
+  });
 
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
@@ -272,7 +281,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (btn.id === "settings-btn") openSettings();
   });
 
-  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
   sm.addEventListener("click", (e) => {
     if (e.target.hasAttribute("data-close") || e.target === sm) {
       sm.classList.remove("open");
@@ -280,5 +288,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
   apply();
 });
