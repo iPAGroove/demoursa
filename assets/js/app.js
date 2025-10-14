@@ -1,4 +1,4 @@
-// URSA IPA — v7.5.4 CertFix + ModalFix + CleanProfile + Full i18n + VIP + AutoCert + Firestore
+// URSA IPA — v7.6 Full Dynamic i18n + ModalFix + CleanProfile + VIP + AutoCert + Firestore
 import { db } from "./firebase.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
@@ -94,6 +94,18 @@ let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").sl
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
+// === Dynamic i18n Apply ===
+function applyI18n() {
+  qsa("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (key && I18N[lang][key]) el.textContent = I18N[lang][key];
+  });
+  qsa("[data-i18n-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (key && I18N[lang][key]) el.placeholder = I18N[lang][key];
+  });
+}
+
 // === Helpers ===
 const prettyBytes = (n) => (!n ? "" : `${(n / 1e6).toFixed(0)} MB`);
 const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
@@ -122,32 +134,6 @@ function normalize(doc) {
     vipOnly: !!doc.vipOnly,
     tags: tags.map((t) => t.toLowerCase())
   };
-}
-
-// === Catalog render ===
-function renderCatalog(apps) {
-  const c = document.getElementById("catalog");
-  c.innerHTML = "";
-  if (!apps.length) {
-    c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("empty")}</div>`;
-    return;
-  }
-
-  apps.forEach((app) => {
-    const el = document.createElement("article");
-    el.className = "card";
-    el.innerHTML = `
-      <div class="row">
-        <img class="icon" src="${app.iconUrl}" alt="">
-        <div>
-          <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
-          <div class="meta">${escapeHTML(app.bundleId || "")}</div>
-          <div class="meta">v${escapeHTML(app.version || "")}${app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
-        </div>
-      </div>`;
-    el.addEventListener("click", () => openModal(app));
-    c.appendChild(el);
-  });
 }
 
 // === App Modal ===
@@ -194,28 +180,6 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && appModal.classList.contains("open")) closeModal();
 });
 
-// === Install IPA ===
-async function installIPA(app) {
-  const dl = document.getElementById("dl-buttons");
-  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">${__t("signing_start")}</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
-  try {
-    const signer_id = localStorage.getItem("ursa_signer_id");
-    if (!signer_id) throw new Error(__t("signing_need_cert"));
-    const form = new FormData();
-    form.append("ipa_url", app.downloadUrl);
-    form.append("signer_id", signer_id);
-    const res = await fetch(SIGNER_API, { method: "POST", body: form });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.detail || json.error || "Signer error");
-    document.getElementById("sign-progress").value = 100;
-    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">${__t("signing_ready")}</div>`;
-    setTimeout(() => (location.href = json.install_link), 900);
-  } catch (err) {
-    dl.innerHTML = `<div style="opacity:.9;color:#ff6;">❌ ${err.message || err}</div>`;
-  }
-}
-window.installIPA = installIPA;
-
 // === Profile Modal ===
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
@@ -225,7 +189,6 @@ window.openSettings = async function openSettings() {
   info.querySelector("#user-name").textContent = localStorage.getItem("ursa_name") || __t("guest");
   info.querySelector("#user-email").textContent = localStorage.getItem("ursa_email") || __t("dash");
 
-  // убираем "Аккаунт:" и "Срок:"
   const accLine = dlg.querySelector("#cert-account")?.closest("p");
   const expLine = dlg.querySelector("#cert-exp")?.closest("p");
   if (accLine) accLine.style.display = "none";
@@ -292,8 +255,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const list = state.all.filter((app) =>
       q
         ? (app.name || "").toLowerCase().includes(q) ||
-          (app.bundleId || "").toLowerCase().includes(q) ||
-          (app.features || "").toLowerCase().includes(q)
+          (app.bundleId || "").toLowerCase().includes(q)
         : state.tab === "games"
         ? app.tags.includes("games")
         : app.tags.includes("apps")
@@ -315,12 +277,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (btn.id === "lang-btn") {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
-      apply();
+      document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
+      applyI18n(); // 💥 моментально обновляем все тексты
+      apply();     // обновляем каталог
     } else if (btn.id === "settings-btn") {
       openSettings();
     }
   });
 
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+  applyI18n(); // первый запуск
   apply();
 });
