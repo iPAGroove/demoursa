@@ -19,7 +19,6 @@
   <!-- Google Identity -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-
 <body>
   <!-- ШАПКА -->
   <header class="topbar">
@@ -77,7 +76,7 @@
     </article>
   </div>
 
-  <!-- ПРОФИЛЬ / НАСТРОЙКИ -->
+  <!-- НАСТРОЙКИ / ПРОФИЛЬ -->
   <div id="settings-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card profile-card big">
@@ -92,15 +91,17 @@
           <p id="user-email" class="muted">–</p>
           <span id="user-status" class="status-badge">Free</span>
           <button id="auth-action" class="btn small mt10">Войти через Google</button>
+          <button id="toggle-status" class="btn outline small mt8">🔁 Переключить статус</button>
         </div>
 
         <hr>
+
         <div class="profile-section">
           <h4>🔏 Сертификат</h4>
           <p>Состояние: <span id="cert-state">❌ Не загружен</span></p>
           <p>Аккаунт: <span id="cert-account">—</span></p>
           <p>Действует до: <span id="cert-exp">—</span></p>
-          <button id="cert-upload" class="btn outline full mt8">📤 Добавить свой сертификат</button>
+          <button id="cert-upload" class="btn outline full mt8">📤 Добавить / Обновить сертификат</button>
         </div>
 
         <hr>
@@ -111,7 +112,7 @@
     </section>
   </div>
 
-  <!-- СЕРТИФИКАТ (UPLOAD) -->
+  <!-- SIGNER -->
   <div id="signer-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card">
@@ -133,11 +134,11 @@
   </div>
 
   <!-- JS -->
-  <script src="assets/js/themes.js?v=8" type="module"></script>
-  <script src="assets/js/ios.js?v=8"></script>
+  <script src="assets/js/themes.js?v=9"></script>
+  <script src="assets/js/ios.js?v=9"></script>
   <script type="module" src="assets/js/firebase.js"></script>
-  <script type="module" src="assets/js/auth.js?v=5"></script>
-  <script type="module" src="assets/js/app.js?v=15"></script>
-  <script type="module" src="assets/js/signer_upload.js?v=4"></script>
+  <script type="module" src="assets/js/auth.js?v=6.5"></script>
+  <script type="module" src="assets/js/app.js?v=6.5"></script>
+  <script type="module" src="assets/js/signer_upload.js?v=4.3"></script>
 </body>
 </html>
