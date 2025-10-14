@@ -1,4 +1,4 @@
-// URSA IPA — v7.9 LazyLoad + Dynamic i18n + VIP Lock + Profile + AutoCert + Firestore
+// URSA IPA — v8.0 LazyLoad + Dynamic i18n + VIP Lock Blur + Profile + AutoCert + Firestore
 import { db } from "./firebase.js";
 import {
   collection,
@@ -101,6 +101,7 @@ let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").sl
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
+// === Dynamic i18n Apply ===
 function applyI18n() {
   qsa("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
@@ -112,6 +113,7 @@ function applyI18n() {
   });
 }
 
+// === Helpers ===
 const prettyBytes = (n) => (!n ? "" : `${(n / 1e6).toFixed(0)} MB`);
 const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -119,6 +121,7 @@ const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({
 const qs = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+// === Normalize Firestore doc ===
 function normalize(doc) {
   const tags = Array.isArray(doc.tags)
     ? doc.tags
@@ -141,7 +144,7 @@ function normalize(doc) {
     tags: tags.map((t) => t.toLowerCase())
   };
 }
-
+// === Catalog render ===
 function renderCatalog(apps) {
   const c = document.getElementById("catalog");
   c.innerHTML = "";
@@ -173,6 +176,7 @@ function renderCatalog(apps) {
   });
 }
 
+// === Install IPA ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = `<div style="opacity:.8;font-size:14px;">${__t("signing_start")}</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
@@ -237,7 +241,59 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && appModal.classList.contains("open")) closeModal();
 });
 
-// === Lazy Load + Search + Tabs ===
+// === Profile Modal ===
+window.openSettings = async function openSettings() {
+  const dlg = document.getElementById("settings-modal");
+  const info = dlg.querySelector("#user-info");
+
+  info.querySelector("#user-photo").src = localStorage.getItem("ursa_photo") || "assets/icons/avatar.png";
+  info.querySelector("#user-name").textContent = localStorage.getItem("ursa_name") || __t("guest");
+  info.querySelector("#user-email").textContent = localStorage.getItem("ursa_email") || __t("dash");
+
+  const accLine = dlg.querySelector("#cert-account")?.closest("p");
+  const expLine = dlg.querySelector("#cert-exp")?.closest("p");
+  if (accLine) accLine.style.display = "none";
+  if (expLine) expLine.style.display = "none";
+
+  const status = localStorage.getItem("ursa_status") || "free";
+  info.querySelector("#user-status").textContent = status === "vip" ? __t("badge_vip") : __t("badge_free");
+
+  const hasSigner = !!localStorage.getItem("ursa_signer_id");
+  info.querySelector("#cert-state").textContent = hasSigner ? __t("cert_state_ok") : __t("cert_state_none");
+
+  const certBtn = info.querySelector("#cert-upload");
+  certBtn.textContent = __t("cert_upload_btn");
+  certBtn.onclick = () => {
+    const modal = document.getElementById("signer-modal");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+  };
+
+  const authBtn = info.querySelector("#auth-action");
+  authBtn.textContent = localStorage.getItem("ursa_email") ? __t("logout_btn") : __t("login_btn");
+  authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
+
+  const upgradeBtn = info.querySelector("#vip-upgrade");
+  if (upgradeBtn) {
+    upgradeBtn.textContent = __t("upgrade_btn");
+    upgradeBtn.onclick = () => {
+      const vip = document.getElementById("vip-modal");
+      vip.classList.add("open");
+      vip.setAttribute("aria-hidden", "false");
+    };
+  }
+
+  dlg.classList.add("open");
+  dlg.setAttribute("aria-hidden", "false");
+  dlg.addEventListener("click", (e) => {
+    if (e.target === dlg || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
+      dlg.classList.remove("open");
+      dlg.setAttribute("aria-hidden", "true");
+    }
+  });
+};
+
+// === Firestore LazyLoad ===
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
@@ -247,23 +303,38 @@ document.addEventListener("DOMContentLoaded", async () => {
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
 
-  const state = {
-    all: [],
-    q: "",
-    tab: "apps",
-    lastVisible: null,
-    loading: false,
-    hasMore: true
-  };
+  const state = { all: [], q: "", tab: "apps", last: null, loading: false, end: false };
 
-  const catalogEl = document.getElementById("catalog");
-  const sentinel = document.createElement("div");
-  sentinel.id = "lazy-sentinel";
-  catalogEl.appendChild(sentinel);
+  async function loadBatch() {
+    if (state.loading || state.end) return;
+    state.loading = true;
 
-  function filterApps() {
+    const cRef = collection(db, "ursa_ipas");
+    let qRef = query(cRef, orderBy("NAME"), limit(10));
+    if (state.last) qRef = query(cRef, orderBy("NAME"), startAfter(state.last), limit(10));
+
+    try {
+      const snap = await getDocs(qRef);
+      if (snap.empty) {
+        state.end = true;
+        return;
+      }
+      const batch = snap.docs.map((d) => normalize(d.data()));
+      state.all.push(...batch);
+      state.last = snap.docs[snap.docs.length - 1];
+      apply();
+    } catch (err) {
+      console.error("Firestore error:", err);
+      document.getElementById("catalog").innerHTML =
+        `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
+    } finally {
+      state.loading = false;
+    }
+  }
+
+  const apply = () => {
     const q = state.q.trim().toLowerCase();
-    return state.all.filter((app) =>
+    const list = state.all.filter((app) =>
       q
         ? (app.name || "").toLowerCase().includes(q) ||
           (app.bundleId || "").toLowerCase().includes(q) ||
@@ -272,43 +343,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? app.tags.includes("games")
         : app.tags.includes("apps")
     );
-  }
+    renderCatalog(list);
+  };
 
-  function apply() {
-    renderCatalog(filterApps());
-  }
-
-  async function loadNextPage(initial = false) {
-    if (state.loading || !state.hasMore) return;
-    state.loading = true;
-
-    try {
-      let qRef = query(
-        collection(db, "ursa_ipas"),
-        orderBy("name"),
-        ...(state.lastVisible ? [startAfter(state.lastVisible)] : []),
-        limit(10)
-      );
-
-      const snap = await getDocs(qRef);
-      const newItems = snap.docs.map((d) => normalize(d.data()));
-      if (initial) state.all = [];
-      state.all.push(...newItems);
-
-      apply();
-      if (snap.docs.length < 10) state.hasMore = false;
-      else state.lastVisible = snap.docs[snap.docs.length - 1];
-    } catch {
-      catalogEl.innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
-    }
-
-    state.loading = false;
-  }
-
-  search.addEventListener("input", (e) => {
-    state.q = e.target.value;
-    apply();
-  });
+  search.addEventListener("input", (e) => (state.q = e.target.value, apply()));
 
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
@@ -330,17 +368,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  await loadNextPage(true);
+  // === Scroll-based Lazy Load ===
+  window.addEventListener("scroll", () => {
+    const scrollY = window.scrollY;
+    const scrollH = document.body.scrollHeight;
+    const innerH = window.innerHeight;
+    if (scrollY + innerH >= scrollH - 200) {
+      loadBatch(); // подгрузка при скролле вниз
+    }
+  });
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        loadNextPage(false);
+  // === Initial load ===
+  await loadBatch();
+  applyI18n();
+  apply();
+
+  // === VIP Modal ===
+  const vipModal = document.getElementById("vip-modal");
+  if (vipModal) {
+    vipModal.addEventListener("click", (e) => {
+      if (e.target === vipModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
+        vipModal.classList.remove("open");
+        vipModal.setAttribute("aria-hidden", "true");
       }
     });
-  });
-  observer.observe(sentinel);
+    const buyBtn = vipModal.querySelector("#buy-vip");
+    if (buyBtn) {
+      buyBtn.onclick = () => {
+        const tgLink = "tg://resolve?domain=Ursa_ipa";
+        window.location.href = tgLink;
+        setTimeout(() => {
+          window.open("https://t.me/Ursa_ipa", "_blank");
+        }, 1200);
+      };
+    }
+  }
 
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
-  applyI18n();
 });
