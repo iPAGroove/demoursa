@@ -119,12 +119,40 @@
     </section>
   </div>
 
+  <!-- SIGNER MODAL -->
+  <div id="signer-modal" class="dialog" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <section class="dialog-card">
+      <header class="dialog-head">
+        <strong>URSA Signer</strong>
+        <button class="close" data-close>✕</button>
+      </header>
+
+      <div class="dialog-body">
+        <p>📄 Загрузите свой сертификат (.p12) и provisioning (.mobileprovision):</p>
+        <form id="signer-form">
+          <label>Файл .p12<br>
+            <input type="file" id="fileP12" accept=".p12" required>
+          </label><br><br>
+          <label>Файл .mobileprovision<br>
+            <input type="file" id="fileProv" accept=".mobileprovision" required>
+          </label><br><br>
+          <label>Пароль<br>
+            <input type="password" id="certPass" placeholder="Пароль (если есть)">
+          </label><br><br>
+          <button type="submit" id="uploadBtn" class="btn full">⬆️ Загрузить в Firebase</button>
+        </form>
+        <div id="uploadStatus" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
+      </div>
+    </section>
+  </div>
+
   <!-- JS -->
   <script src="assets/js/themes.js?v=9"></script>
   <script src="assets/js/ios.js?v=9"></script>
   <script type="module" src="assets/js/firebase.js"></script>
   <script type="module" src="assets/js/auth.js?v=6.5"></script>
-  <script type="module" src="assets/js/app.js?v=7.0"></script>
+  <script type="module" src="assets/js/app.js?v=7.2"></script>
   <script type="module" src="assets/js/signer_upload.js?v=4.3"></script>
 </body>
 </html>
