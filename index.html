@@ -20,14 +20,14 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <!-- HEADER -->
+  <!-- ШАПКА -->
   <header class="topbar">
     <div class="wrap">
       <div class="brand"><span data-text="URSA IPA">URSA IPA</span></div>
     </div>
   </header>
 
-  <!-- SEARCH -->
+  <!-- ПОИСК -->
   <section class="search-area">
     <div class="wrap search-wrap">
       <input id="search" type="search" inputmode="search" placeholder="Поиск по названию, bundleId…" />
@@ -35,14 +35,14 @@
     </div>
   </section>
 
-  <!-- MAIN -->
+  <!-- КАТАЛОГ -->
   <main>
     <div class="wrap">
       <div id="catalog" class="catalog" role="list"></div>
     </div>
   </main>
 
-  <!-- NAVIGATION BAR -->
+  <!-- НИЖНЯЯ ПАНЕЛЬ -->
   <nav class="tabbar" id="tabbar" role="tablist">
     <div class="dock newdock">
       <button class="nav-btn active" data-tab="apps"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
@@ -52,7 +52,7 @@
     </div>
   </nav>
 
-  <!-- APP MODAL -->
+  <!-- МОДАЛКА ПРИЛОЖЕНИЯ -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <article class="sheet" role="dialog">
@@ -76,41 +76,38 @@
     </article>
   </div>
 
-  <!-- PROFILE MODAL -->
+  <!-- НАСТРОЙКИ / ПРОФИЛЬ -->
   <div id="settings-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
-    <section class="dialog-card profile-card rework">
-      <header class="dialog-head neon-header">
+    <section class="dialog-card profile-card big">
+      <header class="dialog-head">
         <strong>Профиль URSA</strong>
         <button class="close" data-close>✕</button>
       </header>
-
-      <div class="profile-body">
-        <div class="profile-avatar-wrap">
-          <div class="avatar-glow">
-            <img id="user-photo" src="assets/icons/avatar.png" class="profile-avatar" alt="avatar">
-          </div>
+      <div class="dialog-body" id="user-info">
+        <div class="profile-center">
+          <img id="user-photo" class="profile-avatar-xl" src="assets/icons/avatar.png" alt="avatar">
           <h3 id="user-name">Гость</h3>
           <p id="user-email" class="muted">–</p>
-          <span id="user-status" class="badge-status">Free</span>
+          <span id="user-status" class="status-badge">Free</span>
+          <button id="auth-action" class="btn small mt10">Войти через Google</button>
+          <button id="toggle-status" class="btn outline small mt8">🔁 Переключить статус</button>
         </div>
 
-        <div class="profile-actions">
-          <button id="auth-action" class="btn full neon">Войти через Google</button>
-          <button id="toggle-status" class="btn outline full">🔁 Переключить статус</button>
-        </div>
+        <hr>
 
-        <div class="profile-cert">
+        <div class="profile-section">
           <h4>🔏 Сертификат</h4>
-          <div class="cert-info">
-            <p>Состояние: <span id="cert-state">❌ Не загружен</span></p>
-            <p>Аккаунт: <span id="cert-account">—</span></p>
-            <p>Действует до: <span id="cert-exp">—</span></p>
-          </div>
-          <button id="cert-upload" class="btn outline full">📤 Добавить / Обновить</button>
+          <p>Состояние: <span id="cert-state">❌ Не загружен</span></p>
+          <p>Аккаунт: <span id="cert-account">—</span></p>
+          <p>Действует до: <span id="cert-exp">—</span></p>
+          <button id="cert-upload" class="btn outline full mt8">📤 Добавить / Обновить сертификат</button>
         </div>
 
-        <p class="account-status">Статус аккаунта: <b id="acc-status">Free</b></p>
+        <hr>
+        <p style="text-align:center;font-size:13px;opacity:.6;">
+          Статус аккаунта: <b id="acc-status">Free</b>
+        </p>
       </div>
     </section>
   </div>
