@@ -1,8 +1,9 @@
-// URSA IPA — v6.7 Final Stable (No Flicker + Profile Fix + VIP + AutoCert + Progress + Theme Integration)
+// URSA IPA — v6.5 Profile + VIP + AutoCert + Progress + Theme Integration
 import { db } from "./firebase.js";
-import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
 
+// === Signer API ===
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
 
 // === ICONS ===
@@ -42,16 +43,19 @@ let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").sl
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
+// === Helpers ===
 const prettyBytes = (n) => (!n ? "" : `${(n / 1e6).toFixed(0)} MB`);
 const escapeHTML = (s) =>
   (s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
-// === Normalize Firestore ===
+// === Normalize Firestore doc ===
 function normalize(doc) {
   const tags = Array.isArray(doc.tags)
     ? doc.tags
     : doc.tags
-    ? String(doc.tags).split(",").map((s) => s.trim())
+    ? String(doc.tags)
+        .split(",")
+        .map((s) => s.trim())
     : [];
   return {
     id: doc.ID || doc.id || "",
@@ -70,7 +74,7 @@ function normalize(doc) {
   };
 }
 
-// === Catalog Renderer ===
+// === Render catalog ===
 function renderCatalog(apps) {
   const c = document.getElementById("catalog");
   c.innerHTML = "";
@@ -78,6 +82,7 @@ function renderCatalog(apps) {
     c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("empty")}</div>`;
     return;
   }
+
   apps.forEach((app) => {
     const el = document.createElement("article");
     el.className = "card";
@@ -95,10 +100,11 @@ function renderCatalog(apps) {
   });
 }
 
-// === Install logic ===
+// === Install logic with progress ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = `<div style="opacity:.8;font-size:14px;">🔄 Подписываем IPA…</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
+
   try {
     const signer_id = localStorage.getItem("ursa_signer_id");
     if (!signer_id) throw new Error("❌ Загрузите свой сертификат в профиле");
@@ -109,6 +115,7 @@ async function installIPA(app) {
 
     const res = await fetch(SIGNER_API, { method: "POST", body: form });
     const json = await res.json();
+
     if (!res.ok) throw new Error(json.detail || json.error || "Ошибка при подписи IPA");
 
     document.getElementById("sign-progress").value = 100;
@@ -136,7 +143,8 @@ function openModal(app) {
 
   const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
   document.getElementById("app-desc").innerHTML = featList.length
-    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div><ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
+    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
+       <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
     : "";
 
   const dl = document.getElementById("dl-buttons");
@@ -177,33 +185,33 @@ window.openSettings = async function openSettings() {
   const photo = localStorage.getItem("ursa_photo");
   const signer = localStorage.getItem("ursa_signer_id") ? "✅ Загружен" : "❌ Не загружен";
   const account = localStorage.getItem("ursa_cert_account") || "—";
-  const expires = localStorage.getItem("ursa_cert_exp") ? new Date(localStorage.getItem("ursa_cert_exp")).toLocaleDateString("ru-RU") : "—";
+  const expires = localStorage.getItem("ursa_cert_exp")
+    ? new Date(localStorage.getItem("ursa_cert_exp")).toLocaleDateString("ru-RU")
+    : "—";
 
-  document.getElementById("user-photo").src = photo || "assets/icons/avatar.png";
-  document.getElementById("user-name").textContent = name;
-  document.getElementById("user-email").textContent = email || "—";
-  document.getElementById("user-status").textContent = status === "vip" ? "⭐ VIP" : "Free";
-  document.getElementById("cert-state").textContent = signer;
-  document.getElementById("cert-account").textContent = account;
-  document.getElementById("cert-exp").textContent = expires;
-  document.getElementById("acc-status").textContent = status === "vip" ? "VIP" : "Free";
+  const info = document.getElementById("user-info");
+  info.querySelector("#user-photo").src = photo || "assets/icons/avatar.png";
+  info.querySelector("#user-name").textContent = name;
+  info.querySelector("#user-email").textContent = email || "—";
+  info.querySelector("#user-status").textContent = status === "vip" ? "⭐ VIP" : "Free";
+  info.querySelector("#cert-state").textContent = signer;
+  info.querySelector("#cert-account").textContent = account;
+  info.querySelector("#cert-exp").textContent = expires;
+  info.querySelector("#acc-status").textContent = status === "vip" ? "VIP" : "Free";
 
-  const authBtn = document.getElementById("auth-action");
+  const authBtn = info.querySelector("#auth-action");
   authBtn.textContent = email ? "Выйти" : "Войти через Google";
   authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
 
-  setTimeout(() => {
-    const btn = document.getElementById("auth-action");
-    if (btn) btn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
-  }, 200);
-
-  document.getElementById("cert-upload").onclick = () => {
-    const m = document.getElementById("signer-modal");
-    m.classList.add("open");
-    m.setAttribute("aria-hidden", "false");
+  const certBtn = info.querySelector("#cert-upload");
+  certBtn.onclick = () => {
+    const modal = document.getElementById("signer-modal");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
   };
 
-  document.getElementById("toggle-status").onclick = async () => {
+  const statusBtn = info.querySelector("#toggle-status");
+  statusBtn.onclick = async () => {
     const uid = localStorage.getItem("ursa_uid");
     if (!uid) return alert("Сначала войдите через Google.");
     const current = localStorage.getItem("ursa_status") || "free";
@@ -220,10 +228,6 @@ window.openSettings = async function openSettings() {
 
 // === Main ===
 document.addEventListener("DOMContentLoaded", async () => {
-  const sm = document.getElementById("settings-modal");
-  sm.classList.remove("open");
-  sm.setAttribute("aria-hidden", "true");
-
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
@@ -257,7 +261,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     if (!list.length) {
       document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(q ? "not_found" : "empty")}</div>`;
-    } else renderCatalog(list);
+    } else {
+      renderCatalog(list);
+    }
   }
 
   search.addEventListener("input", () => {
@@ -278,13 +284,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
       location.reload();
-    } else if (btn.id === "settings-btn") openSettings();
+    } else if (btn.id === "settings-btn") {
+      openSettings();
+    }
   });
 
-  sm.addEventListener("click", (e) => {
-    if (e.target.hasAttribute("data-close") || e.target === sm) {
-      sm.classList.remove("open");
-      sm.setAttribute("aria-hidden", "true");
+  const settingsModal = document.getElementById("settings-modal");
+  settingsModal.addEventListener("click", (e) => {
+    if (e.target.hasAttribute("data-close") || e.target === settingsModal) {
+      settingsModal.classList.remove("open");
+      settingsModal.setAttribute("aria-hidden", "true");
     }
   });
 
