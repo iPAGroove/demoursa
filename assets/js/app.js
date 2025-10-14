@@ -341,7 +341,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // === Theme + i18n ===
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
   applyI18n();
   apply();
+
+  // === VIP Modal обработчики ===
+  const vipModal = document.getElementById("vip-modal");
+  if (vipModal) {
+    // закрытие по фону или ✕
+    vipModal.addEventListener("click", (e) => {
+      if (e.target === vipModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
+        vipModal.classList.remove("open");
+        vipModal.setAttribute("aria-hidden", "true");
+      }
+    });
+
+    // кнопка 💳 Купить
+    const buyBtn = vipModal.querySelector("#buy-vip");
+    if (buyBtn) {
+      buyBtn.onclick = () => {
+        alert("🚀 После оплаты ваш аккаунт будет переведён в VIP статус!");
+        vipModal.classList.remove("open");
+        vipModal.setAttribute("aria-hidden", "true");
+
+        // временно локально выдаём VIP для теста
+        localStorage.setItem("ursa_status", "vip");
+        location.reload();
+      };
+    }
+  }
 });
+
