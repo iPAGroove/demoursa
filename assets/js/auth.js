@@ -1,4 +1,4 @@
-// URSA Auth — v3.3 Fix Silent Profile Popup + Safe State Refresh
+// URSA Auth — v3.4 (Silent Load Fix + Stable Settings Integration)
 import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged,
@@ -10,7 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-console.log("🔥 URSA Auth v3.3 initialized");
+console.log("🔥 URSA Auth v3.4 initialized");
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
@@ -24,7 +24,7 @@ const waitForAuth = () =>
         resolve(user);
       }
     });
-    setTimeout(() => resolve(auth.currentUser), 2500);
+    setTimeout(() => resolve(auth.currentUser), 2000);
   });
 
 // === Login / Logout ===
@@ -38,8 +38,7 @@ window.ursaAuthAction = async () => {
     return;
   }
 
-  alert("🔐 Внимание! Процесс входа может занять два шага (Popup + Redirect) — это нужно для безопасности.");
-
+  alert("🔐 Вход может занять два шага (Popup + Redirect) — это нужно для безопасности.");
   try {
     const res = await signInWithPopup(auth, provider);
     if (res?.user) await syncUser(res.user);
@@ -49,7 +48,7 @@ window.ursaAuthAction = async () => {
   }
 };
 
-// === Redirect Support ===
+// === Redirect login support ===
 getRedirectResult(auth)
   .then(async (res) => {
     if (res?.user) {
@@ -66,6 +65,7 @@ async function syncUser(u) {
 
   const ref = doc(db, "users", u.uid);
   const snap = await getDoc(ref);
+
   if (!snap.exists()) {
     await setDoc(ref, {
       uid: u.uid,
@@ -75,6 +75,7 @@ async function syncUser(u) {
       status: "free",
       created_at: new Date().toISOString()
     });
+    console.log("🆕 Новый пользователь добавлен в Firestore");
   }
 
   const data = snap.exists() ? snap.data() : {};
@@ -97,11 +98,11 @@ async function syncUser(u) {
     console.warn("⚠️ Ошибка подгрузки сертификата:", e);
   }
 
-  // ✅ только обновляем UI, не открываем профиль автоматически
+  // ⚡ Только обновляем UI — не трогаем модалки
   if (window.updateProfileUI) window.updateProfileUI();
 }
 
-// === Live Auth Watcher ===
+// === Watcher ===
 let lastId = null;
 onAuthStateChanged(auth, async (user) => {
   if (user?.uid === lastId) return;
@@ -111,12 +112,14 @@ onAuthStateChanged(auth, async (user) => {
     const ref = doc(db, "users", user.uid);
     const snap = await getDoc(ref);
     const status = snap.exists() ? snap.data().status || "free" : "free";
+
     localStorage.setItem("ursa_uid", user.uid);
     localStorage.setItem("ursa_email", user.email || "");
     localStorage.setItem("ursa_photo", user.photoURL || "");
     localStorage.setItem("ursa_name", user.displayName || "");
     localStorage.setItem("ursa_status", status);
-    console.log(`👤 Активен: ${user.email}`);
+
+    console.log(`👤 Активен: ${user.email} (${status})`);
     if (window.updateProfileUI) window.updateProfileUI();
   } else {
     console.log("👋 Пользователь вышел");
