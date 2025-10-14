@@ -1,8 +1,10 @@
+// URSA IPA Admin — v7.6 (Filtered Users + VIP Control + Dual Tabs)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+// === Firebase Config ===
 const firebaseConfig = {
   apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
   authDomain: "ipa-panel.firebaseapp.com",
@@ -14,7 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Elements
+// === Elements ===
 const cards = document.getElementById("cards");
 const modal = document.getElementById("modal");
 const form = document.getElementById("ipa-form");
@@ -25,7 +27,7 @@ const searchBox = document.getElementById("search");
 const userTable = document.getElementById("user-list");
 let editDocId = null;
 
-// Tabs
+// === Tabs ===
 const ipaTab = document.getElementById("tab-ipas");
 const userTab = document.getElementById("tab-users");
 const ipaSection = document.getElementById("ipa-section");
@@ -97,6 +99,7 @@ function render(apps) {
   });
 }
 
+// === Modal Logic ===
 function openModal(title, values = {}) {
   modalTitle.textContent = title;
   form.reset();
@@ -132,10 +135,12 @@ function closeModal() {
 modal.addEventListener("click", e => {
   if (e.target.hasAttribute("data-close") || e.target === modal) closeModal();
 });
+
 iconInput.addEventListener("input", () => {
   iconPreview.src = iconInput.value;
   iconPreview.style.display = iconInput.value ? "block" : "none";
 });
+
 document.querySelectorAll(".tag-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
@@ -143,6 +148,7 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
     form.tag.value = btn.dataset.tag;
   });
 });
+
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const values = Object.fromEntries(new FormData(form));
@@ -163,11 +169,16 @@ form.addEventListener("submit", async e => {
     tags: values.tag ? [values.tag] : [],
     updatedAt: new Date().toISOString(),
   };
+
   if (!editDocId) ipa.createdAt = new Date().toISOString();
+
   if (editDocId) await updateDoc(doc(db, "ursa_ipas", editDocId), ipa);
   else await addDoc(collection(db, "ursa_ipas"), ipa);
-  closeModal(); loadData();
+
+  closeModal();
+  loadData();
 });
+
 window.deleteItem = async id => {
   if (confirm("Удалить запись?")) {
     await deleteDoc(doc(db, "ursa_ipas", id));
@@ -188,6 +199,13 @@ async function loadUsers(query = "") {
   const snap = await getDocs(collection(db, "users"));
   let users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+  // 🔹 фильтруем только реальных URSA IPA пользователей
+  users = users.filter(u =>
+    (u.status && typeof u.status === "string") ||
+    (u.created_at && u.created_at.includes("202"))
+  );
+
+  // 🔹 поиск
   if (query) {
     const q = query.toLowerCase();
     users = users.filter(u =>
@@ -195,6 +213,9 @@ async function loadUsers(query = "") {
       (u.name || "").toLowerCase().includes(q)
     );
   }
+
+  // 🔹 сортировка: VIP → Free
+  users.sort((a, b) => (a.status === "vip" ? -1 : 1));
 
   renderUsers(users);
 }
@@ -205,6 +226,7 @@ function renderUsers(users) {
     userTable.innerHTML = "<tr><td colspan='5' style='color:#888'>Нет пользователей</td></tr>";
     return;
   }
+
   users.forEach(u => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -212,11 +234,12 @@ function renderUsers(users) {
       <td>${u.name || "—"}</td>
       <td class="muted">${u.uid || u.id}</td>
       <td><span class="badge ${u.status === "vip" ? "vip" : "free"}">${u.status || "free"}</span></td>
-      <td><button class="btn small" onclick="editUser('${u.id}', '${u.email}', '${u.name}', '${u.status}')">✏️</button></td>
+      <td><button class="btn small" onclick="editUser('${u.id}', '${u.email}', '${u.name}', '${u.status || "free"}')">✏️</button></td>
     `;
     userTable.appendChild(tr);
   });
 }
+
 window.editUser = (id, email, name, status) => {
   const m = document.getElementById("user-modal");
   document.getElementById("edit-user-email").textContent = email;
@@ -226,6 +249,7 @@ window.editUser = (id, email, name, status) => {
   m.classList.add("open");
   document.body.style.overflow = "hidden";
 };
+
 document.getElementById("save-user-status").onclick = async () => {
   const m = document.getElementById("user-modal");
   const id = m.dataset.id;
@@ -235,13 +259,15 @@ document.getElementById("save-user-status").onclick = async () => {
   document.body.style.overflow = "";
   loadUsers();
 };
+
 document.getElementById("user-modal").addEventListener("click", e => {
   if (e.target.hasAttribute("data-close") || e.target === e.currentTarget) {
     e.currentTarget.classList.remove("open");
     document.body.style.overflow = "";
   }
 });
+
 document.getElementById("user-search").addEventListener("input", e => loadUsers(e.target.value));
 
-// Load IPA by default
+// === Default load ===
 loadData();
