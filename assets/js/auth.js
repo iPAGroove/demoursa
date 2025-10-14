@@ -1,4 +1,4 @@
-// URSA Auth — v3.0 Dual Login Alert + Auto Cert Load + Instant UI Refresh
+// URSA Auth — v3.2 Stable (Fix Dual Login, Instant Refresh, Safe Logout)
 import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged,
@@ -10,9 +10,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-console.log("🔥 URSA Auth v3.0 initialized");
+console.log("🔥 URSA Auth v3.2 initialized");
 
-// === Wait for user ===
+// === Подготовка провайдера ===
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: "select_account" });
+
+// === Вспомогательная функция ожидания пользователя ===
 const waitForAuth = () =>
   new Promise((resolve) => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -24,7 +28,7 @@ const waitForAuth = () =>
     setTimeout(() => resolve(auth.currentUser), 2500);
   });
 
-// === Login / Logout Handler ===
+// === Вход / Выход ===
 window.ursaAuthAction = async () => {
   const user = auth.currentUser;
 
@@ -33,20 +37,19 @@ window.ursaAuthAction = async () => {
     await signOut(auth);
     console.log("🚪 Вышли из аккаунта");
     localStorage.clear();
-    if (typeof window.updateProfileUI === "function") window.updateProfileUI();
+    if (window.updateProfileUI) window.updateProfileUI();
     return;
   }
 
   // === LOGIN ===
-  alert("🔐 Внимание! Процесс входа может занять два шага (Popup + Redirect) — это нормально и нужно для безопасности ваших данных.");
-
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
+  alert(
+    "🔐 Внимание!\nПроцесс входа может занять два шага (Popup + Redirect).\nЭто нормально и нужно для безопасности ваших данных."
+  );
 
   try {
     console.log("🌐 Попытка входа через Popup…");
     const res = await signInWithPopup(auth, provider);
-    await syncUser(res.user);
+    if (res?.user) await syncUser(res.user);
   } catch (err) {
     console.warn("⚠️ Popup не сработал, пробуем Redirect вход…");
     await signInWithRedirect(auth, provider);
@@ -56,14 +59,14 @@ window.ursaAuthAction = async () => {
 // === Redirect login support ===
 getRedirectResult(auth)
   .then(async (res) => {
-    if (res && res.user) {
+    if (res?.user) {
       console.log("✅ Redirect вход успешен");
       await syncUser(res.user);
     }
   })
   .catch((err) => console.error("Redirect error:", err));
 
-// === Firestore User Sync ===
+// === Синхронизация пользователя с Firestore ===
 async function syncUser(u) {
   if (!u) u = await waitForAuth();
   if (!u) return console.error("❌ Auth not ready");
@@ -71,7 +74,6 @@ async function syncUser(u) {
   const ref = doc(db, "users", u.uid);
   const snap = await getDoc(ref);
 
-  // === Создаём пользователя, если нет ===
   if (!snap.exists()) {
     await setDoc(ref, {
       uid: u.uid,
@@ -106,15 +108,20 @@ async function syncUser(u) {
     console.warn("⚠️ Ошибка при загрузке сертификата:", err);
   }
 
-  if (typeof window.openSettings === "function") window.openSettings();
+  if (window.openSettings) window.openSettings();
 }
 
-// === Auth state watcher (Live Updates) ===
+// === Слежение за состоянием авторизации (Live Updates) ===
+let lastUserId = null;
 onAuthStateChanged(auth, async (user) => {
+  // предотвращаем двойное срабатывание (Popup + Redirect)
+  if (user?.uid === lastUserId) return;
+  lastUserId = user?.uid || null;
+
   if (user) {
     const ref = doc(db, "users", user.uid);
     const snap = await getDoc(ref);
-    const status = snap.exists() ? (snap.data().status || "free") : "free";
+    const status = snap.exists() ? snap.data().status || "free" : "free";
 
     localStorage.setItem("ursa_uid", user.uid);
     localStorage.setItem("ursa_email", user.email || "");
@@ -123,17 +130,10 @@ onAuthStateChanged(auth, async (user) => {
     localStorage.setItem("ursa_status", status);
 
     console.log(`👤 Активен: ${user.email} (${status})`);
-
-    // Автообновляем профиль, если открыт
-    const dlg = document.getElementById("settings-modal");
-    if (dlg?.classList.contains("open") && typeof window.openSettings === "function") {
-      window.openSettings();
-    }
-
+    if (window.updateProfileUI) window.updateProfileUI();
   } else {
-    // === Пользователь вышел ===
-    console.log("👋 Пользователь вышел из аккаунта");
+    console.log("👋 Пользователь вышел");
     localStorage.clear();
-    if (typeof window.updateProfileUI === "function") window.updateProfileUI();
+    if (window.updateProfileUI) window.updateProfileUI();
   }
 });
