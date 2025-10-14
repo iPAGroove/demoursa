@@ -45,10 +45,10 @@
   <!-- НИЖНЯЯ ПАНЕЛЬ -->
   <nav class="tabbar" id="tabbar" role="tablist">
     <div class="dock newdock">
-      <button class="nav-btn active" data-tab="apps"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
-      <button class="nav-btn" data-tab="games"><img id="navGamesIcon" alt=""><span class="dot"></span></button>
-      <button class="nav-btn" id="lang-btn"><img id="navLangIcon" alt=""><span class="dot"></span></button>
-      <button class="nav-btn" id="settings-btn"><img id="navSettingsIcon" alt=""><span class="dot"></span></button>
+      <button class="nav-btn active" data-tab="apps" title="Приложения"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
+      <button class="nav-btn" data-tab="games" title="Игры"><img id="navGamesIcon" alt=""><span class="dot"></span></button>
+      <button class="nav-btn" id="lang-btn" title="Язык"><img id="navLangIcon" alt=""><span class="dot"></span></button>
+      <button class="nav-btn" id="settings-btn" title="Профиль"><img id="navSettingsIcon" alt=""><span class="dot"></span></button>
     </div>
   </nav>
 
@@ -76,7 +76,7 @@
     </article>
   </div>
 
-  <!-- НАСТРОЙКИ / СЕРТИФИКАТ -->
+  <!-- НАСТРОЙКИ / ПРОФИЛЬ -->
   <div id="settings-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card profile-card big">
@@ -100,14 +100,22 @@
           <p>Состояние: <span id="cert-state">❌ Не загружен</span></p>
           <p>Аккаунт: <span id="cert-account">—</span></p>
           <p>Действует до: <span id="cert-exp">—</span></p>
-          <button id="cert-upload" class="btn outline full mt8">📤 Добавить свой сертификат</button>
+          <button id="cert-upload" class="btn outline full mt8">📤 Добавить / Заменить сертификат</button>
         </div>
 
         <hr>
 
-        <p style="text-align:center;font-size:13px;opacity:.6;">
-          Статус аккаунта: <b id="acc-status">Free</b>
-        </p>
+        <div class="profile-section">
+          <h4>💎 Статус доступа</h4>
+          <select id="status-select" class="select">
+            <option value="free">Free</option>
+            <option value="vip">VIP</option>
+          </select>
+          <button id="status-save" class="btn mt8 small">💾 Сохранить</button>
+        </div>
+
+        <hr>
+        <p style="text-align:center;font-size:13px;opacity:.6;">Статус аккаунта: <b id="acc-status">Free</b></p>
       </div>
     </section>
   </div>
@@ -134,11 +142,11 @@
   </div>
 
   <!-- JS -->
-  <script src="assets/js/themes.js?v=8"></script>
+  <script src="assets/js/themes.js?v=9"></script>
   <script src="assets/js/ios.js?v=8"></script>
   <script type="module" src="assets/js/firebase.js"></script>
-  <script type="module" src="assets/js/auth.js?v=5"></script>
-  <script type="module" src="assets/js/app.js?v=15"></script>
-  <script type="module" src="assets/js/signer_upload.js?v=4"></script>
+  <script type="module" src="assets/js/auth.js?v=7"></script>
+  <script type="module" src="assets/js/app.js?v=16"></script>
+  <script type="module" src="assets/js/signer_upload.js?v=5"></script>
 </body>
 </html>
