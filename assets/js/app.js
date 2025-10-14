@@ -1,4 +1,4 @@
-// URSA IPA — v6.3 Stable (Fixed Settings, Header, Theme, Logout Refresh)
+// URSA IPA — v6.4 Stable (Fixed Settings, Theme, Header, Logout Refresh)
 import { db } from "./firebase.js";
 import { collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -164,18 +164,13 @@ function openModal(app) {
     dl.appendChild(a);
   }
   modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-}
-function closeModal() {
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
 }
 modal.addEventListener("click", (e) => {
-  if (e.target === modal || e.target.dataset.close !== undefined) closeModal();
+  if (e.target === modal || e.target.dataset.close !== undefined) modal.classList.remove("open");
 });
 
 // === Update Profile UI ===
-window.updateProfileUI = function() {
+window.updateProfileUI = function () {
   const info = document.getElementById("user-info");
   if (!info) return;
   info.querySelector("#user-photo").src = "assets/icons/avatar.png";
@@ -191,11 +186,13 @@ window.updateProfileUI = function() {
 
 // === Main ===
 document.addEventListener("DOMContentLoaded", async () => {
+  // icons
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
   document.getElementById("navSettingsIcon").src = ICONS.settings;
 
+  // placeholders
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
 
@@ -210,26 +207,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
   }
 
-  function apply() {
+  const apply = () => {
     const q = state.q.trim().toLowerCase();
     const list = state.all.filter((app) => {
-      if (q) {
+      if (q)
         return (
-          (app.name || "").toLowerCase().includes(q) ||
-          (app.bundleId || "").toLowerCase().includes(q) ||
-          (app.features || "").toLowerCase().includes(q) ||
-          app.tags.some((t) => (t || "").toLowerCase().includes(q))
+          app.name.toLowerCase().includes(q) ||
+          app.bundleId.toLowerCase().includes(q) ||
+          app.features.toLowerCase().includes(q)
         );
-      }
       return state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps");
     });
-    if (!list.length) {
-      document.getElementById("catalog").innerHTML =
-        `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(q ? "not_found" : "empty")}</div>`;
-    } else {
-      renderCatalog(list);
-    }
-  }
+    renderCatalog(list);
+  };
 
   search.addEventListener("input", () => {
     state.q = search.value;
@@ -240,7 +230,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
     if (!btn) return;
-
     if (btn.dataset.tab) {
       state.tab = btn.dataset.tab;
       bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
@@ -251,7 +240,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem("ursa_lang", lang);
       location.reload();
     } else if (btn.id === "settings-btn") {
-      if (typeof window.openSettings === "function") window.openSettings();
+      console.log("⚙️ Settings pressed");
+      if (window.openSettings) window.openSettings();
     }
   });
 
@@ -260,7 +250,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // === Settings Modal ===
-window.openSettings = async function() {
+window.openSettings = async function () {
   const dlg = document.getElementById("settings-modal");
   if (!dlg) return;
   const email = localStorage.getItem("ursa_email");
@@ -287,27 +277,5 @@ window.openSettings = async function() {
   authBtn.textContent = email ? "Выйти" : "Войти через Google";
   authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
 
-  const certBtn = info.querySelector("#cert-upload");
-  certBtn.onclick = () => {
-    const modal = document.getElementById("signer-modal");
-    modal.classList.add("open");
-    modal.setAttribute("aria-hidden", "false");
-  };
-
-  const sel = document.getElementById("status-select");
-  sel.value = status;
-  document.getElementById("status-save").onclick = async () => {
-    const newStatus = sel.value;
-    localStorage.setItem("ursa_status", newStatus);
-    const uid = localStorage.getItem("ursa_uid");
-    if (uid) {
-      const ref = doc(db, "users", uid);
-      await setDoc(ref, { status: newStatus }, { merge: true });
-    }
-    alert("✅ Статус обновлён!");
-    window.openSettings();
-  };
-
   dlg.classList.add("open");
-  dlg.setAttribute("aria-hidden", "false");
 };
