@@ -366,3 +366,10 @@ h3 { margin: 0 0 2px; font-size: 15px; font-weight: 700; color: #fff; }
   .profile-avatar { width: 90px; height: 90px; }
   .profile-body h3 { font-size: 17px; }
 }
+#settings-modal {
+  display: none !important;
+}
+#settings-modal.open {
+  display: block !important;
+}
+
