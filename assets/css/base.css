@@ -292,3 +292,138 @@ h3 { margin: 0 0 2px; font-size: 15px; font-weight: 700; color: #fff; }
 @media (min-width: 520px) {
   .catalog { grid-template-columns: repeat(2,1fr); }
 }
+/* === PROFILE (URSA Neon Glass v2) === */
+.profile-card.big {
+  max-width: 420px;
+  min-height: 64vh;
+  padding: 24px 18px 30px;
+  border-radius: 26px 26px 0 0;
+  background: rgba(18, 23, 34, 0.82);
+  border: 1px solid rgba(0, 179, 255, 0.15);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.55);
+  animation: profileFade 0.4s ease;
+}
+
+.profile-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.profile-avatar-xl {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 179, 255, 0.6);
+  object-fit: cover;
+  margin-bottom: 12px;
+  box-shadow: 0 0 25px rgba(0, 179, 255, 0.3);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.profile-avatar-xl:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(0, 179, 255, 0.55);
+}
+
+.profile-center h3 {
+  margin: 6px 0 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+.profile-center p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 10px;
+  margin-top: 6px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--accent) 0%, #00c8ff 100%);
+  color: #001018;
+  box-shadow: 0 0 14px rgba(0, 179, 255, 0.45);
+}
+.status-badge::before {
+  content: "⭐";
+  font-size: 12px;
+  margin-right: 3px;
+}
+
+.btn.small {
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+.btn.outline.small {
+  background: rgba(0, 179, 255, 0.08);
+  border: 1px solid rgba(0, 179, 255, 0.5);
+  color: var(--accent);
+  transition: all 0.3s ease;
+}
+.btn.outline.small:hover {
+  background: var(--accent);
+  color: #001018;
+}
+
+.profile-section {
+  background: rgba(20, 26, 36, 0.7);
+  border: 1px solid rgba(0, 179, 255, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 16px;
+  box-shadow: inset 0 0 10px rgba(0, 179, 255, 0.08);
+}
+.profile-section h4 {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+}
+.profile-section p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.profile-section button {
+  margin-top: 10px;
+  border-radius: 10px;
+}
+
+.profile-footer {
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.65;
+  margin-top: 14px;
+}
+
+.dialog-head strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(0, 179, 255, 0.35);
+}
+.dialog-head .close {
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  font-size: 18px;
+  border: none;
+  border-radius: 50%;
+  padding: 6px 9px;
+  transition: background 0.25s ease;
+}
+.dialog-head .close:hover {
+  background: rgba(0, 179, 255, 0.25);
+}
