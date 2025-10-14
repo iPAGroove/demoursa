@@ -1,4 +1,4 @@
-// URSA IPA — v6.1 Profile + Progress + Auto Status + Theme Integration
+// URSA IPA — v6.3 Stable (Fixed Settings, Header, Theme, Logout Refresh)
 import { db } from "./firebase.js";
 import { collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -98,23 +98,19 @@ function renderCatalog(apps) {
   });
 }
 
-// === Install logic with progress bar ===
+// === Install with Progress ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = `
-    <div class="progress-wrap">
-      <div class="progress-bar" id="sign-progress"></div>
-    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="sign-progress"></div></div>
     <div style="opacity:.8;font-size:14px;">${__t("signing")}</div>
   `;
-
   let progress = 0;
   const bar = document.getElementById("sign-progress");
   const timer = setInterval(() => {
     progress = Math.min(95, progress + Math.random() * 10);
     bar.style.width = progress + "%";
   }, 400);
-
   try {
     const signer_id = localStorage.getItem("ursa_signer_id");
     if (!signer_id) throw new Error("❌ Загрузите свой сертификат в профиле");
@@ -133,38 +129,34 @@ async function installIPA(app) {
     setTimeout(() => (location.href = json.install_link), 900);
   } catch (err) {
     clearInterval(timer);
-    console.error("Install error:", err);
     dl.innerHTML = `<div style="opacity:.9;color:#ff6;">❌ ${err.message || err}</div>`;
   }
 }
 window.installIPA = installIPA;
 
-// === App modal ===
+// === App Modal ===
 const modal = document.getElementById("modal");
 function openModal(app) {
   document.getElementById("app-icon").src = app.iconUrl;
   document.getElementById("app-title").textContent = app.name || "";
   document.getElementById("app-bundle").textContent = app.bundleId || "";
-  document.getElementById("app-info").textContent = `v${app.version || ""}${
-    app.minIOS ? ` · iOS ≥ ${app.minIOS}` : ""
-  }${app.sizeBytes ? ` · ${prettyBytes(app.sizeBytes)}` : ""}`;
+  document.getElementById("app-info").textContent = `v${app.version || ""}${app.minIOS ? ` · iOS ≥ ${app.minIOS}` : ""}${
+    app.sizeBytes ? ` · ${prettyBytes(app.sizeBytes)}` : ""
+  }`;
 
-  let feats = "";
-  if (lang === "ru" && app.features_ru) feats = app.features_ru;
-  else if (lang === "en" && app.features_en) feats = app.features_en;
-  else feats = app.features;
+  const feats = lang === "ru" ? app.features_ru || app.features : app.features_en || app.features;
   const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
   document.getElementById("app-desc").innerHTML = featList.length
-    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
-       <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
+    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div><ul class="bullets">${featList
+        .map((f) => `<li>${escapeHTML(f)}`)
+        .join("")}</ul>`
     : "";
 
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = "";
   const status = localStorage.getItem("ursa_status") || "free";
-  if (app.vipOnly && status !== "vip") {
-    dl.innerHTML = `<div style="color:#ff6;">🔒 Только для VIP</div>`;
-  } else if (app.downloadUrl) {
+  if (app.vipOnly && status !== "vip") dl.innerHTML = `<div style="color:#ff6;">🔒 Только для VIP</div>`;
+  else if (app.downloadUrl) {
     const a = document.createElement("button");
     a.className = "btn";
     a.textContent = __t("install");
@@ -173,23 +165,19 @@ function openModal(app) {
   }
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
 }
 function closeModal() {
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
 }
 modal.addEventListener("click", (e) => {
-  if (e.target.hasAttribute("data-close") || e.target === modal) closeModal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
+  if (e.target === modal || e.target.dataset.close !== undefined) closeModal();
 });
 
-// === Update UI (logout reset) ===
+// === Update Profile UI ===
 window.updateProfileUI = function() {
   const info = document.getElementById("user-info");
+  if (!info) return;
   info.querySelector("#user-photo").src = "assets/icons/avatar.png";
   info.querySelector("#user-name").textContent = "Гость";
   info.querySelector("#user-email").textContent = "—";
@@ -263,7 +251,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       localStorage.setItem("ursa_lang", lang);
       location.reload();
     } else if (btn.id === "settings-btn") {
-      openSettings();
+      if (typeof window.openSettings === "function") window.openSettings();
     }
   });
 
@@ -272,8 +260,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // === Settings Modal ===
-async function openSettings() {
+window.openSettings = async function() {
   const dlg = document.getElementById("settings-modal");
+  if (!dlg) return;
   const email = localStorage.getItem("ursa_email");
   const name = localStorage.getItem("ursa_name") || "Гость";
   const status = localStorage.getItem("ursa_status") || "free";
@@ -305,7 +294,6 @@ async function openSettings() {
     modal.setAttribute("aria-hidden", "false");
   };
 
-  // === Статус (Free/VIP) ===
   const sel = document.getElementById("status-select");
   sel.value = status;
   document.getElementById("status-save").onclick = async () => {
@@ -317,9 +305,9 @@ async function openSettings() {
       await setDoc(ref, { status: newStatus }, { merge: true });
     }
     alert("✅ Статус обновлён!");
-    openSettings();
+    window.openSettings();
   };
 
   dlg.classList.add("open");
   dlg.setAttribute("aria-hidden", "false");
-}
+};
