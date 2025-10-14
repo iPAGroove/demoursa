@@ -429,15 +429,20 @@ font-weight: 600;
 }
 .vip-locked {
   position: relative;
-  filter: blur(1px) brightness(0.8);
-  opacity: 0.8;
+  opacity: 0.6;
   pointer-events: auto;
+  transition: opacity 0.25s ease;
 }
+
+.vip-locked:hover {
+  opacity: 0.8;
+}
+
 .vip-locked .vip-lock {
   position: absolute;
-  top: 6px;
+  top: 8px;
   right: 10px;
-  font-size: 20px;
+  font-size: 18px;
   color: #ffcc00;
-  text-shadow: 0 0 6px #000;
+  text-shadow: 0 0 8px rgba(0,0,0,0.7);
 }
