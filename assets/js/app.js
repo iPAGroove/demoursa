@@ -1,6 +1,6 @@
-// URSA IPA — v7.3 Profile + VIP Modal + i18n + AutoCert + Progress + Theme Integration
+// URSA IPA — v7.5 Full i18n Live Switch + Profile + VIP Modal + AutoCert + Progress + Firestore Integration
 import { db } from "./firebase.js";
-import { collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
 
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
@@ -19,6 +19,8 @@ const ICONS = {
 // === i18n ===
 const I18N = {
   ru: {
+    // Общие
+    profile_title: "Профиль URSA",
     search_ph: "Поиск по названию, bundleId…",
     install: "Установить",
     hack_features: "Функции мода",
@@ -26,21 +28,43 @@ const I18N = {
     empty: "Пока нет приложений",
     load_error: "Ошибка Firestore",
     vip_only: "🔒 Только для VIP",
+
+    // Профиль
     login_btn: "Войти через Google",
-    upgrade_btn: "🚀 Поднять статус",
+    logout_btn: "Выйти",
+    guest: "Гость",
+    dash: "—",
+    badge_free: "Free",
+    badge_vip: "⭐ VIP",
+    acc_status: "Статус аккаунта:",
+    acc_free: "Free",
+    acc_vip: "VIP",
+
+    // Сертификат
     cert_section: "🔏 Сертификат",
     cert_state: "Состояние:",
+    cert_state_ok: "✅ Загружен",
+    cert_state_none: "❌ Не загружен",
     cert_upload_btn: "📤 Добавить / Обновить сертификат",
-    acc_status: "Статус аккаунта:",
+
+    // VIP / апгрейд
+    upgrade_btn: "🚀 Поднять статус",
     vip_title: "VIP Статус URSA",
     vip_desc: "🌟 Получите VIP статус и откройте доступ ко всем модам, скрытым функциям и приоритетной подписи IPA.",
     vip_benefit1: "⭐ Доступ к эксклюзивным модам",
     vip_benefit2: "⚡ Приоритетная установка без ожидания",
     vip_benefit3: "💬 Поддержка напрямую из Telegram",
     vip_price: "Цена: 4.99 USD / месяц",
-    vip_buy: "💳 Купить"
+    vip_buy: "💳 Купить",
+
+    // Подписчик
+    signing_start: "🔄 Подписываем IPA…",
+    signing_ready: "✅ Готово! Установка начнётся…",
+    signing_need_cert: "❌ Загрузите свой сертификат в профиле"
   },
   en: {
+    // Common
+    profile_title: "URSA Profile",
     search_ph: "Search by name or bundleId…",
     install: "Install",
     hack_features: "Hack Features",
@@ -48,19 +72,39 @@ const I18N = {
     empty: "No apps yet",
     load_error: "Firestore error",
     vip_only: "🔒 VIP Only",
+
+    // Profile
     login_btn: "Sign in with Google",
-    upgrade_btn: "🚀 Upgrade Status",
+    logout_btn: "Sign out",
+    guest: "Guest",
+    dash: "—",
+    badge_free: "Free",
+    badge_vip: "⭐ VIP",
+    acc_status: "Account Status:",
+    acc_free: "Free",
+    acc_vip: "VIP",
+
+    // Certificate
     cert_section: "🔏 Certificate",
     cert_state: "Status:",
+    cert_state_ok: "✅ Uploaded",
+    cert_state_none: "❌ Not uploaded",
     cert_upload_btn: "📤 Add / Update Certificate",
-    acc_status: "Account Status:",
+
+    // VIP / upgrade
+    upgrade_btn: "🚀 Upgrade Status",
     vip_title: "URSA VIP Status",
     vip_desc: "🌟 Get VIP to unlock all mods, hidden features, and priority signing.",
     vip_benefit1: "⭐ Access to exclusive mods",
     vip_benefit2: "⚡ Priority installation without wait",
     vip_benefit3: "💬 Direct Telegram support",
     vip_price: "Price: $4.99 / month",
-    vip_buy: "💳 Buy"
+    vip_buy: "💳 Buy",
+
+    // Signer
+    signing_start: "🔄 Signing IPA…",
+    signing_ready: "✅ Done! Installation will start…",
+    signing_need_cert: "❌ Upload your certificate in profile"
   }
 };
 
@@ -72,6 +116,9 @@ window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 const prettyBytes = (n) => (!n ? "" : `${(n / 1e6).toFixed(0)} MB`);
 const escapeHTML = (s) =>
   (s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+
+const qs = (sel, root = document) => root.querySelector(sel);
+const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 // === Normalize Firestore doc ===
 function normalize(doc) {
@@ -126,11 +173,11 @@ function renderCatalog(apps) {
 // === Install IPA ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
-  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">🔄 Подписываем IPA…</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
+  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">${__t("signing_start")}</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
 
   try {
     const signer_id = localStorage.getItem("ursa_signer_id");
-    if (!signer_id) throw new Error("❌ Загрузите свой сертификат в профиле");
+    if (!signer_id) throw new Error(__t("signing_need_cert"));
 
     const form = new FormData();
     form.append("ipa_url", app.downloadUrl);
@@ -138,10 +185,10 @@ async function installIPA(app) {
 
     const res = await fetch(SIGNER_API, { method: "POST", body: form });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.detail || json.error || "Ошибка при подписи IPA");
+    if (!res.ok) throw new Error(json.detail || json.error || "Signer error");
 
     document.getElementById("sign-progress").value = 100;
-    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">✅ Готово! Установка начнётся…</div>`;
+    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">${__t("signing_ready")}</div>`;
     setTimeout(() => (location.href = json.install_link), 900);
   } catch (err) {
     console.error("Install error:", err);
@@ -153,10 +200,10 @@ window.installIPA = installIPA;
 // === App Modal ===
 const modal = document.getElementById("modal");
 function openModal(app) {
-  document.getElementById("app-icon").src = app.iconUrl;
-  document.getElementById("app-title").textContent = app.name || "";
-  document.getElementById("app-bundle").textContent = app.bundleId || "";
-  document.getElementById("app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
+  qs("#app-icon").src = app.iconUrl;
+  qs("#app-title").textContent = app.name || "";
+  qs("#app-bundle").textContent = app.bundleId || "";
+  qs("#app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
 
   let feats = "";
   if (lang === "ru" && app.features_ru) feats = app.features_ru;
@@ -164,7 +211,7 @@ function openModal(app) {
   else feats = app.features;
 
   const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
-  document.getElementById("app-desc").innerHTML = featList.length
+  qs("#app-desc").innerHTML = featList.length
     ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
        <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
     : "";
@@ -194,42 +241,143 @@ function closeModal() {
 modal.addEventListener("click", (e) => {
   if (e.target.hasAttribute("data-close") || e.target === modal) closeModal();
 });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
 
-// === Profile Modal ===
+// === Profile Modal (с i18n и скрытием лишних строк) ===
+function applyProfileI18n(dlg) {
+  // Заголовок
+  const head = dlg.querySelector(".dialog-head strong");
+  if (head) head.textContent = __t("profile_title");
+
+  // Блок "Сертификат"
+  const certSection = dlg.querySelector(".profile-section h4");
+  if (certSection) certSection.textContent = __t("cert_section");
+
+  // Лейбл "Состояние:"
+  const certStateLabel = Array.from(dlg.querySelectorAll(".profile-section p")).find((p) =>
+    p.textContent?.trim().startsWith("Состояние:") || p.textContent?.trim().startsWith("Status:")
+  );
+  if (certStateLabel) {
+    const span = certStateLabel.querySelector("span");
+    certStateLabel.childNodes[0].nodeValue = __t("cert_state") + " ";
+    if (span) {
+      const hasSigner = !!localStorage.getItem("ursa_signer_id");
+      span.textContent = hasSigner ? __t("cert_state_ok") : __t("cert_state_none");
+    }
+  }
+
+  // Скрываем строки "Аккаунт" и "Действует до"
+  const accLine = dlg.querySelector("#cert-account")?.closest("p");
+  const expLine = dlg.querySelector("#cert-exp")?.closest("p");
+  if (accLine) accLine.style.display = "none";
+  if (expLine) expLine.style.display = "none";
+
+  // Кнопки
+  const uploadBtn = dlg.querySelector("#cert-upload");
+  if (uploadBtn) uploadBtn.textContent = __t("cert_upload_btn");
+
+  const authBtn = dlg.querySelector("#auth-action");
+  if (authBtn) authBtn.textContent = localStorage.getItem("ursa_email") ? __t("logout_btn") : __t("login_btn");
+
+  // Статусы
+  const status = localStorage.getItem("ursa_status") || "free";
+  const statusBadge = dlg.querySelector("#user-status");
+  if (statusBadge) statusBadge.textContent = status === "vip" ? __t("badge_vip") : __t("badge_free");
+
+  const accStatusLabel = dlg.querySelector(".profile-footer");
+  if (accStatusLabel) {
+    const val = dlg.querySelector("#acc-status");
+    accStatusLabel.innerHTML = `${__t("acc_status")} <b id="acc-status">${status === "vip" ? __t("acc_vip") : __t("acc_free")}</b>`;
+  }
+
+  // Кнопка "Поднять статус" (заменяем старую "Переключить статус")
+  const upgradeBtn = dlg.querySelector("#vip-upgrade") || dlg.querySelector("#toggle-status");
+  if (upgradeBtn) {
+    upgradeBtn.textContent = __t("upgrade_btn");
+  }
+}
+
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const info = dlg.querySelector("#user-info");
 
+  // Базовые данные
   info.querySelector("#user-photo").src = localStorage.getItem("ursa_photo") || "assets/icons/avatar.png";
-  info.querySelector("#user-name").textContent = localStorage.getItem("ursa_name") || "Гость";
-  info.querySelector("#user-email").textContent = localStorage.getItem("ursa_email") || "—";
+  info.querySelector("#user-name").textContent = localStorage.getItem("ursa_name") || __t("guest");
+  info.querySelector("#user-email").textContent = localStorage.getItem("ursa_email") || __t("dash");
+
   const status = localStorage.getItem("ursa_status") || "free";
-  info.querySelector("#user-status").textContent = status === "vip" ? "⭐ VIP" : "Free";
-  info.querySelector("#cert-state").textContent = localStorage.getItem("ursa_signer_id") ? "✅ Загружен" : "❌ Не загружен";
-  info.querySelector("#acc-status").textContent = status === "vip" ? "VIP" : "Free";
+  info.querySelector("#user-status").textContent = status === "vip" ? __t("badge_vip") : __t("badge_free");
 
-  info.querySelector("#auth-action").textContent = localStorage.getItem("ursa_email") ? "Выйти" : __t("login_btn");
-  info.querySelector("#auth-action").onclick = () => window.ursaAuthAction && window.ursaAuthAction();
+  // Состояние сертификата
+  const hasSigner = !!localStorage.getItem("ursa_signer_id");
+  info.querySelector("#cert-state").textContent = hasSigner ? __t("cert_state_ok") : __t("cert_state_none");
 
-  info.querySelector("#cert-upload").onclick = () => {
+  // Обновление кнопок и секций
+  const authBtn = info.querySelector("#auth-action");
+  authBtn.textContent = localStorage.getItem("ursa_email") ? __t("logout_btn") : __t("login_btn");
+  authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
+
+  const certBtn = info.querySelector("#cert-upload");
+  certBtn.textContent = __t("cert_upload_btn");
+  certBtn.onclick = () => {
     const modal = document.getElementById("signer-modal");
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
   };
 
-  info.querySelector("#vip-upgrade").onclick = () => {
-    const vip = document.getElementById("vip-modal");
-    vip.classList.add("open");
-    vip.setAttribute("aria-hidden", "false");
-  };
+  const upgradeBtn = info.querySelector("#vip-upgrade") || info.querySelector("#toggle-status");
+  if (upgradeBtn) {
+    upgradeBtn.textContent = __t("upgrade_btn");
+    upgradeBtn.onclick = () => {
+      const vip = document.getElementById("vip-modal");
+      if (vip) {
+        // Применим i18n для VIP-модалки перед открытием
+        applyVipI18n(vip);
+        vip.classList.add("open");
+        vip.setAttribute("aria-hidden", "false");
+      } else {
+        // Фолбэк — открываем ссылку
+        window.open("https://t.me/Ursa_ipa", "_blank");
+      }
+    };
+  }
+
+  // Применяем i18n для заголовков/лейблов
+  applyProfileI18n(dlg);
 
   dlg.classList.add("open");
   dlg.setAttribute("aria-hidden", "false");
 };
 
-// === VIP Modal Actions ===
+// === VIP Modal i18n ===
+function applyVipI18n(vip) {
+  // Структура вёрстки может отличаться — аккуратно ищем элементы
+  const head = vip.querySelector(".dialog-head strong");
+  if (head) head.textContent = __t("vip_title");
+
+  const desc = vip.querySelector(".vip-desc");
+  if (desc) desc.textContent = __t("vip_desc");
+
+  const b1 = vip.querySelector(".vip-benefit-1");
+  const b2 = vip.querySelector(".vip-benefit-2");
+  const b3 = vip.querySelector(".vip-benefit-3");
+  if (b1) b1.textContent = __t("vip_benefit1");
+  if (b2) b2.textContent = __t("vip_benefit2");
+  if (b3) b3.textContent = __t("vip_benefit3");
+
+  const price = vip.querySelector(".vip-price");
+  if (price) price.textContent = __t("vip_price");
+
+  const buy = vip.querySelector("#buy-vip");
+  if (buy) buy.textContent = __t("vip_buy");
+}
+
+// === Close any dialog by backdrop or [data-close] ===
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".dialog").forEach((dlg) => {
+  qsa(".dialog").forEach((dlg) => {
     dlg.addEventListener("click", (e) => {
       if (e.target.hasAttribute("data-close") || e.target === dlg) {
         dlg.classList.remove("open");
@@ -237,27 +385,73 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
   const buyBtn = document.getElementById("buy-vip");
   if (buyBtn) buyBtn.onclick = () => window.open("https://t.me/Ursa_ipa", "_blank");
 });
 
+// === Live i18n over page ===
+function applyI18nStatic() {
+  // Иконка языка
+  const navLangIcon = document.getElementById("navLangIcon");
+  if (navLangIcon) navLangIcon.src = ICONS.lang?.[lang] || ICONS.lang.ru;
+
+  // Placeholder поиска
+  const search = document.getElementById("search");
+  if (search) search.placeholder = __t("search_ph");
+
+  // Если открыт профиль — применим i18n
+  const settingsModal = document.getElementById("settings-modal");
+  if (settingsModal?.classList.contains("open")) {
+    applyProfileI18n(settingsModal);
+  }
+
+  // Если открыта VIP-модалка — примени тексты
+  const vipModal = document.getElementById("vip-modal");
+  if (vipModal?.classList.contains("open")) {
+    applyVipI18n(vipModal);
+  }
+
+  // Если открыт модал приложения — перерисуем features-хедер
+  if (modal?.classList.contains("open")) {
+    const head = qs("#app-desc .meta");
+    if (head) head.textContent = __t("hack_features");
+    const btn = qs("#dl-buttons .btn");
+    if (btn) btn.textContent = __t("install");
+    // vip_only блок обновим, если он есть
+    const vipNotice = qs("#dl-buttons div");
+    if (vipNotice && vipNotice.textContent.includes("VIP")) {
+      vipNotice.textContent = __t("vip_only");
+      vipNotice.style.color = "#ff6";
+    }
+  }
+}
+
 // === Main ===
 document.addEventListener("DOMContentLoaded", async () => {
+  // Иконки
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
   document.getElementById("navSettingsIcon").src = ICONS.settings;
-  document.getElementById("search").placeholder = __t("search_ph");
 
+  // Поиск
+  const search = document.getElementById("search");
+  search.placeholder = __t("search_ph");
+
+  // Состояние каталога
   const state = { all: [], q: "", tab: "apps" };
 
+  // Загрузка Firestore
   try {
     const snap = await getDocs(collection(db, "ursa_ipas"));
     state.all = snap.docs.map((d) => normalize(d.data()));
-  } catch {
+  } catch (err) {
+    console.error("Firestore:", err);
     document.getElementById("catalog").innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
   }
 
+  // Рендер
   const apply = () => {
     const q = state.q.trim().toLowerCase();
     const list = state.all.filter((app) =>
@@ -270,28 +464,48 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? app.tags.includes("games")
         : app.tags.includes("apps")
     );
-    list.length ? renderCatalog(list) : (document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(q ? "not_found" : "empty")}</div>`);
+    if (!list.length) {
+      document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(state.q ? "not_found" : "empty")}</div>`;
+    } else {
+      renderCatalog(list);
+    }
   };
 
-  document.getElementById("search").addEventListener("input", (e) => (state.q = e.target.value, apply()));
+  // Слушатели
+  search.addEventListener("input", (e) => (state.q = e.target.value, apply()));
 
-  document.getElementById("tabbar").addEventListener("click", (e) => {
+  const bar = document.getElementById("tabbar");
+  bar.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
     if (!btn) return;
     if (btn.dataset.tab) {
       state.tab = btn.dataset.tab;
-      document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+      bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       apply();
     } else if (btn.id === "lang-btn") {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
-      location.reload();
+      applyI18nStatic(); // живое переключение без reload
+      apply();           // перерисовать каталог, чтобы пустые состояния/тексты обновились
     } else if (btn.id === "settings-btn") {
       openSettings();
     }
   });
 
+  // Закрытие любых диалогов (дублируем защитно)
+  qsa(".dialog").forEach((dlg) => {
+    dlg.addEventListener("click", (e) => {
+      if (e.target.hasAttribute("data-close") || e.target === dlg) {
+        dlg.classList.remove("open");
+        dlg.setAttribute("aria-hidden", "true");
+      }
+    });
+  });
+
+  // Тема
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+
+  // Первый рендер
   apply();
 });
