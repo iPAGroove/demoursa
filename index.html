@@ -76,7 +76,7 @@
     </article>
   </div>
 
-  <!-- НАСТРОЙКИ / ПРОФИЛЬ -->
+  <!-- НАСТРОЙКИ / ПРОФИЛЬ (URSA Neon Glass) -->
   <div id="settings-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card profile-card big">
@@ -84,30 +84,29 @@
         <strong>Профиль URSA</strong>
         <button class="close" data-close>✕</button>
       </header>
+
       <div class="dialog-body" id="user-info">
         <div class="profile-center">
           <img id="user-photo" class="profile-avatar-xl" src="assets/icons/avatar.png" alt="avatar">
           <h3 id="user-name">Гость</h3>
           <p id="user-email" class="muted">–</p>
           <span id="user-status" class="status-badge">Free</span>
-          <button id="auth-action" class="btn small mt10">Войти через Google</button>
-          <button id="toggle-status" class="btn outline small mt8">🔁 Переключить статус</button>
-        </div>
 
-        <hr>
+          <button id="auth-action" class="btn small">Войти через Google</button>
+          <button id="toggle-status" class="btn outline small">🔁 Переключить статус</button>
+        </div>
 
         <div class="profile-section">
           <h4>🔏 Сертификат</h4>
           <p>Состояние: <span id="cert-state">❌ Не загружен</span></p>
           <p>Аккаунт: <span id="cert-account">—</span></p>
           <p>Действует до: <span id="cert-exp">—</span></p>
-          <button id="cert-upload" class="btn outline full mt8">📤 Добавить / Обновить сертификат</button>
+          <button id="cert-upload" class="btn outline full">📤 Добавить / Обновить сертификат</button>
         </div>
 
-        <hr>
-        <p style="text-align:center;font-size:13px;opacity:.6;">
+        <div class="profile-footer">
           Статус аккаунта: <b id="acc-status">Free</b>
-        </p>
+        </div>
       </div>
     </section>
   </div>
