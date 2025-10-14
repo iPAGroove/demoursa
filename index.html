@@ -96,9 +96,12 @@
           <button id="vip-upgrade" class="btn outline small" data-i18n="upgrade_btn">🚀 Поднять статус</button>
         </div>
 
+        <!-- Сертификат -->
         <div class="profile-section">
           <h4 data-i18n="cert_section">🔏 Сертификат</h4>
           <p><span data-i18n="cert_state">Состояние:</span> <span id="cert-state">❌ Не загружен</span></p>
+          <p>Аккаунт: <span id="cert-account">—</span></p>
+          <p>Срок: <span id="cert-exp">—</span></p>
           <button id="cert-upload" class="btn outline full" data-i18n="cert_upload_btn">📤 Добавить / Обновить сертификат</button>
         </div>
 
@@ -109,7 +112,7 @@
     </section>
   </div>
 
-  <!-- VIP МОДАЛКА (Glass) -->
+  <!-- VIP МОДАЛКА -->
   <div id="vip-modal" class="dialog glass" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card vip-card">
@@ -122,9 +125,9 @@
           🌟 Получите VIP статус и откройте доступ ко всем модам, скрытым функциям и приоритетной подписи IPA.
         </p>
         <ul class="vip-benefits">
-          <li class="vip-benefit-1" data-i18n="vip_benefit1">⭐ Доступ к эксклюзивным модам</li>
-          <li class="vip-benefit-2" data-i18n="vip_benefit2">⚡ Приоритетная установка без ожидания</li>
-          <li class="vip-benefit-3" data-i18n="vip_benefit3">💬 Поддержка напрямую из Telegram</li>
+          <li data-i18n="vip_benefit1">⭐ Доступ к эксклюзивным модам</li>
+          <li data-i18n="vip_benefit2">⚡ Приоритетная установка без ожидания</li>
+          <li data-i18n="vip_benefit3">💬 Поддержка напрямую из Telegram</li>
         </ul>
         <p class="vip-price" style="margin-top:10px;font-weight:600;" data-i18n="vip_price">Цена: 4.99 USD / месяц</p>
         <button id="buy-vip" class="btn full" data-i18n="vip_buy">💳 Купить</button>
