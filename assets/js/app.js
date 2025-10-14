@@ -1,4 +1,4 @@
-// URSA IPA — v8.0 LazyLoad + Full Dynamic i18n + VIP Lock + Profile + AutoCert + Firestore
+// URSA IPA — v7.9 LazyLoad + Dynamic i18n + VIP Lock + Profile + AutoCert + Firestore
 import { db } from "./firebase.js";
 import {
   collection,
@@ -101,7 +101,6 @@ let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").sl
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
-// === Dynamic i18n Apply ===
 function applyI18n() {
   qsa("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
@@ -113,7 +112,6 @@ function applyI18n() {
   });
 }
 
-// === Helpers ===
 const prettyBytes = (n) => (!n ? "" : `${(n / 1e6).toFixed(0)} MB`);
 const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -121,7 +119,6 @@ const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({
 const qs = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-// === Normalize Firestore doc ===
 function normalize(doc) {
   const tags = Array.isArray(doc.tags)
     ? doc.tags
@@ -144,16 +141,17 @@ function normalize(doc) {
     tags: tags.map((t) => t.toLowerCase())
   };
 }
-// === Catalog render (append support) ===
-function renderCatalog(apps, append = false) {
+
+function renderCatalog(apps) {
   const c = document.getElementById("catalog");
-  if (!append) c.innerHTML = "";
-  if (!apps.length && !append) {
+  c.innerHTML = "";
+  if (!apps.length) {
     c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
     return;
   }
 
   const userStatus = localStorage.getItem("ursa_status") || "free";
+
   apps.forEach((app) => {
     const el = document.createElement("article");
     el.className = "card";
@@ -175,42 +173,71 @@ function renderCatalog(apps, append = false) {
   });
 }
 
-// === Lazy Load ===
-let lastVisible = null;
-let loading = false;
-let endReached = false;
-const state = { all: [], q: "", tab: "apps" };
-
-async function loadMore(initial = false) {
-  if (loading || endReached) return;
-  loading = true;
+async function installIPA(app) {
+  const dl = document.getElementById("dl-buttons");
+  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">${__t("signing_start")}</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
   try {
-    const ref = collection(db, "ursa_ipas");
-    let q = query(ref, orderBy("name"), limit(10));
-    if (lastVisible) q = query(ref, orderBy("name"), startAfter(lastVisible), limit(10));
-    const snap = await getDocs(q);
-    if (snap.empty) {
-      endReached = true;
-      return;
-    }
-    lastVisible = snap.docs[snap.docs.length - 1];
-    const newApps = snap.docs.map((d) => normalize(d.data()));
-    state.all.push(...newApps);
-    renderCatalog(state.all, true);
+    const signer_id = localStorage.getItem("ursa_signer_id");
+    if (!signer_id) throw new Error(__t("signing_need_cert"));
+    const form = new FormData();
+    form.append("ipa_url", app.downloadUrl);
+    form.append("signer_id", signer_id);
+    const res = await fetch(SIGNER_API, { method: "POST", body: form });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.detail || json.error || "Signer error");
+    document.getElementById("sign-progress").value = 100;
+    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">${__t("signing_ready")}</div>`;
+    setTimeout(() => (location.href = json.install_link), 900);
   } catch (err) {
-    document.getElementById("catalog").innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
-  } finally {
-    loading = false;
+    dl.innerHTML = `<div style="opacity:.9;color:#ff6;">❌ ${err.message || err}</div>`;
   }
 }
+window.installIPA = installIPA;
 
-window.addEventListener("scroll", () => {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-    loadMore();
+// === App Modal ===
+const appModal = document.getElementById("modal");
+function openModal(app) {
+  const userStatus = localStorage.getItem("ursa_status") || "free";
+  qs("#app-icon").src = app.iconUrl || "";
+  qs("#app-title").textContent = app.name || "";
+  qs("#app-bundle").textContent = app.bundleId || "";
+  qs("#app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
+
+  const feats = (lang === "ru" ? app.features_ru : app.features_en) || app.features || "";
+  const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
+  qs("#app-desc").innerHTML = featList.length
+    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div><ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
+    : "";
+
+  const dl = document.getElementById("dl-buttons");
+  dl.innerHTML = "";
+  if (app.vipOnly && userStatus !== "vip") {
+    dl.innerHTML = `<div style="color:#ff6;">${__t("vip_only")}</div>`;
+  } else if (app.downloadUrl) {
+    const a = document.createElement("button");
+    a.className = "btn";
+    a.textContent = __t("install");
+    a.onclick = () => installIPA(app);
+    dl.appendChild(a);
   }
+
+  appModal.classList.add("open");
+  appModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  appModal.classList.remove("open");
+  appModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+appModal.addEventListener("click", (e) => {
+  if (e.target === appModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && appModal.classList.contains("open")) closeModal();
 });
 
-// === Firestore init ===
+// === Lazy Load + Search + Tabs ===
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
@@ -220,33 +247,100 @@ document.addEventListener("DOMContentLoaded", async () => {
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
 
-  try {
-    await loadMore(true);
-  } catch {
-    document.getElementById("catalog").innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
+  const state = {
+    all: [],
+    q: "",
+    tab: "apps",
+    lastVisible: null,
+    loading: false,
+    hasMore: true
+  };
+
+  const catalogEl = document.getElementById("catalog");
+  const sentinel = document.createElement("div");
+  sentinel.id = "lazy-sentinel";
+  catalogEl.appendChild(sentinel);
+
+  function filterApps() {
+    const q = state.q.trim().toLowerCase();
+    return state.all.filter((app) =>
+      q
+        ? (app.name || "").toLowerCase().includes(q) ||
+          (app.bundleId || "").toLowerCase().includes(q) ||
+          (app.features || "").toLowerCase().includes(q)
+        : state.tab === "games"
+        ? app.tags.includes("games")
+        : app.tags.includes("apps")
+    );
   }
 
-  applyI18n();
-  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+  function apply() {
+    renderCatalog(filterApps());
+  }
 
-  // === VIP Modal ===
-  const vipModal = document.getElementById("vip-modal");
-  if (vipModal) {
-    vipModal.addEventListener("click", (e) => {
-      if (e.target === vipModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
-        vipModal.classList.remove("open");
-        vipModal.setAttribute("aria-hidden", "true");
+  async function loadNextPage(initial = false) {
+    if (state.loading || !state.hasMore) return;
+    state.loading = true;
+
+    try {
+      let qRef = query(
+        collection(db, "ursa_ipas"),
+        orderBy("name"),
+        ...(state.lastVisible ? [startAfter(state.lastVisible)] : []),
+        limit(10)
+      );
+
+      const snap = await getDocs(qRef);
+      const newItems = snap.docs.map((d) => normalize(d.data()));
+      if (initial) state.all = [];
+      state.all.push(...newItems);
+
+      apply();
+      if (snap.docs.length < 10) state.hasMore = false;
+      else state.lastVisible = snap.docs[snap.docs.length - 1];
+    } catch {
+      catalogEl.innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
+    }
+
+    state.loading = false;
+  }
+
+  search.addEventListener("input", (e) => {
+    state.q = e.target.value;
+    apply();
+  });
+
+  const bar = document.getElementById("tabbar");
+  bar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".nav-btn");
+    if (!btn) return;
+    if (btn.dataset.tab) {
+      state.tab = btn.dataset.tab;
+      bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      apply();
+    } else if (btn.id === "lang-btn") {
+      lang = lang === "ru" ? "en" : "ru";
+      localStorage.setItem("ursa_lang", lang);
+      document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
+      applyI18n();
+      apply();
+    } else if (btn.id === "settings-btn") {
+      openSettings();
+    }
+  });
+
+  await loadNextPage(true);
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        loadNextPage(false);
       }
     });
-    const buyBtn = vipModal.querySelector("#buy-vip");
-    if (buyBtn) {
-      buyBtn.onclick = () => {
-        const tgLink = "tg://resolve?domain=Ursa_ipa";
-        window.location.href = tgLink;
-        setTimeout(() => {
-          window.open("https://t.me/Ursa_ipa", "_blank");
-        }, 1200);
-      };
-    }
-  }
+  });
+  observer.observe(sentinel);
+
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+  applyI18n();
 });
