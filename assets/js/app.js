@@ -1,8 +1,7 @@
-// URSA IPA — Full UI + Install Integration (v6.0 Unified Firebase Instance)
+// URSA IPA — v6.1 Profile + Progress + Auto Status + Theme Integration
 import { db } from "./firebase.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-// === Signer API ===
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
 
 // === ICONS ===
@@ -24,7 +23,9 @@ const I18N = {
     hack_features: "Функции мода",
     not_found: "Ничего не найдено",
     empty: "Пока нет приложений",
-    load_error: "Ошибка Firestore"
+    load_error: "Ошибка Firestore",
+    signing: "Подписываем IPA…",
+    ready: "✅ Готово! Установка начнётся…"
   },
   en: {
     search_ph: "Search by name or bundleId…",
@@ -32,7 +33,9 @@ const I18N = {
     hack_features: "Hack Features",
     not_found: "Nothing found",
     empty: "No apps yet",
-    load_error: "Firestore error"
+    load_error: "Firestore error",
+    signing: "Signing IPA…",
+    ready: "✅ Ready! Installing…"
   }
 };
 let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").slice(0, 2)).toLowerCase();
@@ -95,10 +98,22 @@ function renderCatalog(apps) {
   });
 }
 
-// === Install logic (URSA Signer Cloud Run) ===
+// === Install logic with progress bar ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
-  dl.innerHTML = `<div style="opacity:.8;font-size:14px;">🔄 Подписываем IPA…</div>`;
+  dl.innerHTML = `
+    <div class="progress-wrap">
+      <div class="progress-bar" id="sign-progress"></div>
+    </div>
+    <div style="opacity:.8;font-size:14px;">${__t("signing")}</div>
+  `;
+
+  let progress = 0;
+  const bar = document.getElementById("sign-progress");
+  const timer = setInterval(() => {
+    progress = Math.min(95, progress + Math.random() * 10);
+    bar.style.width = progress + "%";
+  }, 400);
 
   try {
     const signer_id = localStorage.getItem("ursa_signer_id");
@@ -112,9 +127,12 @@ async function installIPA(app) {
     const json = await res.json();
     if (!res.ok) throw new Error(json.detail || json.error || "Ошибка при подписи IPA");
 
-    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">✅ Готово! Установка начнётся…</div>`;
+    clearInterval(timer);
+    bar.style.width = "100%";
+    dl.innerHTML = `<div style="opacity:.9;font-size:14px;">${__t("ready")}</div>`;
     setTimeout(() => (location.href = json.install_link), 900);
   } catch (err) {
+    clearInterval(timer);
     console.error("Install error:", err);
     dl.innerHTML = `<div style="opacity:.9;color:#ff6;">❌ ${err.message || err}</div>`;
   }
@@ -168,6 +186,20 @@ modal.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeModal();
 });
+
+// === Update UI (logout reset) ===
+window.updateProfileUI = function() {
+  const info = document.getElementById("user-info");
+  info.querySelector("#user-photo").src = "assets/icons/avatar.png";
+  info.querySelector("#user-name").textContent = "Гость";
+  info.querySelector("#user-email").textContent = "—";
+  info.querySelector("#user-status").textContent = "Free";
+  info.querySelector("#cert-state").textContent = "❌ Не загружен";
+  info.querySelector("#cert-account").textContent = "—";
+  info.querySelector("#cert-exp").textContent = "—";
+  info.querySelector("#acc-status").textContent = "Free";
+  info.querySelector("#auth-action").textContent = "Войти через Google";
+};
 
 // === Main ===
 document.addEventListener("DOMContentLoaded", async () => {
@@ -235,20 +267,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  const settingsModal = document.getElementById("settings-modal");
-  settingsModal.addEventListener("click", (e) => {
-    if (e.target.hasAttribute("data-close") || e.target === settingsModal) {
-      settingsModal.classList.remove("open");
-      settingsModal.setAttribute("aria-hidden", "true");
-    }
-  });
-
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
   apply();
 });
 
 // === Settings Modal ===
-function openSettings() {
+async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const email = localStorage.getItem("ursa_email");
   const name = localStorage.getItem("ursa_name") || "Гость";
@@ -279,6 +303,21 @@ function openSettings() {
     const modal = document.getElementById("signer-modal");
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
+  };
+
+  // === Статус (Free/VIP) ===
+  const sel = document.getElementById("status-select");
+  sel.value = status;
+  document.getElementById("status-save").onclick = async () => {
+    const newStatus = sel.value;
+    localStorage.setItem("ursa_status", newStatus);
+    const uid = localStorage.getItem("ursa_uid");
+    if (uid) {
+      const ref = doc(db, "users", uid);
+      await setDoc(ref, { status: newStatus }, { merge: true });
+    }
+    alert("✅ Статус обновлён!");
+    openSettings();
   };
 
   dlg.classList.add("open");
