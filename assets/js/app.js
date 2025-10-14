@@ -263,8 +263,10 @@ function applyProfileI18n(dlg) {
     const span = certStateLabel.querySelector("span");
     certStateLabel.childNodes[0].nodeValue = __t("cert_state") + " ";
     if (span) {
+      // 🔧 только статус без " (2 файла)" — без повторов
       const hasSigner = !!localStorage.getItem("ursa_signer_id");
-      span.textContent = hasSigner ? __t("cert_state_ok") : __t("cert_state_none");
+      const text = hasSigner ? __t("cert_state_ok") : __t("cert_state_none");
+      span.textContent = text.replace(/\s*\(.*файл.*\)/, ""); // убираем любое упоминание количества
     }
   }
 
@@ -288,9 +290,14 @@ function applyProfileI18n(dlg) {
 
   const accStatusLabel = dlg.querySelector(".profile-footer");
   if (accStatusLabel) {
-    const val = dlg.querySelector("#acc-status");
     accStatusLabel.innerHTML = `${__t("acc_status")} <b id="acc-status">${status === "vip" ? __t("acc_vip") : __t("acc_free")}</b>`;
   }
+
+  const upgradeBtn = dlg.querySelector("#vip-upgrade") || dlg.querySelector("#toggle-status");
+  if (upgradeBtn) {
+    upgradeBtn.textContent = __t("upgrade_btn");
+  }
+}
 
   // Кнопка "Поднять статус" (заменяем старую "Переключить статус")
   const upgradeBtn = dlg.querySelector("#vip-upgrade") || dlg.querySelector("#toggle-status");
