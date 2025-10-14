@@ -1,6 +1,6 @@
-// URSA IPA — v6.5 Profile + VIP + AutoCert + Progress + Theme Integration
+// URSA IPA — v6.6 Stable (Profile Fix + VIP + AutoCert + Progress + Theme Integration)
 import { db } from "./firebase.js";
-import { collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
 
 // === Signer API ===
@@ -82,7 +82,6 @@ function renderCatalog(apps) {
     c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("empty")}</div>`;
     return;
   }
-
   apps.forEach((app) => {
     const el = document.createElement("article");
     el.className = "card";
@@ -104,7 +103,6 @@ function renderCatalog(apps) {
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = `<div style="opacity:.8;font-size:14px;">🔄 Подписываем IPA…</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
-
   try {
     const signer_id = localStorage.getItem("ursa_signer_id");
     if (!signer_id) throw new Error("❌ Загрузите свой сертификат в профиле");
@@ -115,7 +113,6 @@ async function installIPA(app) {
 
     const res = await fetch(SIGNER_API, { method: "POST", body: form });
     const json = await res.json();
-
     if (!res.ok) throw new Error(json.detail || json.error || "Ошибка при подписи IPA");
 
     document.getElementById("sign-progress").value = 100;
@@ -135,18 +132,14 @@ function openModal(app) {
   document.getElementById("app-title").textContent = app.name || "";
   document.getElementById("app-bundle").textContent = app.bundleId || "";
   document.getElementById("app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
-
   let feats = "";
   if (lang === "ru" && app.features_ru) feats = app.features_ru;
   else if (lang === "en" && app.features_en) feats = app.features_en;
   else feats = app.features;
-
   const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
   document.getElementById("app-desc").innerHTML = featList.length
-    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
-       <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
+    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div><ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
     : "";
-
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = "";
   const status = localStorage.getItem("ursa_status") || "free";
@@ -159,7 +152,6 @@ function openModal(app) {
     a.onclick = () => installIPA(app);
     dl.appendChild(a);
   }
-
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -176,7 +168,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeModal();
 });
 
-// === Settings Modal ===
+// === Settings Modal (fixed) ===
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const email = localStorage.getItem("ursa_email");
@@ -189,29 +181,27 @@ window.openSettings = async function openSettings() {
     ? new Date(localStorage.getItem("ursa_cert_exp")).toLocaleDateString("ru-RU")
     : "—";
 
-  const info = document.getElementById("user-info");
-  info.querySelector("#user-photo").src = photo || "assets/icons/avatar.png";
-  info.querySelector("#user-name").textContent = name;
-  info.querySelector("#user-email").textContent = email || "—";
-  info.querySelector("#user-status").textContent = status === "vip" ? "⭐ VIP" : "Free";
-  info.querySelector("#cert-state").textContent = signer;
-  info.querySelector("#cert-account").textContent = account;
-  info.querySelector("#cert-exp").textContent = expires;
-  info.querySelector("#acc-status").textContent = status === "vip" ? "VIP" : "Free";
+  // обновляем DOM напрямую без user-info
+  document.getElementById("user-photo").src = photo || "assets/icons/avatar.png";
+  document.getElementById("user-name").textContent = name;
+  document.getElementById("user-email").textContent = email || "—";
+  document.getElementById("user-status").textContent = status === "vip" ? "⭐ VIP" : "Free";
+  document.getElementById("cert-state").textContent = signer;
+  document.getElementById("cert-account").textContent = account;
+  document.getElementById("cert-exp").textContent = expires;
+  document.getElementById("acc-status").textContent = status === "vip" ? "VIP" : "Free";
 
-  const authBtn = info.querySelector("#auth-action");
+  const authBtn = document.getElementById("auth-action");
   authBtn.textContent = email ? "Выйти" : "Войти через Google";
   authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
 
-  const certBtn = info.querySelector("#cert-upload");
-  certBtn.onclick = () => {
+  document.getElementById("cert-upload").onclick = () => {
     const modal = document.getElementById("signer-modal");
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
   };
 
-  const statusBtn = info.querySelector("#toggle-status");
-  statusBtn.onclick = async () => {
+  document.getElementById("toggle-status").onclick = async () => {
     const uid = localStorage.getItem("ursa_uid");
     if (!uid) return alert("Сначала войдите через Google.");
     const current = localStorage.getItem("ursa_status") || "free";
@@ -228,6 +218,11 @@ window.openSettings = async function openSettings() {
 
 // === Main ===
 document.addEventListener("DOMContentLoaded", async () => {
+  // сбрасываем лишние открытия профиля при старте
+  const sm = document.getElementById("settings-modal");
+  sm.classList.remove("open");
+  sm.setAttribute("aria-hidden", "true");
+
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
@@ -237,7 +232,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   search.placeholder = __t("search_ph");
 
   const state = { all: [], q: "", tab: "apps" };
-
   try {
     const snap = await getDocs(collection(db, "ursa_ipas"));
     state.all = snap.docs.map((d) => normalize(d.data()));
@@ -249,27 +243,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   function apply() {
     const q = state.q.trim().toLowerCase();
     const list = state.all.filter((app) => {
-      if (q) {
-        return (
-          (app.name || "").toLowerCase().includes(q) ||
-          (app.bundleId || "").toLowerCase().includes(q) ||
-          (app.features || "").toLowerCase().includes(q) ||
-          app.tags.some((t) => (t || "").toLowerCase().includes(q))
-        );
-      }
+      if (q)
+        return (app.name || "").toLowerCase().includes(q) ||
+               (app.bundleId || "").toLowerCase().includes(q) ||
+               (app.features || "").toLowerCase().includes(q) ||
+               app.tags.some((t) => (t || "").toLowerCase().includes(q));
       return state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps");
     });
-    if (!list.length) {
+    list.length ? renderCatalog(list) :
       document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(q ? "not_found" : "empty")}</div>`;
-    } else {
-      renderCatalog(list);
-    }
   }
 
-  search.addEventListener("input", () => {
-    state.q = search.value;
-    apply();
-  });
+  search.addEventListener("input", () => { state.q = search.value; apply(); });
 
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
@@ -284,19 +269,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
       location.reload();
-    } else if (btn.id === "settings-btn") {
-      openSettings();
-    }
-  });
-
-  const settingsModal = document.getElementById("settings-modal");
-  settingsModal.addEventListener("click", (e) => {
-    if (e.target.hasAttribute("data-close") || e.target === settingsModal) {
-      settingsModal.classList.remove("open");
-      settingsModal.setAttribute("aria-hidden", "true");
-    }
+    } else if (btn.id === "settings-btn") openSettings();
   });
 
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+  sm.addEventListener("click", (e) => {
+    if (e.target.hasAttribute("data-close") || e.target === sm) {
+      sm.classList.remove("open");
+      sm.setAttribute("aria-hidden", "true");
+    }
+  });
+
   apply();
 });
