@@ -1,43 +1,31 @@
-// URSA Themes — v2.0 Light/Dark Toggle + Persistent Mode
-console.log("🎨 URSA Themes v2.0 loaded");
+// URSA Themes (v1.2) — neon (тёмная) / light (светлая)
+const THEME_KEY = "ursa_theme";
+const THEME_LINK_ID = "theme-css";
 
-// === Apply theme ===
-function setTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("ursa_theme", theme);
-
-  // Анимация смены фона
-  document.body.style.transition = "background 0.4s ease, color 0.4s ease";
-  document.documentElement.style.transition = "background 0.4s ease, color 0.4s ease";
-
-  console.log(`🌗 Тема активирована: ${theme}`);
-}
-
-// === Toggle ===
-function toggleTheme() {
-  const current = localStorage.getItem("ursa_theme") || "dark";
-  const next = current === "dark" ? "light" : "dark";
-  setTheme(next);
-
-  const btn = document.getElementById("theme-toggle");
-  if (btn) btn.textContent = next === "dark" ? "🌞" : "🌙";
-}
-
-// === Init ===
-document.addEventListener("DOMContentLoaded", () => {
-  let saved = localStorage.getItem("ursa_theme");
-
-  // Если пользователь впервые — проверяем системную тему
-  if (!saved) {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    saved = prefersDark ? "dark" : "light";
-    localStorage.setItem("ursa_theme", saved);
+export function applyTheme(theme) {
+  const link = document.getElementById(THEME_LINK_ID);
+  if (!link) return;
+  if (theme === "light") {
+    link.href = "assets/css/themes/light.css";
+  } else {
+    link.href = "assets/css/themes/neon.css";
+    theme = "neon";
   }
-
-  setTheme(saved);
-
+  localStorage.setItem(THEME_KEY, theme);
   const btn = document.getElementById("theme-toggle");
-  if (btn) btn.textContent = saved === "dark" ? "🌞" : "🌙";
-});
+  if (btn) btn.setAttribute("aria-label", theme === "light" ? "Тёмная тема" : "Светлая тема");
+}
 
-window.toggleTheme = toggleTheme;
+export function toggleTheme() {
+  const curr = localStorage.getItem(THEME_KEY) || "neon";
+  applyTheme(curr === "neon" ? "light" : "neon");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  applyTheme(localStorage.getItem(THEME_KEY) || "neon");
+  const btn = document.getElementById("theme-toggle");
+  if (btn && !btn._bound) {
+    btn._bound = true;
+    btn.addEventListener("click", toggleTheme);
+  }
+});
