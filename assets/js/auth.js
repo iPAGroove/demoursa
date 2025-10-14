@@ -76,7 +76,10 @@ async function syncUser(u) {
   }
 
   // Обновим UI, если профиль открыт
-  if (typeof window.openSettings === "function") window.openSettings();
+  if (typeof window.openSettings === "function" && dlgIsOpen()) window.openSettings();
+function dlgIsOpen() {
+  const dlg = document.getElementById("settings-modal");
+  return dlg && dlg.classList.contains("open");
 }
 
 // === Login / Logout entry ===
