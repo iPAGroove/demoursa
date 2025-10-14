@@ -1,4 +1,4 @@
-// URSA IPA — v7.6.1 CleanCert Fix + i18n + Profile + VIP Modal + AutoCert + Firestore Integration
+// URSA IPA — v7.6.2 Full Stable (❌ Fix + Fade-In Status + CleanCert + i18n + VIP + Firestore)
 import { db } from "./firebase.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
@@ -100,18 +100,18 @@ const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", 
 const qs = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-// === Normalize Firestore ===
+// === Firestore normalize ===
 function normalize(doc) {
   const tags = Array.isArray(doc.tags) ? doc.tags : (doc.tags ? String(doc.tags).split(",").map(s => s.trim()) : []);
   return {
-    id: doc.ID || doc.id || "",
-    name: doc.NAME || doc.name || "",
-    bundleId: doc["Bundle ID"] || doc.bundleId || "",
-    version: doc.Version || doc.version || "",
-    minIOS: doc["minimal iOS"] || doc.minIOS || "",
+    id: doc.id || "",
+    name: doc.name || "",
+    bundleId: doc.bundleId || "",
+    version: doc.version || "",
+    minIOS: doc.minIOS || "",
     sizeBytes: doc.sizeBytes || 0,
     iconUrl: doc.iconUrl || "",
-    downloadUrl: doc.DownloadUrl || doc.downloadUrl || "",
+    downloadUrl: doc.downloadUrl || "",
     features_ru: doc.features_ru || "",
     features_en: doc.features_en || "",
     vipOnly: !!doc.vipOnly,
@@ -119,14 +119,12 @@ function normalize(doc) {
   };
 }
 
-// === Render catalog ===
+// === Render ===
 function renderCatalog(apps) {
-  const c = document.getElementById("catalog");
+  const c = qs("#catalog");
   c.innerHTML = "";
-  if (!apps.length) {
-    c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("empty")}</div>`;
-    return;
-  }
+  if (!apps.length)
+    return (c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("empty")}</div>`);
   apps.forEach(app => {
     const el = document.createElement("article");
     el.className = "card";
@@ -136,10 +134,10 @@ function renderCatalog(apps) {
         <div>
           <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
           <div class="meta">${escapeHTML(app.bundleId || "")}</div>
-          <div class="meta">v${escapeHTML(app.version || "")}${app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
+          <div class="meta">v${escapeHTML(app.version)}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
         </div>
       </div>`;
-    el.addEventListener("click", () => openModal(app));
+    el.onclick = () => openModal(app);
     c.appendChild(el);
   });
 }
@@ -165,7 +163,7 @@ async function installIPA(app) {
 }
 window.installIPA = installIPA;
 
-// === App Modal ===
+// === Modal open/close ===
 const modal = qs("#modal");
 function openModal(app) {
   qs("#app-icon").src = app.iconUrl;
@@ -186,25 +184,21 @@ function openModal(app) {
   }
   modal.classList.add("open"); document.body.style.overflow = "hidden";
 }
-modal.addEventListener("click", e => { if (e.target.hasAttribute("data-close") || e.target === modal) modal.classList.remove("open"), document.body.style.overflow = ""; });
+
+// === Universal ❌ close fix ===
+document.addEventListener("click", (e) => {
+  const btnClose = e.target.closest("[data-close], .close");
+  if (btnClose) {
+    const dlg = btnClose.closest(".dialog.open, #modal.open");
+    if (dlg) {
+      dlg.classList.remove("open");
+      dlg.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+  }
+});
 
 // === Profile ===
-function applyProfileI18n(dlg) {
-  const head = dlg.querySelector(".dialog-head strong");
-  if (head) head.textContent = __t("profile_title");
-  const certSection = dlg.querySelector(".profile-section h4");
-  if (certSection) certSection.textContent = __t("cert_section");
-  const certStateLabel = Array.from(dlg.querySelectorAll(".profile-section p")).find(p => p.textContent?.trim().startsWith("Состояние:") || p.textContent?.trim().startsWith("Status:"));
-  if (certStateLabel) certStateLabel.childNodes[0].nodeValue = __t("cert_state") + " "; // 🔧 fix double render
-  const accLine = dlg.querySelector("#cert-account")?.closest("p"); if (accLine) accLine.style.display = "none";
-  const expLine = dlg.querySelector("#cert-exp")?.closest("p"); if (expLine) expLine.style.display = "none";
-  const uploadBtn = dlg.querySelector("#cert-upload"); if (uploadBtn) uploadBtn.textContent = __t("cert_upload_btn");
-  const authBtn = dlg.querySelector("#auth-action"); if (authBtn) authBtn.textContent = localStorage.getItem("ursa_email") ? __t("logout_btn") : __t("login_btn");
-  const status = localStorage.getItem("ursa_status") || "free";
-  dlg.querySelector("#user-status").textContent = status === "vip" ? __t("badge_vip") : __t("badge_free");
-  dlg.querySelector(".profile-footer").innerHTML = `${__t("acc_status")} <b>${status === "vip" ? __t("acc_vip") : __t("acc_free")}</b>`;
-}
-
 window.openSettings = async function openSettings() {
   const dlg = qs("#settings-modal");
   const info = dlg.querySelector("#user-info");
@@ -214,37 +208,20 @@ window.openSettings = async function openSettings() {
   const status = localStorage.getItem("ursa_status") || "free";
   info.querySelector("#user-status").textContent = status === "vip" ? __t("badge_vip") : __t("badge_free");
 
-  // 🔧 Clean certificate indicator
+  // Fade-in status indicator
+  const certState = info.querySelector("#cert-state");
+  certState.style.opacity = 0;
   const hasP12 = !!localStorage.getItem("ursa_signer_id");
   const hasProv = !!localStorage.getItem("ursa_cert_exp");
   const certText = hasP12 && hasProv ? "✅ Загружен (2 файла)" : hasP12 || hasProv ? "⚠️ Частично" : "❌ Не загружен";
-  info.querySelector("#cert-state").textContent = certText;
+  certState.textContent = certText;
+  setTimeout(() => (certState.style.transition = "opacity .4s ease", certState.style.opacity = 1), 50);
 
-  const authBtn = info.querySelector("#auth-action");
-  authBtn.textContent = localStorage.getItem("ursa_email") ? __t("logout_btn") : __t("login_btn");
-  authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
-
-  const certBtn = info.querySelector("#cert-upload");
-  certBtn.textContent = __t("cert_upload_btn");
-  certBtn.onclick = () => { const m = qs("#signer-modal"); m.classList.add("open"); m.setAttribute("aria-hidden", "false"); };
-
-  const upgradeBtn = info.querySelector("#vip-upgrade");
-  if (upgradeBtn) { upgradeBtn.textContent = __t("upgrade_btn"); upgradeBtn.onclick = () => { const vip = qs("#vip-modal"); applyVipI18n(vip); vip.classList.add("open"); }; }
-
-  applyProfileI18n(dlg);
-  dlg.classList.add("open"); dlg.setAttribute("aria-hidden", "false");
+  dlg.classList.add("open");
+  dlg.setAttribute("aria-hidden", "false");
 };
 
-// === VIP Modal ===
-function applyVipI18n(vip) {
-  if (!vip) return;
-  const head = vip.querySelector(".dialog-head strong"); if (head) head.textContent = __t("vip_title");
-  const desc = vip.querySelector(".vip-desc"); if (desc) desc.textContent = __t("vip_desc");
-  const price = vip.querySelector(".vip-price"); if (price) price.textContent = __t("vip_price");
-  const buy = vip.querySelector("#buy-vip"); if (buy) buy.textContent = __t("vip_buy");
-}
-
-// === Main ===
+// === Firestore init ===
 document.addEventListener("DOMContentLoaded", async () => {
   qs("#navAppsIcon").src = ICONS.apps;
   qs("#navGamesIcon").src = ICONS.games;
@@ -266,20 +243,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     const list = state.all.filter(app =>
       q ? (app.name || "").toLowerCase().includes(q) || (app.bundleId || "").toLowerCase().includes(q)
         : state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps"));
-    if (!list.length)
-      qs("#catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t(state.q ? "not_found" : "empty")}</div>`;
-    else renderCatalog(list);
+    qs("#catalog").innerHTML = !list.length
+      ? `<div style="opacity:.7;text-align:center;padding:40px;">${__t(state.q ? "not_found" : "empty")}</div>`
+      : renderCatalog(list);
   };
 
   qs("#search").addEventListener("input", e => { state.q = e.target.value; apply(); });
-
-  const bar = qs("#tabbar");
-  bar.addEventListener("click", e => {
+  qs("#tabbar").addEventListener("click", e => {
     const btn = e.target.closest(".nav-btn"); if (!btn) return;
     if (btn.dataset.tab) {
-      state.tab = btn.dataset.tab; bar.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); btn.classList.add("active"); apply();
-    } else if (btn.id === "lang-btn") { lang = lang === "ru" ? "en" : "ru"; localStorage.setItem("ursa_lang", lang); location.reload(); }
-    else if (btn.id === "settings-btn") openSettings();
+      state.tab = btn.dataset.tab;
+      qsAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      apply();
+    } else if (btn.id === "lang-btn") {
+      lang = lang === "ru" ? "en" : "ru";
+      localStorage.setItem("ursa_lang", lang);
+      location.reload();
+    } else if (btn.id === "settings-btn") openSettings();
   });
 
   qs("#theme-toggle").addEventListener("click", toggleTheme);
