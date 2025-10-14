@@ -357,19 +357,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-    // кнопка 💳 Купить
+    // кнопка 💳 Купить — открывает Telegram
     const buyBtn = vipModal.querySelector("#buy-vip");
     if (buyBtn) {
       buyBtn.onclick = () => {
-        alert("🚀 После оплаты ваш аккаунт будет переведён в VIP статус!");
-        vipModal.classList.remove("open");
-        vipModal.setAttribute("aria-hidden", "true");
-
-        // временно локально выдаём VIP для теста
-        localStorage.setItem("ursa_status", "vip");
-        location.reload();
+        const tgLink = "tg://resolve?domain=Ursa_ipa";
+        // если Telegram не установлен — fallback в браузер
+        window.location.href = tgLink;
+        setTimeout(() => {
+          window.open("https://t.me/Ursa_ipa", "_blank");
+        }, 1200);
       };
     }
   }
 });
-
