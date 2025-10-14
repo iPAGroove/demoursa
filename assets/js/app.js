@@ -1,4 +1,4 @@
-// URSA IPA — v7.7 Full Dynamic i18n + Catalog + Modal + Profile + VIP + AutoCert + Firestore
+// URSA IPA — v7.8 Full Dynamic i18n + VIP Lock Blur + Catalog + Modal + Profile + AutoCert + Firestore
 import { db } from "./firebase.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
@@ -146,12 +146,19 @@ function renderCatalog(apps) {
     c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
     return;
   }
+
+  const userStatus = localStorage.getItem("ursa_status") || "free";
+
   apps.forEach((app) => {
     const el = document.createElement("article");
     el.className = "card";
+    if (app.vipOnly && userStatus !== "vip") el.classList.add("vip-locked");
     el.innerHTML = `
       <div class="row">
-        <img class="icon" src="${app.iconUrl}" alt="">
+        <div class="thumb">
+          <img class="icon" src="${app.iconUrl}" alt="">
+          ${app.vipOnly ? '<div class="vip-lock">🔒</div>' : ""}
+        </div>
         <div>
           <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
           <div class="meta">${escapeHTML(app.bundleId || "")}</div>
@@ -188,6 +195,7 @@ window.installIPA = installIPA;
 // === App Modal ===
 const appModal = document.getElementById("modal");
 function openModal(app) {
+  const userStatus = localStorage.getItem("ursa_status") || "free";
   qs("#app-icon").src = app.iconUrl || "";
   qs("#app-title").textContent = app.name || "";
   qs("#app-bundle").textContent = app.bundleId || "";
@@ -201,8 +209,7 @@ function openModal(app) {
 
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = "";
-  const status = localStorage.getItem("ursa_status") || "free";
-  if (app.vipOnly && status !== "vip") {
+  if (app.vipOnly && userStatus !== "vip") {
     dl.innerHTML = `<div style="color:#ff6;">${__t("vip_only")}</div>`;
   } else if (app.downloadUrl) {
     const a = document.createElement("button");
@@ -327,7 +334,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
       document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
-      applyI18n(); // мгновенно переводим весь интерфейс
+      applyI18n();
       apply();
     } else if (btn.id === "settings-btn") {
       openSettings();
@@ -335,6 +342,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
-  applyI18n(); // первый запуск
+  applyI18n();
   apply();
 });
