@@ -165,7 +165,6 @@ window.openSettings = async function openSettings() {
   const name = localStorage.getItem("ursa_name") || __t("guest");
   const status = localStorage.getItem("ursa_status") || "free";
   const photo = localStorage.getItem("ursa_photo");
-  const signer = localStorage.getItem("ursa_signer_id") ? "✅" : "❌";
 
   const info = document.getElementById("user-info");
   info.querySelector("#user-photo").src = photo || "assets/icons/avatar.png";
@@ -185,7 +184,7 @@ window.openSettings = async function openSettings() {
   vipBtn.textContent = __t("upgrade");
   vipBtn.onclick = () => openVIP();
 
-  // === Cert Upload Button ===
+  // Cert Upload Button
   let certBtn = document.getElementById("cert-upload");
   if (!certBtn) {
     certBtn = document.createElement("button");
@@ -242,19 +241,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function apply() {
     const q = state.q.trim().toLowerCase();
+
     const list = state.all.filter((app) => {
-      if (q)
+      if (q) {
         return (
           (app.name || "").toLowerCase().includes(q) ||
           (app.bundleId || "").toLowerCase().includes(q) ||
           (app.features || "").toLowerCase().includes(q) ||
-          app.tags.some((t) => (t || "").toLowerCase().includes(q))
+          (app.tags || []).some((t) => (t || "").toLowerCase().includes(q))
         );
-      return state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps");
+      }
+
+      // фильтрация по вкладке
+      if (state.tab === "games") {
+        return (app.tags || []).includes("games") || (app.tags || []).includes("игры");
+      }
+      if (state.tab === "apps") {
+        return (app.tags || []).includes("apps") || (app.tags || []).includes("приложения");
+      }
+
+      // если тегов нет — всё равно показываем
+      return true;
     });
-    !list.length
-      ? (document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(q ? "not_found" : "empty")}</div>`)
-      : renderCatalog(list);
+
+    if (!list.length) {
+      document.getElementById("catalog").innerHTML = `
+        <div style="opacity:.7;text-align:center;padding:40px 16px;">
+          ${__t(q ? "not_found" : "empty")}
+        </div>`;
+    } else {
+      renderCatalog(list);
+    }
   }
 
   search.addEventListener("input", () => {
