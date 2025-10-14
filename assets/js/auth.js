@@ -1,4 +1,4 @@
-// URSA Auth (v2.9)
+// URSA Auth (v3.1 FIXED)
 import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged, signInWithPopup, signInWithRedirect,
@@ -83,8 +83,7 @@ async function syncUser(u) {
   localStorage.setItem("ursa_name", u.displayName || "");
   localStorage.setItem("ursa_status", snap.exists() ? (snap.data().status || "free") : "free");
   await pullSignerAndStatus(u.uid);
-
-  if (typeof window.openSettings === "function") window.openSettings();
+  // ❌ УБРАН автоматический вызов openSettings()
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -99,6 +98,8 @@ onAuthStateChanged(auth, async (user) => {
     localStorage.clear();
     console.log("👋 Пользователь вышел");
   }
+
+  // 👇 оставляем только автообновление, без открытия профиля
   const dlg = document.getElementById("settings-modal");
   if (dlg?.classList.contains("open") && typeof window.openSettings === "function") {
     window.openSettings();
