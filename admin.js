@@ -1,5 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDFj9gOYU49Df6ohUR5CnbRv3qdY2i_OmU",
@@ -9,10 +11,10 @@ const firebaseConfig = {
   messagingSenderId: "239982196215",
   appId: "1:239982196215:web:9de387c51952da428daaf2"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Elements
 const cards = document.getElementById("cards");
 const modal = document.getElementById("modal");
 const form = document.getElementById("ipa-form");
@@ -20,15 +22,35 @@ const modalTitle = document.getElementById("modal-title");
 const iconInput = document.getElementById("iconUrl");
 const iconPreview = document.getElementById("icon-preview");
 const searchBox = document.getElementById("search");
+const userTable = document.getElementById("user-list");
 let editDocId = null;
 
-// ===== HELPERS =====
+// Tabs
+const ipaTab = document.getElementById("tab-ipas");
+const userTab = document.getElementById("tab-users");
+const ipaSection = document.getElementById("ipa-section");
+const userSection = document.getElementById("users-section");
+
+ipaTab.onclick = () => {
+  ipaTab.classList.add("active");
+  userTab.classList.remove("active");
+  ipaSection.style.display = "block";
+  userSection.style.display = "none";
+};
+userTab.onclick = () => {
+  userTab.classList.add("active");
+  ipaTab.classList.remove("active");
+  ipaSection.style.display = "none";
+  userSection.style.display = "block";
+  loadUsers();
+};
+
+// ========== IPA MANAGEMENT ==========
 function formatSize(bytes) {
   if (!bytes) return "-";
   return `${Math.round(bytes / 1000000)} MB`;
 }
 
-// === Загрузка ===
 async function loadData(query = "") {
   cards.innerHTML = "<p style='color:#888'>Загрузка...</p>";
   const snap = await getDocs(collection(db, "ursa_ipas"));
@@ -46,7 +68,6 @@ async function loadData(query = "") {
   render(apps);
 }
 
-// === Рендер карточек ===
 function render(apps) {
   cards.innerHTML = "";
   if (!apps.length) {
@@ -76,13 +97,11 @@ function render(apps) {
   });
 }
 
-// === Модалка ===
 function openModal(title, values = {}) {
   modalTitle.textContent = title;
   form.reset();
   editDocId = values.__docId || null;
 
-  // Основные поля
   form.name.value = values["NAME"] || "";
   form.bundleId.value = values["Bundle ID"] || "";
   form.version.value = values["Version"] || "";
@@ -90,12 +109,9 @@ function openModal(title, values = {}) {
   form.sizeBytes.value = values["sizeBytes"] ? Math.round(values["sizeBytes"] / 1000000) : "";
   form.iconUrl.value = values.iconUrl || "";
   form.downloadUrl.value = values.DownloadUrl || "";
-
-  // 🇷🇺 / 🇬🇧 фичи
   form.features_ru.value = values.features_ru || "";
   form.features_en.value = values.features_en || "";
 
-  // категории
   document.querySelectorAll(".tag-btn").forEach(btn => btn.classList.remove("active"));
   if (Array.isArray(values.tags)) {
     const tag = values.tags[0];
@@ -109,7 +125,6 @@ function openModal(title, values = {}) {
   modal.classList.add("open");
   document.body.style.overflow = "hidden";
 }
-
 function closeModal() {
   modal.classList.remove("open");
   document.body.style.overflow = "";
@@ -117,18 +132,10 @@ function closeModal() {
 modal.addEventListener("click", e => {
   if (e.target.hasAttribute("data-close") || e.target === modal) closeModal();
 });
-
-// === Превью иконки ===
 iconInput.addEventListener("input", () => {
-  if (iconInput.value) {
-    iconPreview.src = iconInput.value;
-    iconPreview.style.display = "block";
-  } else {
-    iconPreview.style.display = "none";
-  }
+  iconPreview.src = iconInput.value;
+  iconPreview.style.display = iconInput.value ? "block" : "none";
 });
-
-// === Выбор тега ===
 document.querySelectorAll(".tag-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tag-btn").forEach(b => b.classList.remove("active"));
@@ -136,61 +143,105 @@ document.querySelectorAll(".tag-btn").forEach(btn => {
     form.tag.value = btn.dataset.tag;
   });
 });
-
-// === Добавление / обновление ===
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const values = Object.fromEntries(new FormData(form));
 
   const ipa = {
-    "ID": values.bundleId && values.version ? `${values.bundleId}_${values.version}` : values.bundleId,
-    "NAME": values.name,
+    ID: values.bundleId && values.version ? `${values.bundleId}_${values.version}` : values.bundleId,
+    NAME: values.name,
     "Bundle ID": values.bundleId,
-    "Version": values.version,
+    Version: values.version,
     "minimal iOS": values.minIOS,
-    "sizeBytes": Number(values.sizeBytes || 0) * 1000000,
-    "iconUrl": values.iconUrl,
-    "DownloadUrl": values.downloadUrl,
-    // 🔹 Автоматические описания
-    "description_ru": "Функции мода",
-    "description_en": "Hack Features",
-    "features_ru": values.features_ru || "",
-    "features_en": values.features_en || "",
-    "tags": values.tag ? [values.tag] : [],
-    "updatedAt": new Date().toISOString(),
+    sizeBytes: Number(values.sizeBytes || 0) * 1000000,
+    iconUrl: values.iconUrl,
+    DownloadUrl: values.downloadUrl,
+    description_ru: "Функции мода",
+    description_en: "Hack Features",
+    features_ru: values.features_ru || "",
+    features_en: values.features_en || "",
+    tags: values.tag ? [values.tag] : [],
+    updatedAt: new Date().toISOString(),
   };
-
-  if (!editDocId) ipa["createdAt"] = new Date().toISOString();
-
-  if (editDocId) {
-    await updateDoc(doc(db, "ursa_ipas", editDocId), ipa);
-  } else {
-    await addDoc(collection(db, "ursa_ipas"), ipa);
-  }
-  closeModal();
-  loadData();
+  if (!editDocId) ipa.createdAt = new Date().toISOString();
+  if (editDocId) await updateDoc(doc(db, "ursa_ipas", editDocId), ipa);
+  else await addDoc(collection(db, "ursa_ipas"), ipa);
+  closeModal(); loadData();
 });
-
-// === Удаление ===
 window.deleteItem = async id => {
   if (confirm("Удалить запись?")) {
     await deleteDoc(doc(db, "ursa_ipas", id));
     loadData();
   }
 };
-
-// === Редактирование ===
 window.editItem = async id => {
   const snap = await getDocs(collection(db, "ursa_ipas"));
   const app = snap.docs.find(d => d.id === id);
   if (app) openModal("Редактировать IPA", { __docId: app.id, ...app.data() });
 };
-
-// === Поиск ===
 searchBox.addEventListener("input", () => loadData(searchBox.value));
-
-// === Кнопка добавить ===
 document.getElementById("add-btn").addEventListener("click", () => openModal("Добавить IPA"));
 
-// === Автозагрузка ===
+// ========== USERS MANAGEMENT ==========
+async function loadUsers(query = "") {
+  userTable.innerHTML = "<tr><td colspan='5' style='color:#888'>Загрузка...</td></tr>";
+  const snap = await getDocs(collection(db, "users"));
+  let users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (query) {
+    const q = query.toLowerCase();
+    users = users.filter(u =>
+      (u.email || "").toLowerCase().includes(q) ||
+      (u.name || "").toLowerCase().includes(q)
+    );
+  }
+
+  renderUsers(users);
+}
+
+function renderUsers(users) {
+  userTable.innerHTML = "";
+  if (!users.length) {
+    userTable.innerHTML = "<tr><td colspan='5' style='color:#888'>Нет пользователей</td></tr>";
+    return;
+  }
+  users.forEach(u => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${u.email || "—"}</td>
+      <td>${u.name || "—"}</td>
+      <td class="muted">${u.uid || u.id}</td>
+      <td><span class="badge ${u.status === "vip" ? "vip" : "free"}">${u.status || "free"}</span></td>
+      <td><button class="btn small" onclick="editUser('${u.id}', '${u.email}', '${u.name}', '${u.status}')">✏️</button></td>
+    `;
+    userTable.appendChild(tr);
+  });
+}
+window.editUser = (id, email, name, status) => {
+  const m = document.getElementById("user-modal");
+  document.getElementById("edit-user-email").textContent = email;
+  document.getElementById("edit-user-name").textContent = name;
+  document.getElementById("edit-user-status").value = status || "free";
+  m.dataset.id = id;
+  m.classList.add("open");
+  document.body.style.overflow = "hidden";
+};
+document.getElementById("save-user-status").onclick = async () => {
+  const m = document.getElementById("user-modal");
+  const id = m.dataset.id;
+  const newStatus = document.getElementById("edit-user-status").value;
+  await updateDoc(doc(db, "users", id), { status: newStatus });
+  m.classList.remove("open");
+  document.body.style.overflow = "";
+  loadUsers();
+};
+document.getElementById("user-modal").addEventListener("click", e => {
+  if (e.target.hasAttribute("data-close") || e.target === e.currentTarget) {
+    e.currentTarget.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+});
+document.getElementById("user-search").addEventListener("input", e => loadUsers(e.target.value));
+
+// Load IPA by default
 loadData();
