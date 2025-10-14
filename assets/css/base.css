@@ -427,3 +427,38 @@ font-weight: 600;
 .dialog-head .close:hover {
   background: rgba(0, 179, 255, 0.25);
 }
+/* === VIP CARD === */
+.vip-card {
+  max-width: 420px;
+  border-radius: 26px 26px 0 0;
+  background: rgba(18, 23, 34, 0.88);
+  border: 1px solid rgba(0, 179, 255, 0.2);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  animation: profileFade 0.4s ease;
+}
+
+#vip-body {
+  color: #cfe1ff;
+  padding: 18px 20px 26px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+#vip-body b {
+  color: var(--accent);
+}
+
+#vip-buy {
+  margin-top: 16px;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 0 18px rgba(0, 179, 255, 0.45);
+  transition: all 0.3s ease;
+}
+#vip-buy:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 26px rgba(0, 179, 255, 0.7);
+}
