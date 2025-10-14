@@ -1,0 +1,165 @@
+/* === URSA IPA LIGHT THEME v6.6 (paired with Neon Dark) === */
+
+:root {
+  --bg: #f6f8fb;
+  --bg-elev: #ffffff;
+  --card: #ffffff;
+  --border: #e3e7ed;
+  --text: #111;
+  --muted: #5c6a7c;
+  --accent: #007aff;
+  --radius: 16px;
+  --gap: 14px;
+  --nav-btn-h: 56px;
+  --nav-icon: 32px;
+  transition: background .3s ease, color .3s ease;
+}
+
+/* === BASE === */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.42 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color .3s ease, color .3s ease;
+}
+a { color: var(--accent); }
+img { display: block; }
+
+/* === HEADER === */
+.topbar {
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+.brand span {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--accent);
+}
+.brand span::before {
+  color: var(--accent);
+  border-right: 2px solid var(--accent);
+}
+
+/* === SEARCH === */
+#search {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+#search::placeholder { color: #9aa5b5; }
+#theme-toggle {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+#theme-toggle:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* === CARDS === */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+.card:hover {
+  box-shadow: 0 6px 22px rgba(0,0,0,.12), 0 0 10px rgba(0,122,255,.2);
+  transform: translateY(-2px);
+}
+.icon {
+  border: 1px solid var(--border);
+}
+.meta { color: var(--muted); }
+
+/* === NAVBAR === */
+.tabbar {
+  background: rgba(255,255,255,.8);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+}
+.newdock {
+  background: rgba(255,255,255,.75);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.newdock .nav-btn.active img {
+  filter: drop-shadow(0 0 8px var(--accent));
+}
+
+/* === BUTTONS === */
+.btn {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0,122,255,.35);
+}
+.btn:hover {
+  box-shadow: 0 0 16px rgba(0,122,255,.55);
+}
+.btn.outline {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.btn.neon {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(0,122,255,.45);
+}
+
+/* === PROFILE === */
+.profile-card.rework {
+  background: linear-gradient(180deg, #fdfdfd 0%, #f2f5fa 100%);
+  border: 1px solid rgba(0,122,255,.25);
+  box-shadow: 0 0 20px rgba(0,122,255,.12);
+}
+.neon-header {
+  background: rgba(0,122,255,.05);
+  border-bottom: 1px solid rgba(0,122,255,.2);
+  box-shadow: 0 2px 8px rgba(0,122,255,.05);
+}
+.avatar-glow {
+  background: radial-gradient(circle, rgba(0,122,255,.3) 0%, transparent 70%);
+  box-shadow: 0 0 22px rgba(0,122,255,.25);
+}
+.profile-avatar {
+  border: 2px solid var(--accent);
+}
+.badge-status {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0,122,255,.35);
+}
+.profile-cert {
+  background: rgba(0,122,255,.05);
+  border: 1px solid rgba(0,122,255,.2);
+}
+.profile-cert h4 {
+  color: var(--accent);
+}
+.cert-info p {
+  color: var(--text);
+}
+.account-status {
+  color: var(--muted);
+}
+
+/* === MODALS === */
+.dialog-card, .sheet {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 24px rgba(0,0,0,.08);
+}
+
+/* === ADAPTIVE === */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f8fb;
+    --bg-elev: #ffffff;
+    --text: #111;
+    --accent: #007aff;
+  }
+}
