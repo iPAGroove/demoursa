@@ -1,4 +1,4 @@
-// URSA IPA Admin — v7.6 (Filtered Users + VIP Control + Dual Tabs + Stable UI)
+// URSA IPA Admin — v7.6.1 (Fixed VIP Save + Stable UI + Dual Tabs)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc
@@ -16,7 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-console.log("⚙️ URSA Admin v7.6 started");
+console.log("⚙️ URSA Admin v7.6.1 started");
 
 // === Elements ===
 const cards = document.getElementById("cards");
@@ -255,11 +255,20 @@ window.editUser = (id, email, name, status) => {
   document.body.style.overflow = "hidden";
 };
 
+// ✅ FIXED: Correct collection name for VIP save
 document.getElementById("save-user-status").onclick = async () => {
   const m = document.getElementById("user-modal");
   const id = m.dataset.id;
   const newStatus = document.getElementById("edit-user-status").value;
-  await updateDoc(doc(db, "users", id), { status: newStatus });
+
+  try {
+    await updateDoc(doc(db, "ursa_users", id), { status: newStatus });
+    console.log(`✅ User ${id} status changed to ${newStatus}`);
+  } catch (err) {
+    console.error("❌ Ошибка при обновлении статуса:", err);
+    alert("Не удалось сохранить статус: " + err.message);
+  }
+
   m.classList.remove("open");
   document.body.style.overflow = "";
   loadUsers();
