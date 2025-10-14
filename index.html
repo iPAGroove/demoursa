@@ -98,7 +98,7 @@
 
         <div class="profile-section">
           <h4 data-i18n="cert_section">🔏 Сертификат</h4>
-          <p data-i18n="cert_state">Состояние: <span id="cert-state">❌ Не загружен</span></p>
+          <p><span data-i18n="cert_state">Состояние:</span> <span id="cert-state">❌ Не загружен</span></p>
           <button id="cert-upload" class="btn outline full" data-i18n="cert_upload_btn">📤 Добавить / Обновить сертификат</button>
         </div>
 
@@ -109,24 +109,24 @@
     </section>
   </div>
 
-  <!-- VIP МОДАЛКА -->
-  <div id="vip-modal" class="dialog" aria-hidden="true">
+  <!-- VIP МОДАЛКА (Glass) -->
+  <div id="vip-modal" class="dialog glass" aria-hidden="true">
     <div class="backdrop" data-close></div>
-    <section class="dialog-card">
+    <section class="dialog-card vip-card">
       <header class="dialog-head">
         <strong data-i18n="vip_title">VIP Статус URSA</strong>
         <button class="close" data-close>✕</button>
       </header>
       <div class="dialog-body">
-        <p data-i18n="vip_desc">
+        <p class="vip-desc" data-i18n="vip_desc">
           🌟 Получите VIP статус и откройте доступ ко всем модам, скрытым функциям и приоритетной подписи IPA.
         </p>
-        <ul>
-          <li data-i18n="vip_benefit1">⭐ Доступ к эксклюзивным модам</li>
-          <li data-i18n="vip_benefit2">⚡ Приоритетная установка без ожидания</li>
-          <li data-i18n="vip_benefit3">💬 Поддержка напрямую из Telegram</li>
+        <ul class="vip-benefits">
+          <li class="vip-benefit-1" data-i18n="vip_benefit1">⭐ Доступ к эксклюзивным модам</li>
+          <li class="vip-benefit-2" data-i18n="vip_benefit2">⚡ Приоритетная установка без ожидания</li>
+          <li class="vip-benefit-3" data-i18n="vip_benefit3">💬 Поддержка напрямую из Telegram</li>
         </ul>
-        <p style="margin-top:10px;font-weight:600;" data-i18n="vip_price">Цена: 4.99 USD / месяц</p>
+        <p class="vip-price" style="margin-top:10px;font-weight:600;" data-i18n="vip_price">Цена: 4.99 USD / месяц</p>
         <button id="buy-vip" class="btn full" data-i18n="vip_buy">💳 Купить</button>
       </div>
     </section>
@@ -157,8 +157,8 @@
   <script src="assets/js/themes.js?v=9"></script>
   <script src="assets/js/ios.js?v=9"></script>
   <script type="module" src="assets/js/firebase.js"></script>
-  <script type="module" src="assets/js/auth.js?v=7.3"></script>
-  <script type="module" src="assets/js/app.js?v=7.3"></script>
+  <script type="module" src="assets/js/auth.js?v=7.5"></script>
+  <script type="module" src="assets/js/app.js?v=7.5"></script>
   <script type="module" src="assets/js/signer_upload.js?v=4.3"></script>
 </body>
 </html>
