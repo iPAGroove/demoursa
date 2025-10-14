@@ -1,4 +1,4 @@
-// URSA Auth (v2.9) — двойной вход (уведомление), мгновенный logout, автозагрузка signer/статуса
+// URSA Auth (v2.9)
 import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged, signInWithPopup, signInWithRedirect,
@@ -6,19 +6,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-console.log("🔥 URSA Auth initialized");
-
-// — Мини помощник —
 async function pullSignerAndStatus(uid){
   try{
-    // user status
     const uref = doc(db,"users",uid);
     const usnap = await getDoc(uref);
     let status = "free";
     if (usnap.exists() && usnap.data().status) status = usnap.data().status;
     localStorage.setItem("ursa_status", status);
 
-    // signer
     const sref = doc(db,"ursa_signers",uid);
     const ssnap = await getDoc(sref);
     if (ssnap.exists()){
@@ -33,25 +28,21 @@ async function pullSignerAndStatus(uid){
   }catch(e){ console.warn("pullSignerAndStatus:", e); }
 }
 
-// — Ждём auth, если надо —
 const waitForAuth = () => new Promise((resolve) => {
   const unsub = onAuthStateChanged(auth, (user) => { if (user) { unsub(); resolve(user); } });
   setTimeout(() => resolve(auth.currentUser), 2000);
 });
 
-// — Login / Logout —
 window.ursaAuthAction = async () => {
   const user = auth.currentUser;
   if (user) {
     await signOut(auth);
-    // мгновенный UI reset
     localStorage.clear();
     if (window.openSettings) window.openSettings();
     if (window.ursaToast) ursaToast("Вы вышли из аккаунта", "success");
     return;
   }
 
-  // предупредим про «двойной вход»
   if (window.ursaToast) ursaToast("Сейчас откроется 1–2 окна входа Google — это нормально 🔐", "info", 5000);
 
   const provider = new GoogleAuthProvider();
@@ -69,13 +60,12 @@ window.ursaAuthAction = async () => {
 getRedirectResult(auth)
   .then(async (res) => {
     if (res && res.user) {
-      if (window.ursaToast) ursaToast("Вход выполнен (redirect) ✅", "success");
+      if (window.ursaToast) ursaToast("Вход выполнен ✅", "success");
       await syncUser(res.user);
     }
   })
   .catch((err) => console.error("Redirect error:", err));
 
-// — Синк профиля —
 async function syncUser(u) {
   if (!u) u = await waitForAuth();
   if (!u) return console.error("❌ Auth not ready");
@@ -97,7 +87,6 @@ async function syncUser(u) {
   if (typeof window.openSettings === "function") window.openSettings();
 }
 
-// — Наблюдатель состояния —
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     localStorage.setItem("ursa_uid", user.uid);
@@ -112,6 +101,6 @@ onAuthStateChanged(auth, async (user) => {
   }
   const dlg = document.getElementById("settings-modal");
   if (dlg?.classList.contains("open") && typeof window.openSettings === "function") {
-    window.openSettings(); // мгновенно перерисуем профиль
+    window.openSettings();
   }
 });
