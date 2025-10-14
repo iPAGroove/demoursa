@@ -1,4 +1,4 @@
-// URSA IPA — v6.4 Stable (Fixed Settings, Theme, Header, Logout Refresh)
+// URSA IPA — v6.5 Final Fix (No Auto Profile, Stable Settings, Theme, Header)
 import { db } from "./firebase.js";
 import { collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -186,13 +186,11 @@ window.updateProfileUI = function () {
 
 // === Main ===
 document.addEventListener("DOMContentLoaded", async () => {
-  // icons
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
   document.getElementById("navSettingsIcon").src = ICONS.settings;
 
-  // placeholders
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
 
@@ -239,18 +237,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
       location.reload();
-    } else if (btn.id === "settings-btn") {
-      console.log("⚙️ Settings pressed");
-      if (window.openSettings) window.openSettings();
     }
   });
 
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+
+  // ✅ FIX: Settings button is now handled separately
+  const settingsBtn = document.getElementById("settings-btn");
+  if (settingsBtn) {
+    settingsBtn.addEventListener("click", () => {
+      console.log("⚙️ Settings pressed (stable)");
+      window.openSettings();
+    });
+  }
+
   apply();
 });
 
 // === Settings Modal ===
-window.openSettings = async function () {
+window.openSettings = function () {
   const dlg = document.getElementById("settings-modal");
   if (!dlg) return;
   const email = localStorage.getItem("ursa_email");
@@ -264,6 +269,7 @@ window.openSettings = async function () {
     : "—";
 
   const info = document.getElementById("user-info");
+  if (!info) return;
   info.querySelector("#user-photo").src = photo || "assets/icons/avatar.png";
   info.querySelector("#user-name").textContent = name;
   info.querySelector("#user-email").textContent = email || "—";
@@ -278,4 +284,5 @@ window.openSettings = async function () {
   authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
 
   dlg.classList.add("open");
+  dlg.setAttribute("aria-hidden", "false");
 };
