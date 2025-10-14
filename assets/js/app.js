@@ -1,4 +1,4 @@
-// URSA IPA — Full UI + Profile + VIP + Signer + Progress + Theme Integration (v6.3)
+// URSA IPA — Full UI + Profile + VIP + Signer + Progress + Theme Integration (v6.4 FIXED)
 import { db } from "./firebase.js";
 import { collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -85,7 +85,7 @@ function makeProgress(container) {
   return { step };
 }
 
-// === INSTALL LOGIC (Cloud Run) ===
+// === INSTALL ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
   const prog = makeProgress(dl);
@@ -114,166 +114,16 @@ async function installIPA(app) {
 }
 window.installIPA = installIPA;
 
-// === RENDER CATALOG ===
-function renderCatalog(apps) {
-  const c = document.getElementById("catalog");
-  c.innerHTML = "";
-  if (!apps.length) {
-    c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t("empty")}</div>`;
-    return;
-  }
-  apps.forEach((app) => {
-    const el = document.createElement("article");
-    el.className = "card";
-    el.innerHTML = `
-      <div class="row">
-        <img class="icon" src="${app.iconUrl}" alt="">
-        <div>
-          <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
-          <div class="meta">${escapeHTML(app.bundleId || "")}</div>
-          <div class="meta">
-            v${escapeHTML(app.version || "")}${
-      app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""
-    }${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}
-          </div>
-        </div>
-      </div>`;
-    el.addEventListener("click", () => openModal(app));
-    c.appendChild(el);
-  });
-}
-
-// === APP MODAL ===
-const modal = document.getElementById("modal");
-function openModal(app) {
-  document.getElementById("app-icon").src = app.iconUrl;
-  document.getElementById("app-title").textContent = app.name || "";
-  document.getElementById("app-bundle").textContent = app.bundleId || "";
-  document.getElementById("app-info").textContent = `v${app.version || ""}${
-    app.minIOS ? " · iOS ≥ " + app.minIOS : ""
-  }${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
-
-  let feats = "";
-  if (lang === "ru" && app.features_ru) feats = app.features_ru;
-  else if (lang === "en" && app.features_en) feats = app.features_en;
-  else feats = app.features;
-  const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
-  document.getElementById("app-desc").innerHTML = featList.length
-    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
-       <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}</li>`).join("")}</ul>`
-    : "";
-
-  const dl = document.getElementById("dl-buttons");
-  dl.innerHTML = "";
-  const status = localStorage.getItem("ursa_status") || "free";
-  if (app.vipOnly && status !== "vip") {
-    dl.innerHTML = `<div style="color:#ff6;">🔒 Только для VIP</div>`;
-  } else if (app.downloadUrl) {
-    const a = document.createElement("button");
-    a.className = "btn";
-    a.textContent = __t("install");
-    a.onclick = () => installIPA(app);
-    dl.appendChild(a);
-  }
-
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-
-function closeModal() {
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-}
-
-modal.addEventListener("click", (e) => {
-  if (e.target.hasAttribute("data-close") || e.target === modal) closeModal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
-});
-
-// === MAIN ===
-document.addEventListener("DOMContentLoaded", async () => {
-  document.getElementById("navAppsIcon").src = ICONS.apps;
-  document.getElementById("navGamesIcon").src = ICONS.games;
-  document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
-  document.getElementById("navSettingsIcon").src = ICONS.settings;
-  document.getElementById("search").placeholder = __t("search_ph");
-
-  const state = { all: [], q: "", tab: "apps" };
-
-  try {
-    const snap = await getDocs(collection(db, "ursa_ipas"));
-    state.all = snap.docs.map((d) => normalize(d.data()));
-  } catch (err) {
-    console.error("Firestore:", err);
-    document.getElementById("catalog").innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t(
-      "load_error"
-    )}</div>`;
-  }
-
-  function apply() {
-    const q = state.q.trim().toLowerCase();
-    const list = state.all.filter((app) => {
-      if (q) {
-        return (
-          (app.name || "").toLowerCase().includes(q) ||
-          (app.bundleId || "").toLowerCase().includes(q) ||
-          (app.features || "").toLowerCase().includes(q) ||
-          app.tags.some((t) => (t || "").toLowerCase().includes(q))
-        );
-      }
-      return state.tab === "games" ? app.tags.includes("games") : app.tags.includes("apps");
-    });
-    if (!list.length) {
-      document.getElementById("catalog").innerHTML = `<div style="opacity:.7;text-align:center;padding:40px 16px;">${__t(
-        q ? "not_found" : "empty"
-      )}</div>`;
-    } else {
-      renderCatalog(list);
-    }
-  }
-
-  document.getElementById("search").addEventListener("input", () => {
-    state.q = search.value;
-    apply();
-  });
-
-  const bar = document.getElementById("tabbar");
-  bar.addEventListener("click", (e) => {
-    const btn = e.target.closest(".nav-btn");
-    if (!btn) return;
-    if (btn.dataset.tab) {
-      state.tab = btn.dataset.tab;
-      bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      apply();
-    } else if (btn.id === "lang-btn") {
-      lang = lang === "ru" ? "en" : "ru";
-      localStorage.setItem("ursa_lang", lang);
-      location.reload();
-    } else if (btn.id === "settings-btn") {
-      openSettings();
-    }
-  });
-
-  document.getElementById("settings-modal").addEventListener("click", (e) => {
-    if (e.target.hasAttribute("data-close") || e.target.id === "settings-modal") {
-      e.currentTarget.classList.remove("open");
-      e.currentTarget.setAttribute("aria-hidden", "true");
-    }
-  });
-
-  apply();
-});
-
-// === SETTINGS MODAL ===
+// === SETTINGS MODAL (FIXED) ===
 window.openSettings = async function openSettings() {
-  const dlg = document.getElementById("settings-modal");
-  const info = document.getElementById("user-info");
+  if (window.ursa_settings_lock) return;
+  window.ursa_settings_lock = true;
+  setTimeout(() => (window.ursa_settings_lock = false), 1000);
 
+  const dlg = document.getElementById("settings-modal");
+  if (!dlg) return;
+
+  const info = document.getElementById("user-info");
   const uid = localStorage.getItem("ursa_uid");
   const email = localStorage.getItem("ursa_email");
   const name = localStorage.getItem("ursa_name") || "Гость";
@@ -289,9 +139,7 @@ window.openSettings = async function openSettings() {
         localStorage.setItem("ursa_cert_account", ssnap.data().account || "—");
         if (ssnap.data().expires) localStorage.setItem("ursa_cert_exp", ssnap.data().expires);
       }
-    } catch (e) {
-      console.warn("Signer fetch:", e);
-    }
+    } catch (e) { console.warn("Signer fetch:", e); }
   }
 
   const signer = localStorage.getItem("ursa_signer_id") ? "✅ Загружен" : "❌ Не загружен";
@@ -321,6 +169,7 @@ window.openSettings = async function openSettings() {
     modal.setAttribute("aria-hidden", "false");
   };
 
+  // VIP/FREE переключатель
   let switchWrap = info.querySelector(".status-switch");
   if (!switchWrap) {
     switchWrap = document.createElement("div");
