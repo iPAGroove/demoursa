@@ -1,4 +1,4 @@
-// URSA Auth — v6.5 (Safe Double Login + AutoCert + Instant Logout + Live Profile Refresh)
+// URSA Auth — v7.5 (i18n RU/EN + Safe Double Login + AutoCert + Instant Logout + Live Profile Refresh)
 import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged,
@@ -10,14 +10,51 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-console.log("🔥 URSA Auth v6.5 initialized");
+console.log("🔥 URSA Auth v7.5 initialized");
+
+// === Local i18n (не зависит от app.js) ===
+const AUTH_I18N = {
+  ru: {
+    step1_popup: "🔐 Пожалуйста, подождите: выполняется двойная проверка входа.\nШаг 1/2 — вход через всплывающее окно.",
+    step2_ok: "✅ Шаг 2/2 — проверка безопасности пройдена.",
+    popup_fallback: "↪️ Переключаемся на защищённый вход (Шаг 2/2). Продолжите в открывшейся вкладке.",
+    redirect_ok: "✅ Redirect вход успешен",
+    logout_ok: "🚪 Вышли из аккаунта",
+    auth_not_ready: "❌ Авторизация ещё не готова",
+    sync_err_user: "⚠️ Не удалось подтянуть профиль из Firestore",
+    sync_err_signer: "⚠️ Не удалось подтянуть signer",
+    no_google: "❌ Не удалось запустить Google вход",
+  },
+  en: {
+    step1_popup: "🔐 Please wait: performing double-check sign-in.\nStep 1/2 — sign in via popup.",
+    step2_ok: "✅ Step 2/2 — security check passed.",
+    popup_fallback: "↪️ Falling back to secure sign-in (Step 2/2). Continue in the opened tab.",
+    redirect_ok: "✅ Redirect sign-in succeeded",
+    logout_ok: "🚪 Signed out",
+    auth_not_ready: "❌ Auth not ready yet",
+    sync_err_user: "⚠️ Failed to fetch user profile from Firestore",
+    sync_err_signer: "⚠️ Failed to fetch signer",
+    no_google: "❌ Could not start Google sign-in",
+  }
+};
+function langCode() {
+  const l = (localStorage.getItem("ursa_lang") || (navigator.language || "ru")).slice(0,2).toLowerCase();
+  return AUTH_I18N[l] ? l : "ru";
+}
+function t(key) {
+  const l = langCode();
+  return (AUTH_I18N[l] && AUTH_I18N[l][key]) || (AUTH_I18N.ru[key] || key);
+}
 
 // === Helper: safe set local storage ===
 function setLocal(key, val) {
-  try { localStorage.setItem(key, val ?? ""); } catch (e) { /* ignore */ }
+  try { localStorage.setItem(key, val ?? ""); } catch { /* ignore */ }
+}
+function removeLocal(key) {
+  try { localStorage.removeItem(key); } catch { /* ignore */ }
 }
 function clearLocalAll() {
-  try { localStorage.clear(); } catch (e) { /* ignore */ }
+  try { localStorage.clear(); } catch { /* ignore */ }
 }
 
 // === Wait for user (guards SSR/slow auth) ===
@@ -32,7 +69,7 @@ const waitForAuth = () =>
 // === Sync Firestore user + signer into localStorage ===
 async function syncUser(u) {
   if (!u) u = await waitForAuth();
-  if (!u) return console.error("❌ Auth not ready");
+  if (!u) { console.error(t("auth_not_ready")); return; }
 
   // users/{uid}
   const userRef = doc(db, "users", u.uid);
@@ -47,13 +84,13 @@ async function syncUser(u) {
       created_at: new Date().toISOString()
     });
   }
+  const data = snap.exists() ? snap.data() : { status: "free" };
 
-  const status = snap.exists() ? (snap.data().status || "free") : "free";
   setLocal("ursa_uid", u.uid);
   setLocal("ursa_email", u.email || "");
   setLocal("ursa_photo", u.photoURL || "");
   setLocal("ursa_name", u.displayName || "");
-  setLocal("ursa_status", status);
+  setLocal("ursa_status", data.status || "free");
 
   // ursa_signers/{uid} — автоподгрузка сертификата
   try {
@@ -64,15 +101,14 @@ async function syncUser(u) {
       setLocal("ursa_signer_id", u.uid);
       setLocal("ursa_cert_account", s.account || "—");
       setLocal("ursa_cert_exp", s.expires || "");
-      console.log("📜 Сертификат подгружен из базы.");
+      console.log("📜 Signer loaded from Firestore.");
     } else {
-      // нет сертификата — почистим локальные ключи сертификата
-      localStorage.removeItem("ursa_signer_id");
-      localStorage.removeItem("ursa_cert_account");
-      localStorage.removeItem("ursa_cert_exp");
+      removeLocal("ursa_signer_id");
+      removeLocal("ursa_cert_account");
+      removeLocal("ursa_cert_exp");
     }
   } catch (e) {
-    console.warn("⚠️ Не удалось получить signer-док:", e);
+    console.warn(t("sync_err_signer") + ":", e);
   }
 
   // Обновим UI, если профиль открыт
@@ -83,29 +119,30 @@ async function syncUser(u) {
 window.ursaAuthAction = async () => {
   const user = auth.currentUser;
   if (user) {
-    // Logout: мгновенно чистим локал и перерисовываем профиль
     await signOut(auth);
-    console.log("🚪 Вышли из аккаунта");
+    console.log(t("logout_ok"));
     clearLocalAll();
     if (typeof window.openSettings === "function") window.openSettings();
     return;
   }
 
-  // Login flow: безопасный двойной вход (popup → redirect)
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
   try {
-    console.log("🌐 Вход через popup…");
-    alert("🔐 Пожалуйста, подождите: выполняется двойная проверка входа.\nШаг 1/2 — вход через всплывающее окно.");
+    console.log("🌐 Sign-in via popup…");
+    alert(t("step1_popup"));
     const res = await signInWithPopup(auth, provider);
-    // Успех popup — всё равно сообщим про 2-й шаг (проверка токена)
-    alert("✅ Шаг 2/2 — проверка безопасности пройдена.");
+    alert(t("step2_ok"));
     await syncUser(res.user);
   } catch (err) {
-    console.warn("⚠️ Popup не сработал, fallback redirect вход…", err);
-    alert("↪️ Переключаемся на защищённый вход (Шаг 2/2). Продолжите в открывшейся вкладке.");
-    await signInWithRedirect(auth, provider);
+    console.warn("⚠️ Popup failed, fallback to redirect…", err);
+    alert(t("popup_fallback"));
+    try {
+      await signInWithRedirect(auth, provider);
+    } catch (e) {
+      console.error(t("no_google"), e);
+    }
   }
 };
 
@@ -113,7 +150,7 @@ window.ursaAuthAction = async () => {
 getRedirectResult(auth)
   .then(async (res) => {
     if (res && res.user) {
-      console.log("✅ Redirect вход успешен");
+      console.log(t("redirect_ok"));
       await syncUser(res.user);
     }
   })
@@ -132,9 +169,9 @@ onAuthStateChanged(auth, async (user) => {
       setLocal("ursa_photo", user.photoURL || "");
       setLocal("ursa_name", user.displayName || "");
       setLocal("ursa_status", status);
-      console.log(`👤 Активен: ${user.email} (${status})`);
+      console.log(`👤 Active: ${user.email} (${status})`);
     } catch (e) {
-      console.warn("⚠️ Не удалось подтянуть профиль из Firestore:", e);
+      console.warn(t("sync_err_user") + ":", e);
     }
 
     // Автоподгрузка сертификата
@@ -146,14 +183,18 @@ onAuthStateChanged(auth, async (user) => {
         setLocal("ursa_signer_id", user.uid);
         setLocal("ursa_cert_account", s.account || "—");
         setLocal("ursa_cert_exp", s.expires || "");
+      } else {
+        removeLocal("ursa_signer_id");
+        removeLocal("ursa_cert_account");
+        removeLocal("ursa_cert_exp");
       }
     } catch (e) {
-      console.warn("⚠️ Не удалось подтянуть signer:", e);
+      console.warn(t("sync_err_signer") + ":", e);
     }
   } else {
     // Signed out
     clearLocalAll();
-    console.log("👋 Пользователь вышел");
+    console.log("👋 Signed out");
   }
 
   // Если профиль открыт — перерисуем
