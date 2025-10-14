@@ -1,4 +1,4 @@
-// URSA Auth — v3.6 (Silent Init + No Auto Popup)
+// URSA Auth — v3.8 (Full Stable + No Auto Popup + Safe UI Update)
 import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged,
@@ -10,8 +10,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-console.log("🔥 URSA Auth v3.6 loaded");
+console.log("🔥 URSA Auth v3.8 fully loaded");
 
+// === Google provider ===
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
 
@@ -26,16 +27,17 @@ window.ursaAuthAction = async () => {
     return;
   }
 
+  alert("🔐 Для входа выберите Google-аккаунт (возможно 2 шага).");
   try {
     const res = await signInWithPopup(auth, provider);
     if (res?.user) await syncUser(res.user);
   } catch (err) {
-    console.warn("⚠️ Popup не сработал, пробуем Redirect вход…");
+    console.warn("⚠️ Popup не сработал — пробуем redirect вход…");
     await signInWithRedirect(auth, provider);
   }
 };
 
-// === Redirect login support ===
+// === Redirect Support ===
 getRedirectResult(auth)
   .then(async (res) => {
     if (res?.user) {
@@ -45,9 +47,9 @@ getRedirectResult(auth)
   })
   .catch((err) => console.error("Redirect error:", err));
 
-// === Firestore Sync ===
+// === Синхронизация с Firestore ===
 async function syncUser(u) {
-  if (!u) return;
+  if (!u) return console.error("❌ Пользователь не найден");
 
   const ref = doc(db, "users", u.uid);
   const snap = await getDoc(ref);
@@ -70,7 +72,6 @@ async function syncUser(u) {
   localStorage.setItem("ursa_name", u.displayName || "");
   localStorage.setItem("ursa_status", data.status || "free");
 
-  // === Cert info ===
   try {
     const signerRef = doc(db, "ursa_signers", u.uid);
     const signerSnap = await getDoc(signerRef);
@@ -84,11 +85,10 @@ async function syncUser(u) {
     console.warn("⚠️ Ошибка подгрузки сертификата:", e);
   }
 
-  // Только обновляем UI, без открытия окна
   if (window.updateProfileUI) window.updateProfileUI();
 }
 
-// === Silent Watcher ===
+// === Watcher (без открытия окна) ===
 let lastId = null;
 onAuthStateChanged(auth, async (user) => {
   if (user?.uid === lastId) return;
@@ -103,12 +103,12 @@ onAuthStateChanged(auth, async (user) => {
     localStorage.setItem("ursa_photo", user.photoURL || "");
     localStorage.setItem("ursa_name", user.displayName || "");
     localStorage.setItem("ursa_status", status);
-    console.log(`👤 Активен: ${user.email} (${status})`);
+    console.log(`👤 Авторизован: ${user.email} (${status})`);
   } else {
     console.log("👋 Пользователь вышел");
     localStorage.clear();
   }
 
-  // Не трогаем модалки — только UI
+  // Только UI
   if (window.updateProfileUI) window.updateProfileUI();
 });
