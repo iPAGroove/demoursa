@@ -1,4 +1,4 @@
-// URSA IPA — v7.5.3 CertFix + CleanProfile + ModalHandlers + Full i18n + VIP + AutoCert + Firestore
+// URSA IPA — v7.5.4 CertFix + ModalFix + CleanProfile + Full i18n + VIP + AutoCert + Firestore
 import { db } from "./firebase.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
@@ -145,11 +145,54 @@ function renderCatalog(apps) {
           <div class="meta">v${escapeHTML(app.version || "")}${app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
         </div>
       </div>`;
-    // Клик по карточке — открыть модал приложения
     el.addEventListener("click", () => openModal(app));
     c.appendChild(el);
   });
 }
+
+// === App Modal ===
+const appModal = document.getElementById("modal");
+function openModal(app) {
+  qs("#app-icon").src = app.iconUrl || "";
+  qs("#app-title").textContent = app.name || "";
+  qs("#app-bundle").textContent = app.bundleId || "";
+  qs("#app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
+
+  const feats = (lang === "ru" ? app.features_ru : app.features_en) || app.features || "";
+  const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
+  qs("#app-desc").innerHTML = featList.length
+    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
+       <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
+    : "";
+
+  const dl = document.getElementById("dl-buttons");
+  dl.innerHTML = "";
+  const status = localStorage.getItem("ursa_status") || "free";
+  if (app.vipOnly && status !== "vip") {
+    dl.innerHTML = `<div style="color:#ff6;">${__t("vip_only")}</div>`;
+  } else if (app.downloadUrl) {
+    const a = document.createElement("button");
+    a.className = "btn";
+    a.textContent = __t("install");
+    a.onclick = () => installIPA(app);
+    dl.appendChild(a);
+  }
+
+  appModal.classList.add("open");
+  appModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  appModal.classList.remove("open");
+  appModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+appModal.addEventListener("click", (e) => {
+  if (e.target === appModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && appModal.classList.contains("open")) closeModal();
+});
 
 // === Install IPA ===
 async function installIPA(app) {
@@ -168,75 +211,10 @@ async function installIPA(app) {
     dl.innerHTML = `<div style="opacity:.9;font-size:14px;">${__t("signing_ready")}</div>`;
     setTimeout(() => (location.href = json.install_link), 900);
   } catch (err) {
-    console.error("Install error:", err);
     dl.innerHTML = `<div style="opacity:.9;color:#ff6;">❌ ${err.message || err}</div>`;
   }
 }
 window.installIPA = installIPA;
-
-// === App Modal (open/close handlers restored) ===
-const appModal = document.getElementById("modal");
-function openModal(app) {
-  qs("#app-icon").src = app.iconUrl || "";
-  qs("#app-title").textContent = app.name || "";
-  qs("#app-bundle").textContent = app.bundleId || "";
-  qs("#app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
-
-  let feats = "";
-  if (lang === "ru" && app.features_ru) feats = app.features_ru;
-  else if (lang === "en" && app.features_en) feats = app.features_en;
-  else feats = app.features;
-
-  const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
-  qs("#app-desc").innerHTML = featList.length
-    ? `<div class="meta" style="margin-bottom:6px">${__t("hack_features")}</div>
-       <ul class="bullets">${featList.map((f) => `<li>${escapeHTML(f)}`).join("")}</ul>`
-    : "";
-
-  // Кнопки загрузки/установки
-  const dl = document.getElementById("dl-buttons");
-  dl.innerHTML = "";
-  const status = localStorage.getItem("ursa_status") || "free";
-  if (app.vipOnly && status !== "vip") {
-    dl.innerHTML = `<div style="color:#ff6;">${__t("vip_only")}</div>`;
-  } else if (app.downloadUrl) {
-    const a = document.createElement("button");
-    a.className = "btn";
-    a.textContent = __t("install");
-    a.onclick = () => installIPA(app);
-    dl.appendChild(a);
-  }
-
-  // Открыть модал
-  appModal.classList.add("open");
-  appModal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-function closeDialog(dlg) {
-  if (!dlg) return;
-  dlg.classList.remove("open");
-  dlg.setAttribute("aria-hidden", "true");
-  if (!qsa(".dialog.open").length) document.body.style.overflow = "";
-}
-function bindDialogClose(dlg) {
-  if (!dlg || dlg.__boundClose) return;
-  dlg.__boundClose = true;
-
-  // клик по фону или по любому элементу с [data-close]
-  dlg.addEventListener("click", (e) => {
-    if (e.target === dlg || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
-      closeDialog(dlg);
-    }
-  });
-}
-
-// Esc закрывает ТЕКУЩИЙ верхний диалог
-document.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-  const opened = qsa(".dialog.open");
-  const top = opened[opened.length - 1];
-  if (top) closeDialog(top);
-});
 
 // === Profile Modal ===
 window.openSettings = async function openSettings() {
@@ -247,7 +225,7 @@ window.openSettings = async function openSettings() {
   info.querySelector("#user-name").textContent = localStorage.getItem("ursa_name") || __t("guest");
   info.querySelector("#user-email").textContent = localStorage.getItem("ursa_email") || __t("dash");
 
-  // скрываем "Аккаунт:" и "Срок:" если присутствуют в вёрстке
+  // убираем "Аккаунт:" и "Срок:"
   const accLine = dlg.querySelector("#cert-account")?.closest("p");
   const expLine = dlg.querySelector("#cert-exp")?.closest("p");
   if (accLine) accLine.style.display = "none";
@@ -262,11 +240,9 @@ window.openSettings = async function openSettings() {
   const certBtn = info.querySelector("#cert-upload");
   certBtn.textContent = __t("cert_upload_btn");
   certBtn.onclick = () => {
-    const sm = document.getElementById("signer-modal");
-    applyVipI18nIfNeeded(); // безвредно
-    bindDialogClose(sm);
-    sm.classList.add("open");
-    sm.setAttribute("aria-hidden", "false");
+    const modal = document.getElementById("signer-modal");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
   };
 
   const authBtn = info.querySelector("#auth-action");
@@ -278,44 +254,23 @@ window.openSettings = async function openSettings() {
     upgradeBtn.textContent = __t("upgrade_btn");
     upgradeBtn.onclick = () => {
       const vip = document.getElementById("vip-modal");
-      applyVipI18n(vip);
-      bindDialogClose(vip);
       vip.classList.add("open");
       vip.setAttribute("aria-hidden", "false");
     };
   }
 
-  bindDialogClose(dlg);
   dlg.classList.add("open");
   dlg.setAttribute("aria-hidden", "false");
+  dlg.addEventListener("click", (e) => {
+    if (e.target === dlg || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
+      dlg.classList.remove("open");
+      dlg.setAttribute("aria-hidden", "true");
+    }
+  });
 };
 
-// === VIP Modal texts ===
-function applyVipI18n(vip) {
-  if (!vip) return;
-  const head = vip.querySelector(".dialog-head strong");
-  if (head) head.textContent = __t("vip_title");
-  const desc = vip.querySelector(".vip-desc");
-  if (desc) desc.textContent = __t("vip_desc");
-  const b1 = vip.querySelector(".vip-benefit-1");
-  const b2 = vip.querySelector(".vip-benefit-2");
-  const b3 = vip.querySelector(".vip-benefit-3");
-  if (b1) b1.textContent = __t("vip_benefit1");
-  if (b2) b2.textContent = __t("vip_benefit2");
-  if (b3) b3.textContent = __t("vip_benefit3");
-  const price = vip.querySelector(".vip-price");
-  if (price) price.textContent = __t("vip_price");
-  const buy = vip.querySelector("#buy-vip");
-  if (buy) buy.textContent = __t("vip_buy");
-}
-function applyVipI18nIfNeeded() {
-  const vip = document.getElementById("vip-modal");
-  if (vip) applyVipI18n(vip);
-}
-
-// === init & global dialog close bindings ===
+// === Firestore init ===
 document.addEventListener("DOMContentLoaded", async () => {
-  // Иконки/плейсхолдеры
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
@@ -324,14 +279,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
 
-  // Привязываем закрытие ко всем диалогам (включая X-кнопки с data-close)
-  qsa(".dialog").forEach(bindDialogClose);
-
-  // VIP "Купить"
-  const buyBtn = document.getElementById("buy-vip");
-  if (buyBtn) buyBtn.onclick = () => window.open("https://t.me/Ursa_ipa", "_blank");
-
-  // Состояние каталога
   const state = { all: [], q: "", tab: "apps" };
   try {
     const snap = await getDocs(collection(db, "ursa_ipas"));
@@ -340,26 +287,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("catalog").innerHTML = `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
   }
 
-  // Фильтрация/рендер
   const apply = () => {
     const q = state.q.trim().toLowerCase();
     const list = state.all.filter((app) =>
       q
         ? (app.name || "").toLowerCase().includes(q) ||
           (app.bundleId || "").toLowerCase().includes(q) ||
-          (app.features || "").toLowerCase().includes(q) ||
-          (app.tags || []).some((t) => (t || "").toLowerCase().includes(q))
+          (app.features || "").toLowerCase().includes(q)
         : state.tab === "games"
-        ? (app.tags || []).includes("games")
-        : (app.tags || []).includes("apps")
+        ? app.tags.includes("games")
+        : app.tags.includes("apps")
     );
     renderCatalog(list);
   };
 
-  // Поиск
   search.addEventListener("input", (e) => (state.q = e.target.value, apply()));
 
-  // Табы/кнопки
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
@@ -372,15 +315,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (btn.id === "lang-btn") {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
-      apply(); // мгновенное обновление
+      apply();
     } else if (btn.id === "settings-btn") {
       openSettings();
     }
   });
 
-  // Тема
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
-
-  // Первый рендер
   apply();
 });
