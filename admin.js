@@ -205,7 +205,7 @@ document.getElementById("add-btn").addEventListener("click", () => openModal("Д
 // ========== USERS MANAGEMENT ==========
 async function loadUsers(query = "") {
   userTable.innerHTML = "<tr><td colspan='5' style='color:#888'>Загрузка...</td></tr>";
-  const snap = await getDocs(collection(db, "users"));
+  const snap = await getDocs(collection(db, "ursa_users"));
   let users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
   users = users.filter(u =>
