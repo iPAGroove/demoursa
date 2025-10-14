@@ -1,4 +1,4 @@
-// URSA Auth — v7.0 (Full i18n + Safe Double Login + Instant Logout + Live Sync)
+// URSA Auth — v6.5 (Safe Double Login + AutoCert + Instant Logout + Live Profile Refresh)
 import { auth, db } from "./firebase.js";
 import {
   onAuthStateChanged,
@@ -10,17 +10,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-console.log("🔥 URSA Auth v7.0 initialized");
+console.log("🔥 URSA Auth v6.5 initialized");
 
-// === Helpers ===
-function t(k) {
-  return typeof window.__t === "function" ? window.__t(k) : k;
-}
+// === Helper: safe set local storage ===
 function setLocal(key, val) {
-  try { localStorage.setItem(key, val ?? ""); } catch (e) {}
+  try { localStorage.setItem(key, val ?? ""); } catch (e) { /* ignore */ }
 }
 function clearLocalAll() {
-  try { localStorage.clear(); } catch (e) {}
+  try { localStorage.clear(); } catch (e) { /* ignore */ }
 }
 
 // === Wait for user (guards SSR/slow auth) ===
@@ -37,6 +34,7 @@ async function syncUser(u) {
   if (!u) u = await waitForAuth();
   if (!u) return console.error("❌ Auth not ready");
 
+  // users/{uid}
   const userRef = doc(db, "users", u.uid);
   const snap = await getDoc(userRef);
   if (!snap.exists()) {
@@ -57,7 +55,7 @@ async function syncUser(u) {
   setLocal("ursa_name", u.displayName || "");
   setLocal("ursa_status", status);
 
-  // signer autoload
+  // ursa_signers/{uid} — автоподгрузка сертификата
   try {
     const signerRef = doc(db, "ursa_signers", u.uid);
     const signerSnap = await getDoc(signerRef);
@@ -66,64 +64,65 @@ async function syncUser(u) {
       setLocal("ursa_signer_id", u.uid);
       setLocal("ursa_cert_account", s.account || "—");
       setLocal("ursa_cert_exp", s.expires || "");
-      console.log("📜", t("Certificate loaded from database"));
+      console.log("📜 Сертификат подгружен из базы.");
     } else {
+      // нет сертификата — почистим локальные ключи сертификата
       localStorage.removeItem("ursa_signer_id");
       localStorage.removeItem("ursa_cert_account");
       localStorage.removeItem("ursa_cert_exp");
     }
   } catch (e) {
-    console.warn("⚠️", t("Failed to fetch signer doc:"), e);
+    console.warn("⚠️ Не удалось получить signer-док:", e);
   }
 
-  // refresh UI if open
+  // Обновим UI, если профиль открыт
   if (typeof window.openSettings === "function") window.openSettings();
 }
 
-// === Login / Logout ===
+// === Login / Logout entry ===
 window.ursaAuthAction = async () => {
   const user = auth.currentUser;
   if (user) {
+    // Logout: мгновенно чистим локал и перерисовываем профиль
     await signOut(auth);
-    console.log("🚪", t("Signed out"));
+    console.log("🚪 Вышли из аккаунта");
     clearLocalAll();
     if (typeof window.openSettings === "function") window.openSettings();
     return;
   }
 
+  // Login flow: безопасный двойной вход (popup → redirect)
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
   try {
-    console.log("🌐", t("Signing in via popup…"));
-    alert(
-      t("🔐 Please wait: double-checking your login.\nStep 1/2 — signing in via popup.")
-    );
+    console.log("🌐 Вход через popup…");
+    alert("🔐 Пожалуйста, подождите: выполняется двойная проверка входа.\nШаг 1/2 — вход через всплывающее окно.");
     const res = await signInWithPopup(auth, provider);
-    alert(t("✅ Step 2/2 — security check completed."));
+    // Успех popup — всё равно сообщим про 2-й шаг (проверка токена)
+    alert("✅ Шаг 2/2 — проверка безопасности пройдена.");
     await syncUser(res.user);
   } catch (err) {
-    console.warn("⚠️ Popup failed, fallback redirect:", err);
-    alert(
-      t("↪️ Switching to secure login (Step 2/2). Continue in the opened tab.")
-    );
+    console.warn("⚠️ Popup не сработал, fallback redirect вход…", err);
+    alert("↪️ Переключаемся на защищённый вход (Шаг 2/2). Продолжите в открывшейся вкладке.");
     await signInWithRedirect(auth, provider);
   }
 };
 
-// === Redirect login step ===
+// === Redirect result (второй шаг двойного входа) ===
 getRedirectResult(auth)
   .then(async (res) => {
     if (res && res.user) {
-      console.log("✅", t("Redirect login successful"));
+      console.log("✅ Redirect вход успешен");
       await syncUser(res.user);
     }
   })
   .catch((err) => console.error("Redirect error:", err));
 
-// === Global watcher ===
+// === Global watcher — держим локальное состояние и профиль в актуальном виде ===
 onAuthStateChanged(auth, async (user) => {
   if (user) {
+    // Подтянем статус и сертификат
     try {
       const uref = doc(db, "users", user.uid);
       const usnap = await getDoc(uref);
@@ -133,11 +132,12 @@ onAuthStateChanged(auth, async (user) => {
       setLocal("ursa_photo", user.photoURL || "");
       setLocal("ursa_name", user.displayName || "");
       setLocal("ursa_status", status);
-      console.log(`👤 ${t("Active")}: ${user.email} (${status})`);
+      console.log(`👤 Активен: ${user.email} (${status})`);
     } catch (e) {
-      console.warn("⚠️", t("Failed to fetch user profile:"), e);
+      console.warn("⚠️ Не удалось подтянуть профиль из Firestore:", e);
     }
 
+    // Автоподгрузка сертификата
     try {
       const signerRef = doc(db, "ursa_signers", user.uid);
       const signerSnap = await getDoc(signerRef);
@@ -148,13 +148,15 @@ onAuthStateChanged(auth, async (user) => {
         setLocal("ursa_cert_exp", s.expires || "");
       }
     } catch (e) {
-      console.warn("⚠️", t("Failed to fetch signer:"), e);
+      console.warn("⚠️ Не удалось подтянуть signer:", e);
     }
   } else {
+    // Signed out
     clearLocalAll();
-    console.log("👋", t("User signed out"));
+    console.log("👋 Пользователь вышел");
   }
 
+  // Если профиль открыт — перерисуем
   const dlg = document.getElementById("settings-modal");
   if (dlg?.classList.contains("open") && typeof window.openSettings === "function") {
     window.openSettings();

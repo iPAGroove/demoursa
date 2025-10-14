@@ -20,14 +20,14 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <!-- HEADER -->
+  <!-- ШАПКА -->
   <header class="topbar">
     <div class="wrap">
       <div class="brand"><span data-text="URSA IPA">URSA IPA</span></div>
     </div>
   </header>
 
-  <!-- SEARCH -->
+  <!-- ПОИСК -->
   <section class="search-area">
     <div class="wrap search-wrap">
       <input id="search" type="search" inputmode="search" placeholder="Поиск по названию, bundleId…" />
@@ -35,14 +35,14 @@
     </div>
   </section>
 
-  <!-- CATALOG -->
+  <!-- КАТАЛОГ -->
   <main>
     <div class="wrap">
       <div id="catalog" class="catalog" role="list"></div>
     </div>
   </main>
 
-  <!-- NAVBAR -->
+  <!-- НИЖНЯЯ ПАНЕЛЬ -->
   <nav class="tabbar" id="tabbar" role="tablist">
     <div class="dock newdock">
       <button class="nav-btn active" data-tab="apps"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
@@ -52,7 +52,7 @@
     </div>
   </nav>
 
-  <!-- APP MODAL -->
+  <!-- МОДАЛКА ПРИЛОЖЕНИЯ -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <article class="sheet" role="dialog">
@@ -76,12 +76,12 @@
     </article>
   </div>
 
-  <!-- PROFILE (URSA Neon Glass) -->
+  <!-- НАСТРОЙКИ / ПРОФИЛЬ (URSA Neon Glass) -->
   <div id="settings-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card profile-card big">
       <header class="dialog-head">
-        <strong id="profile-title">Профиль URSA</strong>
+        <strong>Профиль URSA</strong>
         <button class="close" data-close>✕</button>
       </header>
 
@@ -93,33 +93,25 @@
           <span id="user-status" class="status-badge">Free</span>
 
           <button id="auth-action" class="btn small">Войти через Google</button>
-          <button id="vip-upgrade" class="btn outline small">⭐ Поднять статус</button>
+          <button id="toggle-status" class="btn outline small">🔁 Переключить статус</button>
+        </div>
+
+        <div class="profile-section">
+          <h4>🔏 Сертификат</h4>
+          <p>Состояние: <span id="cert-state">❌ Не загружен</span></p>
+          <p>Аккаунт: <span id="cert-account">—</span></p>
+          <p>Действует до: <span id="cert-exp">—</span></p>
+          <button id="cert-upload" class="btn outline full">📤 Добавить / Обновить сертификат</button>
         </div>
 
         <div class="profile-footer">
-          <span id="profile-footer-text">Статус аккаунта: <b id="acc-status">Free</b></span>
+          Статус аккаунта: <b id="acc-status">Free</b>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- VIP MODAL -->
-  <div id="vip-modal" class="dialog" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <section class="dialog-card vip-card">
-      <header class="dialog-head">
-        <strong id="vip-title">URSA VIP</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="dialog-body" id="vip-body">
-        <p id="vip-desc">VIP открывает доступ к приватным IPA, установке без ограничений и ранним обновлениям.</p>
-        <p id="vip-price"><b>Цена: 4.99 $ / месяц</b></p>
-        <button id="vip-buy" class="btn full">💎 Купить VIP</button>
-      </div>
-    </section>
-  </div>
-
-  <!-- SIGNER MODAL -->
+  <!-- SIGNER -->
   <div id="signer-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card">
@@ -127,20 +119,13 @@
         <strong>URSA Signer</strong>
         <button class="close" data-close>✕</button>
       </header>
-
       <div class="dialog-body">
         <p>📄 Загрузите свой сертификат (.p12) и provisioning (.mobileprovision):</p>
         <form id="signer-form">
-          <label>Файл .p12<br>
-            <input type="file" id="fileP12" accept=".p12" required>
-          </label><br><br>
-          <label>Файл .mobileprovision<br>
-            <input type="file" id="fileProv" accept=".mobileprovision" required>
-          </label><br><br>
-          <label>Пароль<br>
-            <input type="password" id="certPass" placeholder="Пароль (если есть)">
-          </label><br><br>
-          <button type="submit" id="uploadBtn" class="btn full">⬆️ Загрузить в Firebase</button>
+          <label>Файл .p12<br><input type="file" id="fileP12" accept=".p12" required></label><br><br>
+          <label>Файл .mobileprovision<br><input type="file" id="fileProv" accept=".mobileprovision" required></label><br><br>
+          <label>Пароль<br><input type="password" id="certPass" placeholder="password (если есть)"></label><br><br>
+          <button type="submit" id="uploadBtn" class="btn">⬆️ Загрузить в Firebase</button>
         </form>
         <div id="uploadStatus" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
       </div>
@@ -152,7 +137,7 @@
   <script src="assets/js/ios.js?v=9"></script>
   <script type="module" src="assets/js/firebase.js"></script>
   <script type="module" src="assets/js/auth.js?v=6.5"></script>
-  <script type="module" src="assets/js/app.js?v=7.2"></script>
+  <script type="module" src="assets/js/app.js?v=6.5"></script>
   <script type="module" src="assets/js/signer_upload.js?v=4.3"></script>
 </body>
 </html>
