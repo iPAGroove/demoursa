@@ -292,7 +292,23 @@ window.openSettings = async function openSettings() {
     }
   });
 };
+// === Signer Modal (добавление сертификата) ===
+const signerModal = document.getElementById("signer-modal");
+if (signerModal) {
+  signerModal.addEventListener("click", (e) => {
+    if (e.target === signerModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
+      signerModal.classList.remove("open");
+      signerModal.setAttribute("aria-hidden", "true");
+    }
+  });
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && signerModal.classList.contains("open")) {
+      signerModal.classList.remove("open");
+      signerModal.setAttribute("aria-hidden", "true");
+    }
+  });
+}
 // === Firestore LazyLoad ===
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("navAppsIcon").src = ICONS.apps;
