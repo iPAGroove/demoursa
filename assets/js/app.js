@@ -165,7 +165,9 @@ document.addEventListener("keydown", (e) => {
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const email = localStorage.getItem("ursa_email");
-  const name = localStorage.getItem("ursa_name") || "Гость";
+  const name =
+  localStorage.getItem("ursa_name") ||
+  (lang === "ru" ? "Гость" : "Guest");
   const status = localStorage.getItem("ursa_status") || "free";
   const photo = localStorage.getItem("ursa_photo");
 
