@@ -85,6 +85,7 @@ async function syncUser(u) {
   localStorage.setItem("ursa_name", u.displayName || "");
   localStorage.setItem("ursa_status", data.status || "free");
 
+  // === Load signer info (certificate) ===
   try {
     const signerRef = doc(db, "ursa_signers", u.uid);
     const signerSnap = await getDoc(signerRef);
