@@ -398,12 +398,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     state.loading = true;
 
     const cRef = collection(db, "ursa_ipas");
-    // Сортируем по NAME. Это требует 1 индекса `NAME asc`.
-    // Если будешь сортировать по `updatedAt`, понадобится индекс `updatedAt desc`.
-    // Пока оставим `NAME` для предсказуемой подгрузки.
-    let qRef = query(cRef, orderBy("NAME"), limit(20)); 
+
+    // === ИСПРАВЛЕНИЕ ===
+    // Сортируем по 'updatedAt' (самые новые СНАЧALA)
+    // Это гарантирует, что "Updates" всегда будут первыми в списке.
+    let qRef = query(cRef, orderBy("updatedAt", "desc"), limit(20)); 
     if (state.last) {
-      qRef = query(cRef, orderBy("NAME"), startAfter(state.last), limit(20));
+      // state.last теперь будет документом с полем 'updatedAt', а не 'NAME'
+      qRef = query(cRef, orderBy("updatedAt", "desc"), startAfter(state.last), limit(20));
     }
 
     try {
