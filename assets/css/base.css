@@ -596,3 +596,93 @@ body.light .scroll-card:hover { box-shadow: 0 6px 20px rgba(0, 127, 255, 0.25); 
   .scroll-card { width: 180px; }
   .scroll-card img { height: 140px; }
 }
+/* === FIX: Popular / Updates как 3 колонки, без горизонтального скролла === */
+
+/* сам контейнер секции больше НЕ скроллится по X, а становится grid */
+.scroll-row {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  overflow: visible !important;
+  padding: 8px 0 16px !important;
+  scroll-snap-type: none !important;
+}
+
+/* карточка секции больше не фиксированной ширины */
+.scroll-card {
+  width: auto !important;
+  flex: 0 0 auto;
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+/* содержание карточки: иконка слева, текст справа */
+.scroll-card .body {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+}
+
+/* иконка */
+.scroll-card .thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,179,255,.25);
+}
+.scroll-card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+/* тексты */
+.scroll-card h3 {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+}
+.scroll-card .meta {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ховер и неоновый свет — аккуратно */
+.scroll-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(0,179,255,.35);
+}
+
+/* бейджи NEW/UPDATE/VIP остаются, просто уточним позицию */
+.scroll-card .badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+}
+
+/* заголовки секций — отступы как на скрине */
+.section-title {
+  margin: 22px 4px 10px !important;
+}
+
+/* (опционально) если совсем маленькие экраны — можно упасть в 2 колонки.
+   если хочешь строго 3 везде — удали этот медиазапрос. */
+@media (max-width: 360px) {
+  .scroll-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
