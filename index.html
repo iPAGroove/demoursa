@@ -11,23 +11,19 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 
-  <!-- CSS -->
   <link rel="stylesheet" href="assets/css/base.css" />
   <link rel="stylesheet" href="assets/css/ios.css" />
   <link id="theme-css" rel="stylesheet" href="assets/css/themes/neon.css" />
 
-  <!-- Google Identity -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <!-- 🧭 ШАПКА -->
   <header class="topbar">
     <div class="wrap">
       <div class="brand"><span>URSA IPA</span></div>
     </div>
   </header>
 
-  <!-- 🔍 ПОИСК -->
   <section class="search-area">
     <div class="wrap search-wrap">
       <input id="search" type="search" inputmode="search" data-i18n-placeholder="search_ph" placeholder="Поиск по названию, bundleId…">
@@ -35,14 +31,19 @@
     </div>
   </section>
 
-  <!-- 📱 КАТАЛОГ -->
   <main>
     <div class="wrap">
-      <div id="catalog" class="catalog" role="list"></div>
+      
+      <div id="featured-collections" class="catalog-collections">
+        </div>
+      
+      <h2 id="main-catalog-title" class="collection-title" style="margin-top: 24px; display: none;">Apps</h2>
+      <div id="catalog" class="catalog" role="list">
+        </div>
+
     </div>
   </main>
 
-  <!-- ⚙️ НИЖНЯЯ ПАНЕЛЬ -->
   <nav class="tabbar" id="tabbar" role="tablist">
     <div class="dock newdock">
       <button class="nav-btn active" data-tab="apps"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
@@ -52,7 +53,6 @@
     </div>
   </nav>
 
-  <!-- 🧩 МОДАЛКА ПРИЛОЖЕНИЯ -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <article class="sheet" role="dialog">
@@ -76,7 +76,6 @@
     </article>
   </div>
 
-  <!-- 👤 МОДАЛКА ПРОФИЛЯ -->
   <div id="settings-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card profile-card big">
@@ -96,7 +95,6 @@
           <button id="vip-upgrade" class="btn outline small" data-i18n="upgrade_btn">🚀 Поднять статус</button>
         </div>
 
-        <!-- Сертификат -->
         <div class="profile-section">
           <h4 data-i18n="cert_section">🔏 Сертификат</h4>
           <p><span data-i18n="cert_state">Состояние:</span> <span id="cert-state" data-i18n="cert_state_none">❌ Не загружен</span></p>
@@ -112,7 +110,6 @@
     </section>
   </div>
 
-  <!-- 🌟 VIP МОДАЛКА -->
   <div id="vip-modal" class="dialog glass" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card vip-card">
@@ -135,7 +132,6 @@
     </section>
   </div>
 
-  <!-- 🪪 SIGNER -->
   <div id="signer-modal" class="dialog" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <section class="dialog-card">
@@ -156,7 +152,6 @@
     </section>
   </div>
 
-  <!-- 🧩 JS -->
   <script src="assets/js/themes.js?v=9"></script>
   <script src="assets/js/ios.js?v=9"></script>
   <script type="module" src="assets/js/firebase.js"></script>
