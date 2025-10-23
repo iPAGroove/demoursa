@@ -1,19 +1,17 @@
-// URSA IPA — v8.0 LazyLoad + Dynamic i18n + VIP Lock Blur + Profile + AutoCert + Firestore
-// === МОДИФИЦИРОВАНО: НОВЫЙ ВИД КОЛЛЕКЦИЙ v9.0 ===
-
+// URSA IPA — v9.1: Гибрид (v8.0 LazyLoad + v9.0 Carousels)
 import { db } from "./firebase.js";
 import {
   collection,
   query,
   orderBy,
   limit,
-  // startAfter, // Больше не нужен для старой постраничной загрузки
+  startAfter, // <-- ВОЗВРАЩАЕМ LAZY LOAD
   getDocs,
-  doc,         // Добавлено
-  updateDoc,   // Добавлено
-  increment,   // Добавлено
-  where,       // Добавлено
-  Timestamp    // Добавлено
+  doc,
+  updateDoc,
+  increment,
+  where,
+  Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
 
@@ -128,12 +126,11 @@ const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({
 const qs = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-// === НОВАЯ ФУНКЦИЯ: Учет кликов по "Установить" ===
+// === НОВАЯ ФУНКЦИЯ: Учет кликов по "Установить" (без изменений) ===
 async function incrementInstallCount(appId) {
   if (!appId) return;
   try {
     const appRef = doc(db, "ursa_ipas", appId);
-    // Убедись, что в Firestore есть поле 'installCount' (тип Number)
     await updateDoc(appRef, {
       installCount: increment(1)
     });
@@ -142,18 +139,17 @@ async function incrementInstallCount(appId) {
   }
 }
 
-// === Normalize Firestore doc (МОДИФИЦИРОВАНО) ===
-// Теперь принимает весь 'doc', а не 'doc.data()'
+// === Normalize Firestore doc (без изменений) ===
 // Добавлены ID и временные метки
 function normalize(doc) {
-  const data = doc.data(); // Получаем данные из документа
+  const data = doc.data(); 
   const tags = Array.isArray(data.tags)
     ? data.tags
     : data.tags
     ? String(data.tags).split(",").map((s) => s.trim())
     : [];
   return {
-    id: doc.id, // <-- ВАЖНО: получаем ID_документа
+    id: doc.id, 
     name: data.NAME || data.name || "",
     bundleId: data["Bundle ID"] || data.bundleId || "",
     version: data.Version || data.version || "",
@@ -166,43 +162,42 @@ function normalize(doc) {
     features_en: data.features_en || "",
     vipOnly: !!data.vipOnly,
     tags: tags.map((t) => t.toLowerCase()),
-    createdAt: data.createdAt || null, // <-- НУЖНО ПОЛЕ Timestamp в Firestore
-    updatedAt: data.updatedAt || null  // <-- НУЖНО ПОЛЕ Timestamp в Firestore
+    createdAt: data.createdAt || null, 
+    updatedAt: data.updatedAt || null,
+    // Нам нужно поле installCount для сортировки "Popular"
+    installCount: data.installCount || 0 
   };
 }
 
-// === Catalog render (ПОЛНОСТЬЮ ЗАМЕНЕН) ===
-// Старая 'renderCatalog' удалена. Новая функция рендерит 1 ряд карусели.
+// === Catalog render (Функция рендеринга 1-го ряда карусели) (без изменений) ===
+const catalogContainer = document.getElementById("catalog");
+let allAppsCache = {}; // Кэш для модального окна
+
 function renderCollectionRow(containerEl, title, apps) {
   if (!apps.length) return; // Не рендерим пустые секции
 
   const userStatus = localStorage.getItem("ursa_status") || "free";
   const now = Timestamp.now();
-  // 7 дней назад
   const sevenDaysAgo = Timestamp.fromMillis(now.toMillis() - 7 * 24 * 60 * 60 * 1000);
 
   let cardsHTML = "";
   apps.forEach((app) => {
-    let badge = "";
+    // Добавляем приложение в кэш для модалки
+    if (app.id) allAppsCache[app.id] = app;
     
-    // Логика для плашек New/Update
-    // Проверяем, было ли обновление за последние 7 дней
+    let badge = "";
     if (app.updatedAt && app.updatedAt.seconds > sevenDaysAgo.seconds) {
-      // Проверяем, что обновление было не в ту же минуту, что и создание
       if (app.createdAt && (app.updatedAt.seconds - app.createdAt.seconds > 60)) { 
          badge = '<span class="badge update">Update</span>';
       }
     }
-    // Если не "Update", проверяем, не "New" ли (создано за последние 7 дней)
     if (!badge && app.createdAt && app.createdAt.seconds > sevenDaysAgo.seconds) {
        badge = '<span class="badge new">New</span>';
     }
     
-    // Проверка на VIP-блок
     const isLocked = app.vipOnly && userStatus !== "vip";
     const cardClass = isLocked ? "card vip-locked" : "card";
 
-    // data-app-id нужен для модального окна
     cardsHTML += `
       <article class="${cardClass}" data-app-id="${app.id}"> 
         ${badge}
@@ -231,12 +226,9 @@ function renderCollectionRow(containerEl, title, apps) {
 }
 
 
-// === Install IPA (МОДИФИЦИРОВАНО) ===
+// === Install IPA (без изменений) ===
 async function installIPA(app) {
-  // ===> ДОБАВЛЕНО: Отправляем +1 клик в аналитику
   incrementInstallCount(app.id); 
-  // <===
-
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = `<div style="opacity:.8;font-size:14px;">${__t("signing_start")}</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
   try {
@@ -257,8 +249,21 @@ async function installIPA(app) {
 }
 window.installIPA = installIPA;
 
-// === App Modal (без изменений) ===
+// === App Modal (МОДИФИЦИРОВАНО) ===
 const appModal = document.getElementById("modal");
+// Открываем модалку по клику (теперь ищем в кэше)
+catalogContainer.addEventListener("click", (e) => {
+    const card = e.target.closest(".card");
+    if (!card) return;
+    
+    const appId = card.dataset.appId;
+    if (appId && allAppsCache[appId]) {
+      openModal(allAppsCache[appId]);
+    } else {
+      console.warn("No app data in cache for ID:", appId);
+    }
+});
+
 function openModal(app) {
   const userStatus = localStorage.getItem("ursa_status") || "free";
   qs("#app-icon").src = app.iconUrl || "";
@@ -304,22 +309,17 @@ document.addEventListener("keydown", (e) => {
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const info = dlg.querySelector("#user-info");
-
   info.querySelector("#user-photo").src = localStorage.getItem("ursa_photo") || "assets/icons/avatar.png";
   info.querySelector("#user-name").textContent = localStorage.getItem("ursa_name") || __t("guest");
   info.querySelector("#user-email").textContent = localStorage.getItem("ursa_email") || __t("dash");
-
   const accLine = dlg.querySelector("#cert-account")?.closest("p");
   const expLine = dlg.querySelector("#cert-exp")?.closest("p");
   if (accLine) accLine.style.display = "none";
   if (expLine) expLine.style.display = "none";
-
   const status = localStorage.getItem("ursa_status") || "free";
   info.querySelector("#user-status").textContent = status === "vip" ? __t("badge_vip") : __t("badge_free");
-
   const hasSigner = !!localStorage.getItem("ursa_signer_id");
   info.querySelector("#cert-state").textContent = hasSigner ? __t("cert_state_ok") : __t("cert_state_none");
-
   const certBtn = info.querySelector("#cert-upload");
   certBtn.textContent = __t("cert_upload_btn");
   certBtn.onclick = () => {
@@ -327,11 +327,9 @@ window.openSettings = async function openSettings() {
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
   };
-
   const authBtn = info.querySelector("#auth-action");
   authBtn.textContent = localStorage.getItem("ursa_email") ? __t("logout_btn") : __t("login_btn");
   authBtn.onclick = () => window.ursaAuthAction && window.ursaAuthAction();
-
   const upgradeBtn = info.querySelector("#vip-upgrade");
   if (upgradeBtn) {
     upgradeBtn.textContent = __t("upgrade_btn");
@@ -341,7 +339,6 @@ window.openSettings = async function openSettings() {
       vip.setAttribute("aria-hidden", "false");
     };
   }
-
   dlg.classList.add("open");
   dlg.setAttribute("aria-hidden", "false");
   dlg.addEventListener("click", (e) => {
@@ -361,7 +358,6 @@ if (signerModal) {
       signerModal.setAttribute("aria-hidden", "true");
     }
   });
-
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && signerModal.classList.contains("open")) {
       signerModal.classList.remove("open");
@@ -370,7 +366,7 @@ if (signerModal) {
   });
 }
 
-// === Firestore LazyLoad (ПОЛНОСТЬЮ ЗАМЕНЕН) ===
+// === Firestore LazyLoad (ВОЗВРАЩАЕМ ЛОГИКУ v8.0, НО МЕНЯЕМ РЕНДЕРИНГ) ===
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
@@ -379,125 +375,164 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
-  
-  const catalogContainer = document.getElementById("catalog");
-  
-  // Кэш для хранения данных приложений (для модального окна)
-  let allAppsCache = {}; 
 
-  // Единый обработчик кликов по карточкам
-  catalogContainer.addEventListener("click", (e) => {
-    const card = e.target.closest(".card");
-    if (!card) return;
+  // ВОЗВРАЩАЕМ СТАРЫЙ STATE
+  const state = { 
+    all: [], // Весь кэш
+    q: "", // Поиск
+    tab: "apps", // Активный таб
+    last: null, // Последний документ для lazy-load
+    loading: false, // Флаг загрузки
+    end: false // Флаг конца коллекции
+  };
+
+  // ИНИЦИАЛИЗИРУЕМ АКТИВНЫЙ ТАБ ИЗ HTML
+  const actBtn = qs(".nav-btn.active");
+  if (actBtn && actBtn.dataset.tab) {
+    state.tab = actBtn.dataset.tab;
+  }
+
+  // ВОЗВРАЩАЕМ LAZY-LOAD BATCH
+  async function loadBatch() {
+    if (state.loading || state.end) return;
+    state.loading = true;
+
+    const cRef = collection(db, "ursa_ipas");
+    // Сортируем по NAME. Это требует 1 индекса `NAME asc`.
+    // Если будешь сортировать по `updatedAt`, понадобится индекс `updatedAt desc`.
+    // Пока оставим `NAME` для предсказуемой подгрузки.
+    let qRef = query(cRef, orderBy("NAME"), limit(20)); 
+    if (state.last) {
+      qRef = query(cRef, orderBy("NAME"), startAfter(state.last), limit(20));
+    }
+
+    try {
+      const snap = await getDocs(qRef);
+      if (snap.empty) {
+        state.end = true;
+        // Если это была первая загрузка и ничего нет
+        if (state.all.length === 0) {
+           catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
+        }
+        return;
+      }
+      // Нормализуем и добавляем в общий кэш `state.all`
+      const batch = snap.docs.map(normalize);
+      state.all.push(...batch);
+      state.last = snap.docs[snap.docs.length - 1];
+      apply(); // <--- Перерисовываем
+    } catch (err) {
+      console.error("Firestore error:", err);
+      catalogContainer.innerHTML =
+        `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
+    } finally {
+      state.loading = false;
+    }
+  }
+
+  // === ГЛАВНАЯ ФУНКЦИЯ РЕНДЕРИНГА (МОДИФИЦИРОВАНА) ===
+  const apply = () => {
+    // 1. Фильтруем ВЕСЬ загруженный кэш `state.all`
+    const q = state.q.trim().toLowerCase();
+    const list = state.all.filter((app) =>
+      q // Сначала фильтр поиска
+        ? (app.name || "").toLowerCase().includes(q) ||
+          (app.bundleId || "").toLowerCase().includes(q) ||
+          (app.features || "").toLowerCase().includes(q)
+        : // Потом фильтр табов
+          state.tab === "games"
+          ? app.tags.includes("games")
+          : app.tags.includes("apps")
+    );
     
-    const appId = card.dataset.appId;
-    if (appId && allAppsCache[appId]) {
-      openModal(allAppsCache[appId]);
-    } else {
-      console.warn("No app data in cache for ID:", appId);
+    // Очищаем контейнер
+    catalogContainer.innerHTML = "";
+    allAppsCache = {}; // Чистим кэш для модалки
+
+    if (!list.length && !state.loading) {
+       catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${state.q ? __t("not_found") : __t("empty")}</div>`;
+       return;
+    }
+
+    // 2. Сортируем отфильтрованный список для каждой карусели
+    
+    // Сортировка Popular: копия списка, отсортированная по installCount
+    const popularList = [...list].sort((a, b) => (b.installCount || 0) - (a.installCount || 0));
+    
+    // Сортировка Updates: копия списка, отсортированная по updatedAt
+    const updatesList = [...list].sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+
+    // Сортировка VIP: фильтруем VIP и сортируем по имени
+    const vipList = list.filter(app => app.vipOnly).sort((a, b) => a.name.localeCompare(b.name));
+
+    // 3. Рендерим ряды каруселей
+    // Теперь они будут содержать ВСЕ 100+ приложений, отфильтрованных по табу
+    // и отсортированных для каждой секции.
+    renderCollectionRow(catalogContainer, "Popular", popularList);
+    renderCollectionRow(catalogContainer, "Updates", updatesList);
+    renderCollectionRow(catalogContainer, "VIP", vipList);
+  };
+
+  // ВОЗВРАЩАЕМ ОБРАБОТЧИК ПОИСКА
+  search.addEventListener("input", (e) => {
+    state.q = e.target.value;
+    apply();
+    // Если в поиске мало результатов, попробуем догрузить
+    if (state.all.length < 50 && !state.end) {
+       loadBatch();
     }
   });
 
-  // Главная функция загрузки коллекций
-  async function loadCollections() {
-    // Временный лоадер
-    catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">Загрузка...</div>`; 
-    
-    try {
-      const cRef = collection(db, "ursa_ipas");
-      
-      // 1. Запрос "Popular"
-      // Сортируем по 'installCount' (поле должно быть в Firestore)
-      // Берем 12 штук (4 "страницы" по 3 карточки)
-      const popularQuery = query(cRef, orderBy("installCount", "desc"), limit(12));
-      
-      // 2. Запрос "Updates"
-      // Сортируем по 'updatedAt' (поле должно быть в Firestore)
-      const updatesQuery = query(cRef, orderBy("updatedAt", "desc"), limit(12));
-      
-      // 3. Запрос "VIP"
-      // Фильтруем по 'vipOnly == true'
-      const vipQuery = query(cRef, where("vipOnly", "==", true), orderBy("NAME"), limit(12));
-
-      // Выполняем все запросы параллельно
-      const [popularSnap, updatesSnap, vipSnap] = await Promise.all([
-        getDocs(popularQuery),
-        getDocs(updatesQuery),
-        getDocs(vipQuery)
-      ]);
-
-      // Нормализуем данные
-      const popularApps = popularSnap.docs.map(normalize);
-      const updatesApps = updatesSnap.docs.map(normalize);
-      const vipApps = vipSnap.docs.map(normalize);
-      
-      // Очищаем лоадер
-      catalogContainer.innerHTML = "";
-      
-      // Сбрасываем кэш и наполняем новыми данными
-      allAppsCache = {};
-      [...popularApps, ...updatesApps, ...vipApps].forEach(app => {
-        if (app.id) allAppsCache[app.id] = app;
-      });
-
-      // Рендерим секции
-      renderCollectionRow(catalogContainer, "Popular", popularApps);
-      renderCollectionRow(catalogContainer, "Updates", updatesApps);
-      renderCollectionRow(catalogContainer, "VIP", vipApps);
-      
-      // Если ничего не загрузилось
-      if (catalogContainer.innerHTML === "") {
-         catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
-      }
-
-    } catch (err) {
-      console.error("Collection load error:", err);
-      catalogContainer.innerHTML =
-        `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
-    }
-  }
-  
-  // Старый 'state', 'loadBatch', 'apply' и 'scroll' listener УДАЛЕНЫ
-  // ...
-
-  // === Tab Bar Logic (МОДИФИЦИРОВАНО) ===
+  // ВОЗВРАЩАЕМ ОБРАБОТЧИК ТАБОВ
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
     if (!btn) return;
+
     if (btn.dataset.tab) {
-      // state.tab = btn.dataset.tab; // Старая логика
+      // Если клик по тому же табу, ничего не делаем
+      if (state.tab === btn.dataset.tab) return; 
+      
+      state.tab = btn.dataset.tab; // Меняем стейт
       bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      // apply(); // Старая логика
-      // TODO: Табы 'apps' и 'games' теперь ничего не делают.
-      // Нужно будет придумать для них новую логику.
+      apply(); // <--- ПЕРЕРИСОВЫВАЕМ
       
+      // Если в кэше мало приложений (например, только что переключились)
+      // а скролл уже внизу, попробуем догрузить
+      if (state.all.length < 50 && !state.end) {
+         loadBatch();
+      }
+
     } else if (btn.id === "lang-btn") {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
       document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
-      applyI18n(); // Применяем язык
-      loadCollections(); // Перезагружаем коллекции с новым языком
+      applyI18n();
+      apply(); // <--- ПЕРЕРИСОВЫВАЕМ с новым языком
       
     } else if (btn.id === "settings-btn") {
       openSettings();
     }
   });
 
-  // === Search (МОДИФИЦИРОВАНО) ===
-  search.addEventListener("input", (e) => {
-     // state.q = e.target.value; // Старая логика
-     // apply(); // Старая логика
-     // TODO: Поиск теперь ничего не делает.
-     // Его нужно будет или подключить к API, 
-     // или фильтровать карточки на лету (сложно).
+  // ВОЗВРАЩАЕМ LAZY-LOAD НА СКРОЛЛ
+  window.addEventListener("scroll", () => {
+    // Не грузим, если идет поиск
+    if (state.q.length > 0) return; 
+    
+    const scrollY = window.scrollY;
+    const scrollH = document.body.scrollHeight;
+    const innerH = window.innerHeight;
+    if (scrollY + innerH >= scrollH - 300) { // 300px до конца
+      loadBatch(); // подгрузка при скролле вниз
+    }
   });
 
   // === Initial load ===
-  await loadCollections(); // Запускаем загрузку новых коллекций
+  await loadBatch(); // Запускаем первую загрузку
   applyI18n();
-  // apply(); // Старая логика
+  // apply() вызовется автоматически внутри loadBatch()
 
   // === VIP Modal (без изменений) ===
   const vipModal = document.getElementById("vip-modal");
