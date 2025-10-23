@@ -77,50 +77,16 @@ transition: background 0.25s, color 0.25s, transform 0.25s;
 }
 #theme-toggle:hover { transform: scale(1.08); background: var(--accent); color: #001018; }
 
-/* === НОВЫЕ СТИЛИ КОЛЛЕКЦИЙ (3 В РЯД) === */
-.catalog-collections {
+/* === CATALOG (ИЗМЕНЕНО) === */
+.catalog {
   margin-top: 12px;
-  display: flex; /* Блоки коллекций друг под другом */
-  flex-direction: column;
-  gap: 24px; /* Отступ между "Popular" и "Updates" */
-  /* Добавляем нижний отступ, который раньше был у #catalog */
+  /* display: grid; grid-template-columns: 1fr; (старый) */
+  display: flex; /* (новый) */
+  flex-direction: column; /* (новый) */
+  gap: 24px; /* (изменено) Расстояние между секциями */
   padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
 }
 
-.collection-block {
-  /* Контейнер для одного блока (e.g., "Popular") */
-}
-
-.collection-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 12px 4px;
-  font-family: 'Orbitron', sans-serif; /* Стильный заголовок */
-}
-
-/* ИЗМЕНЕНО: .collection-scroll теперь СЕТКА (Grid) */
-.collection-scroll {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* <--- ВОТ ОНИ, 3 КОЛОНКИ */
-  gap: calc(var(--gap) / 1.5); /* Уменьшаем отступ для сетки */
-  padding-bottom: 16px; /* Небольшой отступ снизу */
-}
-/* Карточки ВНУТРИ горизонтального скролла */
-/* .collection-scroll .card {
-  flex: 0 0 auto;
-  width: 300px;
-} */
-/* ^^^ СТАРЫЕ СТИЛИ СТРОЛЛА УДАЛЕНЫ ^^^ */
-
-
-/* === ИЗМЕНЕННЫЙ СТИЛЬ ОСНОВНОГО КАТАЛОГА === */
-/* .catalog { ... } */
-/* .catalog .card { ... } */
-/* ^^^ ВСЕ СТИЛИ ДЛЯ #catalog УДАЛЕНЫ, Т.К. ЕГО БОЛЬШЕ НЕТ ^^^ */
-
-
-/* === СТИЛИ КАРТОЧЕК (ОБЩИЕ) === */
 .card {
 position: relative; cursor: pointer;
 background: var(--card); border-radius: var(--radius);
@@ -148,63 +114,6 @@ animation: borderflow 4s linear infinite;
 transform: translateY(-3px);
 box-shadow: 0 10px 28px rgba(0,0,0,.5), 0 0 12px rgba(0,179,255,.3);
 }
-
-/* === НОВЫЕ СТИЛИ ДЛЯ КОМПАКТНЫХ КАРТОЧЕК В СЕТКЕ === */
-.collection-scroll .card {
-  padding: 10px; /* Уменьшаем паддинг */
-  gap: 8px; /* Уменьшаем отступ */
-}
-.collection-scroll .row {
-  /* Ставим иконку и текст ВЕРТИКАЛЬНО */
-  grid-template-columns: 1fr; /* 1 колонка */
-  gap: 8px;
-  text-align: center; /* Центрируем */
-}
-.collection-scroll .thumb {
-  /* Центрируем иконку */
-  margin: 0 auto;
-}
-.collection-scroll .icon {
-  /* Размер иконки 60x60 (из .row) остается, это ок */
-}
-.collection-scroll h3 {
-  font-size: 13px; /* Мелкий шрифт */
-  font-weight: 600;
-  /* Обрезаем длинный текст */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0;
-}
-.collection-scroll .meta {
-  display: none; /* Скрываем всю мету (bundle,- size) */
-}
-
-
-/* === НОВЫЕ СТИЛИ ДЛЯ БЕЙДЖЕЙ "New" / "Update" === */
-.card[data-badge]::after {
-  content: attr(data-badge);
-  position: absolute;
-  top: 6px;  /* <--- Чуть поправил позицию для мелкой карточки */
-  right: 6px; /* <--- */
-  padding: 2px 6px; /* <--- Уменьшил */
-  border-radius: 6px;
-  font-size: 10px; /* <--- Уменьшил */
-  font-weight: 700;
-  z-index: 2;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
-  /* Стили по умолчанию (для "Update") */
-  background: #ff9800; /* Оранжевый */
-  color: #fff;
-}
-/* Отдельный стиль для "New" */
-.card[data-badge="New"]::after,
-.card[data-badge="Новый"]::after {
-  background: #4caf50; /* Зеленый */
-  color: #fff;
-}
-
-
 .row { display: grid; grid-template-columns: 60px 1fr; gap: 12px; align-items: center; }
 .icon {
 width: 60px; height: 60px;
@@ -228,10 +137,7 @@ box-sizing: border-box;
 transition: background 0.3s ease;
 }
 .newdock {
-display: grid;
-/* ИЗМЕНЕНО: 2 колонки вместо 4 */
-grid-template-columns: repeat(2,1fr); 
-align-items: center;
+display: grid; grid-template-columns: repeat(4,1fr); align-items: center;
 background: color-mix(in oklab, var(--bg-elev) 94%, #000 6%);
 border: 1px solid var(--border); border-radius: 26px;
 padding: 8px 4px; margin: 0 auto; max-width: 420px;
@@ -385,10 +291,11 @@ color: #001018;
 font-weight: 600;
 }
 
-/* === ADAPTIVE === */
-/* @media (min-width: 520px) { ... } */ 
-/* ^^^ СТАРЫЙ MEDIA-ЗАПРОС УДАЛЕН ^^^ */
-
+/* === ADAPTIVE (ИЗМЕНЕНО) === */
+@media (min-width: 520px) {
+  /* .catalog { grid-template-columns: repeat(2,1fr); } (старый) */
+  .catalog { grid-template-columns: 1fr; } /* (новый) Отменяем старое правило */
+}
 
 /* === PROFILE (URSA Neon Glass v2) === */
 .profile-card.big {
@@ -543,4 +450,89 @@ font-weight: 600;
   font-size: 18px;
   color: #ffcc00;
   text-shadow: 0 0 8px rgba(0,0,0,0.7);
+}
+
+
+/* === НОВЫЕ СТИЛИ ДЛЯ КОЛЛЕКЦИЙ === */
+
+/* Секция (Заголовок + Карусель) */
+.collection-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Заголовок секции (Popular, Updates...) */
+.collection-row h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  /* Отступ, чтобы совпадал с карточками */
+  padding: 0 4px; 
+}
+
+/* Контейнер карусели */
+.card-carousel {
+  display: grid;
+  grid-auto-flow: column; /* Магия: грид-сетка скроллится горизонтально */
+  grid-template-rows: repeat(3, auto); /* Магия: 3 ряда, как ты просил */
+  
+  /* Каждая "колонка" карточек. 
+     На моб. ~88% ширины экрана. Можешь поменять. */
+  grid-auto-columns: calc(88vw - var(--gap)); 
+  
+  gap: var(--gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory; /* Плавная доводка при скролле */
+  -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+  padding: 4px 0; /* Небольшой верт. отступ */
+}
+
+/* Прячем скроллбар */
+.card-carousel::-webkit-scrollbar { display: none; }
+.card-carousel { scrollbar-width: none; }
+
+/* Карточка внутри карусели */
+.card-carousel .card {
+  width: 100%; /* Карточка занимает всю ячейку грида */
+  margin: 0;
+  scroll-snap-align: start; /* Привязка к началу экрана */
+}
+
+/* Плашки "New" / "Update" */
+.card .badge {
+  position: absolute;
+  top: -1px; /* Налезает на "неоновую" рамку */
+  right: -1px; /* Налезает на "неоновую" рамку */
+  background: var(--accent);
+  color: #001018;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  /* Красивые скругления */
+  border-radius: 0 var(--radius) 0 10px; 
+  text-transform: uppercase;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.card .badge.new {
+   background: #4caf50; /* Зеленый для New */
+   color: #fff;
+}
+
+.card .badge.update {
+   background: #ff9800; /* Оранжевый для Update */
+   color: #fff;
+}
+
+
+/* === АДАПТИВ ДЛЯ КОЛЛЕКЦИЙ (ДОБАВЛЕНО) === */
+
+@media (min-width: 520px) {
+  /* На планшете делаем колонки карусели шире */
+  .card-carousel {
+     grid-auto-columns: 400px; /* Фикс. ширина колонки */
+  }
 }
