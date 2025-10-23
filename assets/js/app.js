@@ -1,4 +1,4 @@
-// URSA IPA — v8.0 LazyLoad + Dynamic i18n + VIP Lock Blur + Profile + AutoCert + Firestore
+// URSA IPA — v9.0 Collections + Popular/Updates + Horizontal Scroll + NEW/UPDATE + VIP + Firestore + LazyLoad
 import { db } from "./firebase.js";
 import {
   collection,
@@ -101,7 +101,6 @@ let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").sl
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
-// === Dynamic i18n Apply ===
 function applyI18n() {
   qsa("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
@@ -141,41 +140,65 @@ function normalize(doc) {
     features_ru: doc.features_ru || "",
     features_en: doc.features_en || "",
     vipOnly: !!doc.vipOnly,
+    installs: doc.installs || 0,
+    createdAt: doc.createdAt || 0,
+    lastUpdated: doc.lastUpdated || 0,
+    isNew: !!doc.isNew,
+    isUpdated: !!doc.isUpdated,
     tags: tags.map((t) => t.toLowerCase())
   };
 }
-// === Catalog render ===
+
+// === Catalog render (Popular + Updates) ===
 function renderCatalog(apps) {
   const c = document.getElementById("catalog");
   c.innerHTML = "";
+
   if (!apps.length) {
     c.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
     return;
   }
 
-  const userStatus = localStorage.getItem("ursa_status") || "free";
+  const makeSection = (title, list) => {
+    if (!list.length) return;
+    const section = document.createElement("section");
+    section.className = "catalog-section";
+    section.innerHTML = `
+      <h2 class="section-title">${title}</h2>
+      <div class="scroll-row">
+        ${list.map(app => {
+          const badge = app.isNew
+            ? `<span class="badge new">NEW</span>`
+            : app.isUpdated
+            ? `<span class="badge upd">UPDATE</span>`
+            : "";
+          return `
+            <article class="card small" data-id="${app.id}">
+              <div class="thumb">
+                <img class="icon" src="${app.iconUrl}" alt="">
+                ${badge}
+              </div>
+              <h3>${escapeHTML(app.name)}</h3>
+              <div class="meta">v${escapeHTML(app.version || "")}</div>
+            </article>`;
+        }).join("")}
+      </div>
+    `;
+    c.appendChild(section);
 
-  apps.forEach((app) => {
-    const el = document.createElement("article");
-    el.className = "card";
-    if (app.vipOnly && userStatus !== "vip") el.classList.add("vip-locked");
-    el.innerHTML = `
-      <div class="row">
-        <div class="thumb">
-          <img class="icon" src="${app.iconUrl}" alt="">
-          ${app.vipOnly ? '<div class="vip-lock">🔒</div>' : ""}
-        </div>
-        <div>
-          <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
-          <div class="meta">${escapeHTML(app.bundleId || "")}</div>
-          <div class="meta">v${escapeHTML(app.version || "")}${app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
-        </div>
-      </div>`;
-    el.addEventListener("click", () => openModal(app));
-    c.appendChild(el);
-  });
+    section.querySelectorAll(".card").forEach((el) => {
+      const id = el.dataset.id;
+      const app = apps.find((a) => a.id === id);
+      if (app) el.addEventListener("click", () => openModal(app));
+    });
+  };
+
+  const popular = [...apps].sort((a, b) => (b.installs || 0) - (a.installs || 0)).slice(0, 9);
+  const updates = [...apps].sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+
+  makeSection("🔥 Popular", popular);
+  makeSection("🆕 Updates", updates);
 }
-
 // === Install IPA ===
 async function installIPA(app) {
   const dl = document.getElementById("dl-buttons");
@@ -183,12 +206,15 @@ async function installIPA(app) {
   try {
     const signer_id = localStorage.getItem("ursa_signer_id");
     if (!signer_id) throw new Error(__t("signing_need_cert"));
+
     const form = new FormData();
     form.append("ipa_url", app.downloadUrl);
     form.append("signer_id", signer_id);
+
     const res = await fetch(SIGNER_API, { method: "POST", body: form });
     const json = await res.json();
     if (!res.ok) throw new Error(json.detail || json.error || "Signer error");
+
     document.getElementById("sign-progress").value = 100;
     dl.innerHTML = `<div style="opacity:.9;font-size:14px;">${__t("signing_ready")}</div>`;
     setTimeout(() => (location.href = json.install_link), 900);
@@ -202,10 +228,14 @@ window.installIPA = installIPA;
 const appModal = document.getElementById("modal");
 function openModal(app) {
   const userStatus = localStorage.getItem("ursa_status") || "free";
+
   qs("#app-icon").src = app.iconUrl || "";
   qs("#app-title").textContent = app.name || "";
   qs("#app-bundle").textContent = app.bundleId || "";
-  qs("#app-info").textContent = `v${app.version || ""}${app.minIOS ? " · iOS ≥ " + app.minIOS : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}`;
+  qs("#app-info").textContent =
+    `v${app.version || ""}` +
+    (app.minIOS ? ` · iOS ≥ ${app.minIOS}` : "") +
+    (app.sizeBytes ? ` · ${prettyBytes(app.sizeBytes)}` : "");
 
   const feats = (lang === "ru" ? app.features_ru : app.features_en) || app.features || "";
   const featList = feats ? feats.split(",").map((f) => f.trim()).filter(Boolean) : [];
@@ -241,7 +271,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && appModal.classList.contains("open")) closeModal();
 });
 
-// === Profile Modal ===
+// === Profile / Settings Modal ===
 window.openSettings = async function openSettings() {
   const dlg = document.getElementById("settings-modal");
   const info = dlg.querySelector("#user-info");
@@ -292,6 +322,7 @@ window.openSettings = async function openSettings() {
     }
   });
 };
+
 // === Signer Modal (добавление сертификата) ===
 const signerModal = document.getElementById("signer-modal");
 if (signerModal) {
@@ -309,8 +340,9 @@ if (signerModal) {
     }
   });
 }
-// === Firestore LazyLoad ===
+// === Firestore LazyLoad + Apply + VIP Modal + Theme ===
 document.addEventListener("DOMContentLoaded", async () => {
+  // --- Навигация и иконки ---
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
@@ -319,15 +351,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
 
+  // --- Состояние для LazyLoad ---
   const state = { all: [], q: "", tab: "apps", last: null, loading: false, end: false };
 
+  // --- Загрузка батча ---
   async function loadBatch() {
     if (state.loading || state.end) return;
     state.loading = true;
 
     const cRef = collection(db, "ursa_ipas");
-    let qRef = query(cRef, orderBy("NAME"), limit(10));
-    if (state.last) qRef = query(cRef, orderBy("NAME"), startAfter(state.last), limit(10));
+    let qRef = query(cRef, orderBy("NAME"), limit(20));
+    if (state.last) qRef = query(cRef, orderBy("NAME"), startAfter(state.last), limit(20));
 
     try {
       const snap = await getDocs(qRef);
@@ -348,6 +382,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // --- Фильтрация и отрисовка ---
   const apply = () => {
     const q = state.q.trim().toLowerCase();
     const list = state.all.filter((app) =>
@@ -362,12 +397,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderCatalog(list);
   };
 
-  search.addEventListener("input", (e) => (state.q = e.target.value, apply()));
+  // --- Поиск ---
+  search.addEventListener("input", (e) => {
+    state.q = e.target.value;
+    apply();
+  });
 
+  // --- Нижняя панель ---
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
     if (!btn) return;
+
     if (btn.dataset.tab) {
       state.tab = btn.dataset.tab;
       bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
@@ -384,22 +425,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // === Scroll-based Lazy Load ===
+  // --- Lazy Load при скролле ---
   window.addEventListener("scroll", () => {
     const scrollY = window.scrollY;
     const scrollH = document.body.scrollHeight;
     const innerH = window.innerHeight;
-    if (scrollY + innerH >= scrollH - 200) {
-      loadBatch(); // подгрузка при скролле вниз
-    }
+    if (scrollY + innerH >= scrollH - 200) loadBatch();
   });
 
-  // === Initial load ===
+  // --- Первичная загрузка ---
   await loadBatch();
   applyI18n();
   apply();
 
-  // === VIP Modal ===
+  // --- VIP Modal ---
   const vipModal = document.getElementById("vip-modal");
   if (vipModal) {
     vipModal.addEventListener("click", (e) => {
@@ -408,6 +447,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         vipModal.setAttribute("aria-hidden", "true");
       }
     });
+
     const buyBtn = vipModal.querySelector("#buy-vip");
     if (buyBtn) {
       buyBtn.onclick = () => {
@@ -420,5 +460,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // --- Переключение темы ---
   document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
 });
