@@ -77,12 +77,14 @@ transition: background 0.25s, color 0.25s, transform 0.25s;
 }
 #theme-toggle:hover { transform: scale(1.08); background: var(--accent); color: #001018; }
 
-/* === НОВЫЕ СТИЛИ КОЛЛЕКЦИЙ === */
+/* === НОВЫЕ СТИЛИ КОЛЛЕКЦИЙ (3 В РЯД) === */
 .catalog-collections {
   margin-top: 12px;
   display: flex; /* Блоки коллекций друг под другом */
   flex-direction: column;
   gap: 24px; /* Отступ между "Popular" и "Updates" */
+  /* Добавляем нижний отступ, который раньше был у #catalog */
+  padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
 }
 
 .collection-block {
@@ -97,52 +99,26 @@ transition: background 0.25s, color 0.25s, transform 0.25s;
   font-family: 'Orbitron', sans-serif; /* Стильный заголовок */
 }
 
+/* ИЗМЕНЕНО: .collection-scroll теперь СЕТКА (Grid) */
 .collection-scroll {
-  display: flex; /* Ключ к горизонтальному скроллу */
-  gap: var(--gap, 14px);
-  overflow-x: auto; /* Включаем горизонтальный скролл */
-  overflow-y: hidden; /* Выключаем вертикальный */
-  padding: 4px 4px 16px 4px; /* Паддинг для теней и скроллбара */
-  
-  /* Скрываем скроллбар */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* <--- ВОТ ОНИ, 3 КОЛОНКИ */
+  gap: calc(var(--gap) / 1.5); /* Уменьшаем отступ для сетки */
+  padding-bottom: 16px; /* Небольшой отступ снизу */
 }
-.collection-scroll::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
 /* Карточки ВНУТРИ горизонтального скролла */
-.collection-scroll .card {
-  flex: 0 0 auto; /* Не сжиматься */
-  width: 300px; /* Фиксированная ширина карточки. 3 карточки не влезет, но так юзабельнее */
-  /* Если нужно ровно 3 - можно поставить calc( (100% - var(--gap)*2) / 3 ) 
-     но 300px выглядит лучше на большинстве мобилок */
-}
+/* .collection-scroll .card {
+  flex: 0 0 auto;
+  width: 300px;
+} */
+/* ^^^ СТАРЫЕ СТИЛИ СТРОЛЛА УДАЛЕНЫ ^^^ */
+
 
 /* === ИЗМЕНЕННЫЙ СТИЛЬ ОСНОВНОГО КАТАЛОГА === */
-.catalog {
-  /* Теперь это тоже горизонтальный скролл */
-  display: flex;
-  gap: var(--gap, 14px);
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 4px 4px 16px 4px;
-  padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px); /* Старый паддинг снизу */
+/* .catalog { ... } */
+/* .catalog .card { ... } */
+/* ^^^ ВСЕ СТИЛИ ДЛЯ #catalog УДАЛЕНЫ, Т.К. ЕГО БОЛЬШЕ НЕТ ^^^ */
 
-  /* Скрываем скроллбар */
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.catalog::-webkit-scrollbar {
-  display: none;
-}
-
-/* Карточка в основном каталоге */
-.catalog .card {
-  flex: 0 0 auto;
-  width: 300px; /* Та же ширина, что и у карточек в коллекциях */
-}
 
 /* === СТИЛИ КАРТОЧЕК (ОБЩИЕ) === */
 .card {
@@ -173,15 +149,47 @@ transform: translateY(-3px);
 box-shadow: 0 10px 28px rgba(0,0,0,.5), 0 0 12px rgba(0,179,255,.3);
 }
 
+/* === НОВЫЕ СТИЛИ ДЛЯ КОМПАКТНЫХ КАРТОЧЕК В СЕТКЕ === */
+.collection-scroll .card {
+  padding: 10px; /* Уменьшаем паддинг */
+  gap: 8px; /* Уменьшаем отступ */
+}
+.collection-scroll .row {
+  /* Ставим иконку и текст ВЕРТИКАЛЬНО */
+  grid-template-columns: 1fr; /* 1 колонка */
+  gap: 8px;
+  text-align: center; /* Центрируем */
+}
+.collection-scroll .thumb {
+  /* Центрируем иконку */
+  margin: 0 auto;
+}
+.collection-scroll .icon {
+  /* Размер иконки 60x60 (из .row) остается, это ок */
+}
+.collection-scroll h3 {
+  font-size: 13px; /* Мелкий шрифт */
+  font-weight: 600;
+  /* Обрезаем длинный текст */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+.collection-scroll .meta {
+  display: none; /* Скрываем всю мету (bundle,- size) */
+}
+
+
 /* === НОВЫЕ СТИЛИ ДЛЯ БЕЙДЖЕЙ "New" / "Update" === */
 .card[data-badge]::after {
   content: attr(data-badge);
   position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 12px;
+  top: 6px;  /* <--- Чуть поправил позицию для мелкой карточки */
+  right: 6px; /* <--- */
+  padding: 2px 6px; /* <--- Уменьшил */
+  border-radius: 6px;
+  font-size: 10px; /* <--- Уменьшил */
   font-weight: 700;
   z-index: 2;
   box-shadow: 0 2px 8px rgba(0,0,0,.3);
@@ -220,7 +228,10 @@ box-sizing: border-box;
 transition: background 0.3s ease;
 }
 .newdock {
-display: grid; grid-template-columns: repeat(4,1fr); align-items: center;
+display: grid;
+/* ИЗМЕНЕНО: 2 колонки вместо 4 */
+grid-template-columns: repeat(2,1fr); 
+align-items: center;
 background: color-mix(in oklab, var(--bg-elev) 94%, #000 6%);
 border: 1px solid var(--border); border-radius: 26px;
 padding: 8px 4px; margin: 0 auto; max-width: 420px;
@@ -375,10 +386,7 @@ font-weight: 600;
 }
 
 /* === ADAPTIVE === */
-/* @media (min-width: 520px) {
-.catalog { grid-template-columns: repeat(2,1fr); }
-} 
-*/ 
+/* @media (min-width: 520px) { ... } */ 
 /* ^^^ СТАРЫЙ MEDIA-ЗАПРОС УДАЛЕН ^^^ */
 
 
