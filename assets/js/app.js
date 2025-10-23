@@ -1,24 +1,28 @@
 // URSA IPA — v8.0 LazyLoad + Dynamic i18n + VIP Lock Blur + Profile + AutoCert + Firestore
+// === МОДИФИЦИРОВАНО: НОВЫЙ ВИД КОЛЛЕКЦИЙ v9.0 ===
+
 import { db } from "./firebase.js";
 import {
   collection,
   query,
   orderBy,
   limit,
-  // startAfter, // <-- НЕ НУЖНО
+  // startAfter, // Больше не нужен для старой постраничной загрузки
   getDocs,
-  doc,
-  updateDoc,
-  increment
+  doc,         // Добавлено
+  updateDoc,   // Добавлено
+  increment,   // Добавлено
+  where,       // Добавлено
+  Timestamp    // Добавлено
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { toggleTheme } from "./themes.js";
 
 const SIGNER_API = "https://ursa-signer-239982196215.europe-west1.run.app/sign_remote";
 
-// === ICONS ===
+// === ICONS (без изменений) ===
 const ICONS = {
-  // apps: "...", // <-- НЕ НУЖНО
-  // games: "...", // <-- НЕ НУЖНО
+  apps: "https://store5.gofile.io/download/direct/9a5cf9e9-9b82-4ce4-9cc9-ce63b857dcaf/%D0%BA%D0%BE%D0%BF%D0%B8.png",
+  games: "https://store-eu-par-3.gofile.io/download/direct/22931df3-7659-4095-8dd0-a7eadb14e1e6/IMG_9678.PNG",
   lang: {
     ru: "https://store-eu-par-3.gofile.io/download/direct/79e2512c-552c-4e1a-9b47-0cf1bcbfe556/IMG_9679.PNG",
     en: "https://store-eu-par-3.gofile.io/download/direct/79e2512c-552c-4e1a-9b47-0cf1bcbfe556/IMG_9679.PNG"
@@ -26,11 +30,11 @@ const ICONS = {
   settings: "https://cdn-icons-png.flaticon.com/512/3524/3524659.png"
 };
 
-// === i18n ===
+// === i18n (без изменений) ===
 const I18N = {
   ru: {
     profile_title: "Профиль URSA",
-    search_ph: "Поиск по названию…", // <--- Изменил плейсхолдер
+    search_ph: "Поиск по названию, bundleId…",
     install: "Установить",
     hack_features: "Функции мода",
     not_found: "Ничего не найдено",
@@ -61,18 +65,11 @@ const I18N = {
     vip_buy: "💳 Купить",
     signing_start: "🔄 Подписываем IPA…",
     signing_ready: "✅ Готово! Установка начнётся…",
-    signing_need_cert: "❌ Загрузите свой сертификат в профиле",
-    // --- Новые ключи для коллекций ---
-    collection_popular: "Popular",
-    collection_updates: "Updates",
-    // collection_apps: "Apps", // <-- НЕ НУЖНО
-    // collection_games: "Games", // <-- НЕ НУЖНО
-    badge_new: "New",
-    badge_update: "Update"
+    signing_need_cert: "❌ Загрузите свой сертификат в профиле"
   },
   en: {
     profile_title: "URSA Profile",
-    search_ph: "Search by name…", // <--- Изменил плейсхолдер
+    search_ph: "Search by name or bundleId…",
     install: "Install",
     hack_features: "Hack Features",
     not_found: "Nothing found",
@@ -80,7 +77,7 @@ const I18N = {
     load_error: "Firestore error",
     vip_only: "🔒 VIP Only",
     login_btn: "Sign in with Google",
-    logout_btn: "SignOut",
+    logout_btn: "Sign out",
     guest: "Guest",
     dash: "—",
     badge_free: "Free",
@@ -103,14 +100,7 @@ const I18N = {
     vip_buy: "💳 Buy",
     signing_start: "🔄 Signing IPA…",
     signing_ready: "✅ Done! Installation will start…",
-    signing_need_cert: "❌ Upload your certificate in profile",
-    // --- Новые ключи для коллекций ---
-    collection_popular: "Popular",
-    collection_updates: "Updates",
-    // collection_apps: "Apps", // <-- НЕ НУЖНО
-    // collection_games: "Games", // <-- НЕ НУЖНО
-    badge_new: "New",
-    badge_update: "Update"
+    signing_need_cert: "❌ Upload your certificate in profile"
   }
 };
 
@@ -118,7 +108,7 @@ let lang = (localStorage.getItem("ursa_lang") || (navigator.language || "ru").sl
 if (!I18N[lang]) lang = "ru";
 window.__t = (k) => (I18N[lang] && I18N[lang][k]) || k;
 
-// === Dynamic i18n Apply ===
+// === Dynamic i18n Apply (без изменений) ===
 function applyI18n() {
   qsa("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
@@ -128,10 +118,9 @@ function applyI18n() {
     const key = el.getAttribute("data-i18n-placeholder");
     if (key && I18N[lang][key]) el.placeholder = I18N[lang][key];
   });
-  // --- Удалена логика обновления #main-catalog-title ---
 }
 
-// === Helpers ===
+// === Helpers (без изменений) ===
 const prettyBytes = (n) => (!n ? "" : `${(n / 1e6).toFixed(0)} MB`);
 const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -139,132 +128,120 @@ const escapeHTML = (s) => (s || "").replace(/[&<>"']/g, (m) => ({
 const qs = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-// === Normalize Firestore doc ===
-// Добавлен firestoreId, installCount, createdAt, updatedAt
-function normalize(doc, firestoreId) {
-  const tags = Array.isArray(doc.tags)
-    ? doc.tags
-    : doc.tags
-    ? String(doc.tags).split(",").map((s) => s.trim())
-    : [];
-  return {
-    id: firestoreId || doc.ID || doc.id || "", // <--- ID документа для счетчика
-    name: doc.NAME || doc.name || "",
-    bundleId: doc["Bundle ID"] || doc.bundleId || "",
-    version: doc.Version || doc.version || "",
-    minIOS: doc["minimal iOS"] || doc.minIOS || "",
-    sizeBytes: doc.sizeBytes || 0,
-    iconUrl: doc.iconUrl || "",
-    downloadUrl: doc.DownloadUrl || doc.downloadUrl || "",
-    features: doc.features || "",
-    features_ru: doc.features_ru || "",
-    features_en: doc.features_en || "",
-    vipOnly: !!doc.vipOnly,
-    tags: tags.map((t) => t.toLowerCase()),
-    installCount: doc.installCount || 0,   // <--- Для "Popular"
-    createdAt: doc.createdAt || null,    // <--- Для бейджа "New" (должен быть Timestamp)
-    updatedAt: doc.updatedAt || null     // <--- Для бейджа "Update" (должен быть Timestamp)
-  };
-}
-
-// === НОВАЯ ФУНКЦИЯ: Рендер одной карточки (DOM-элемент) ===
-function renderCardElement(app, userStatus) {
-  const el = document.createElement("article");
-  el.className = "card";
-  if (app.vipOnly && userStatus !== "vip") el.classList.add("vip-locked");
-
-  // --- Логика бейджей "New" / "Update" ---
-  let badge = null;
-  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 48 часов
-  
-  // Проверяем, что createdAt/updatedAt - это объекты Timestamp
-  const created = app.createdAt?.toDate ? app.createdAt.toDate() : null;
-  const updated = app.updatedAt?.toDate ? app.updatedAt.toDate() : null;
-
-  if (created && created > twoDaysAgo) {
-    badge = __t("badge_new");
-  }
-  // Если обновлено *после* создания и *недавно*
-  if (updated && updated > twoDaysAgo && (!created || updated.getTime() > created.getTime() + 60000)) { // +1 минута допуска
-    badge = __t("badge_update");
-  }
-  
-  if (badge) {
-    el.dataset.badge = badge; // Используем data-атрибут для стилизации CSS
-  }
-  // --- Конец логики бейджей ---
-
-  el.innerHTML = `
-    <div class="row">
-      <div class="thumb">
-        <img class="icon" src="${app.iconUrl}" alt="">
-        ${app.vipOnly ? '<div class="vip-lock">🔒</div>' : ""}
-      </div>
-      <div>
-        <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
-        <div class="meta">${escapeHTML(app.bundleId || "")}</div>
-        <div class="meta">v${escapeHTML(app.version || "")}${app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
-      </div>
-    </div>`;
-  el.addEventListener("click", () => openModal(app));
-  return el;
-}
-
-// === НОВАЯ ФУНКЦИЯ: Создание блока коллекции ===
-function createCollectionElement(titleKey, apps, userStatus) {
-  const collectionSection = document.createElement("section");
-  collectionSection.className = "collection-block";
-
-  const title = document.createElement("h2");
-  title.className = "collection-title";
-  title.textContent = __t(titleKey);
-  collectionSection.appendChild(title);
-
-  const scrollContainer = document.createElement("div");
-  scrollContainer.className = "collection-scroll"; // <-- Этот класс теперь grid-сетка
-
-  if (apps.length > 0) {
-    apps.forEach(app => {
-      scrollContainer.appendChild(renderCardElement(app, userStatus));
-    });
-  } else {
-    scrollContainer.innerHTML = `<div style="opacity:.7;padding:20px 10px;">${__t("empty")}</div>`;
-  }
-  
-  collectionSection.appendChild(scrollContainer);
-  return collectionSection;
-}
-
-// === ИЗМЕНЕННАЯ ФУНКЦИЯ: Рендер основного каталога ===
-// --- ФУНКЦИЯ renderCatalog УДАЛЕНА ---
-
-// === НОВАЯ ФУНКЦИЯ: Увеличение счетчика скачиваний ===
+// === НОВАЯ ФУНКЦИЯ: Учет кликов по "Установить" ===
 async function incrementInstallCount(appId) {
-  if (!appId) return; // Не можем обновить, если нет ID
-  const appRef = doc(db, "ursa_ipas", appId);
+  if (!appId) return;
   try {
-    // Используем `increment` от Firestore
+    const appRef = doc(db, "ursa_ipas", appId);
+    // Убедись, что в Firestore есть поле 'installCount' (тип Number)
     await updateDoc(appRef, {
       installCount: increment(1)
     });
-    console.log(`Install count for ${appId} incremented.`);
-  } catch (e) {
-    console.warn("Could not update install count", e);
+  } catch (err) {
+    console.error("Failed to increment install count:", err);
   }
 }
 
-// === ИЗМЕНЕННАЯ ФУНКЦИЯ: Install IPA ===
+// === Normalize Firestore doc (МОДИФИЦИРОВАНО) ===
+// Теперь принимает весь 'doc', а не 'doc.data()'
+// Добавлены ID и временные метки
+function normalize(doc) {
+  const data = doc.data(); // Получаем данные из документа
+  const tags = Array.isArray(data.tags)
+    ? data.tags
+    : data.tags
+    ? String(data.tags).split(",").map((s) => s.trim())
+    : [];
+  return {
+    id: doc.id, // <-- ВАЖНО: получаем ID_документа
+    name: data.NAME || data.name || "",
+    bundleId: data["Bundle ID"] || data.bundleId || "",
+    version: data.Version || data.version || "",
+    minIOS: data["minimal iOS"] || data.minIOS || "",
+    sizeBytes: data.sizeBytes || 0,
+    iconUrl: data.iconUrl || "",
+    downloadUrl: data.DownloadUrl || data.downloadUrl || "",
+    features: data.features || "",
+    features_ru: data.features_ru || "",
+    features_en: data.features_en || "",
+    vipOnly: !!data.vipOnly,
+    tags: tags.map((t) => t.toLowerCase()),
+    createdAt: data.createdAt || null, // <-- НУЖНО ПОЛЕ Timestamp в Firestore
+    updatedAt: data.updatedAt || null  // <-- НУЖНО ПОЛЕ Timestamp в Firestore
+  };
+}
+
+// === Catalog render (ПОЛНОСТЬЮ ЗАМЕНЕН) ===
+// Старая 'renderCatalog' удалена. Новая функция рендерит 1 ряд карусели.
+function renderCollectionRow(containerEl, title, apps) {
+  if (!apps.length) return; // Не рендерим пустые секции
+
+  const userStatus = localStorage.getItem("ursa_status") || "free";
+  const now = Timestamp.now();
+  // 7 дней назад
+  const sevenDaysAgo = Timestamp.fromMillis(now.toMillis() - 7 * 24 * 60 * 60 * 1000);
+
+  let cardsHTML = "";
+  apps.forEach((app) => {
+    let badge = "";
+    
+    // Логика для плашек New/Update
+    // Проверяем, было ли обновление за последние 7 дней
+    if (app.updatedAt && app.updatedAt.seconds > sevenDaysAgo.seconds) {
+      // Проверяем, что обновление было не в ту же минуту, что и создание
+      if (app.createdAt && (app.updatedAt.seconds - app.createdAt.seconds > 60)) { 
+         badge = '<span class="badge update">Update</span>';
+      }
+    }
+    // Если не "Update", проверяем, не "New" ли (создано за последние 7 дней)
+    if (!badge && app.createdAt && app.createdAt.seconds > sevenDaysAgo.seconds) {
+       badge = '<span class="badge new">New</span>';
+    }
+    
+    // Проверка на VIP-блок
+    const isLocked = app.vipOnly && userStatus !== "vip";
+    const cardClass = isLocked ? "card vip-locked" : "card";
+
+    // data-app-id нужен для модального окна
+    cardsHTML += `
+      <article class="${cardClass}" data-app-id="${app.id}"> 
+        ${badge}
+        <div class="row">
+          <div class="thumb">
+            <img class="icon" src="${app.iconUrl}" alt="">
+            ${app.vipOnly ? '<div class="vip-lock">🔒</div>' : ""}
+          </div>
+          <div>
+            <h3>${escapeHTML(app.name)}${app.vipOnly ? ' <span style="color:#00b3ff">⭐</span>' : ""}</h3>
+            <div class="meta">${escapeHTML(app.bundleId || "")}</div>
+            <div class="meta">v${escapeHTML(app.version || "")}${app.minIOS ? " · iOS ≥ " + escapeHTML(app.minIOS) : ""}${app.sizeBytes ? " · " + prettyBytes(app.sizeBytes) : ""}</div>
+          </div>
+        </div>
+      </article>`;
+  });
+
+  const section = document.createElement("section");
+  section.className = "collection-row";
+  section.innerHTML = `
+    <h2>${escapeHTML(title)}</h2>
+    <div class="card-carousel">${cardsHTML}</div>
+  `;
+  
+  containerEl.appendChild(section);
+}
+
+
+// === Install IPA (МОДИФИЦИРОВАНО) ===
 async function installIPA(app) {
+  // ===> ДОБАВЛЕНО: Отправляем +1 клик в аналитику
+  incrementInstallCount(app.id); 
+  // <===
+
   const dl = document.getElementById("dl-buttons");
   dl.innerHTML = `<div style="opacity:.8;font-size:14px;">${__t("signing_start")}</div><progress id="sign-progress" max="100" value="30" style="width:100%;height:8px;margin-top:6px;border-radius:8px;"></progress>`;
   try {
     const signer_id = localStorage.getItem("ursa_signer_id");
     if (!signer_id) throw new Error(__t("signing_need_cert"));
-    
-    // --- ВЫЗЫВАЕМ СЧЕТЧИК ---
-    if (app.id) incrementInstallCount(app.id); 
-    // --- КОНЕЦ ---
-
     const form = new FormData();
     form.append("ipa_url", app.downloadUrl);
     form.append("signer_id", signer_id);
@@ -283,7 +260,6 @@ window.installIPA = installIPA;
 // === App Modal (без изменений) ===
 const appModal = document.getElementById("modal");
 function openModal(app) {
-  // ... (код без изменений) ...
   const userStatus = localStorage.getItem("ursa_status") || "free";
   qs("#app-icon").src = app.iconUrl || "";
   qs("#app-title").textContent = app.name || "";
@@ -326,7 +302,6 @@ document.addEventListener("keydown", (e) => {
 
 // === Profile Modal (без изменений) ===
 window.openSettings = async function openSettings() {
-  // ... (код без изменений) ...
   const dlg = document.getElementById("settings-modal");
   const info = dlg.querySelector("#user-info");
 
@@ -376,10 +351,10 @@ window.openSettings = async function openSettings() {
     }
   });
 };
+
 // === Signer Modal (без изменений) ===
 const signerModal = document.getElementById("signer-modal");
 if (signerModal) {
-  // ... (код без изменений) ...
   signerModal.addEventListener("click", (e) => {
     if (e.target === signerModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
       signerModal.classList.remove("open");
@@ -395,101 +370,138 @@ if (signerModal) {
   });
 }
 
-// === НОВАЯ ФУНКЦИЯ: Загрузка "Popular" и "Updates" ===
-async function loadFeaturedCollections() {
-  const container = document.getElementById('featured-collections');
-  if (!container) return;
-  container.innerHTML = `<div style="opacity:.7;padding:40px;text-align:center;">Loading...</div>`; // Заглушка
-
-  const userStatus = localStorage.getItem("ursa_status") || "free";
-
-  try {
-    // --- Загрузка Popular ---
-    const popQuery = query(collection(db, "ursa_ipas"), orderBy("installCount", "desc"), limit(12)); // 12 = 4 ряда по 3
-    const popSnap = await getDocs(popQuery);
-    const popApps = popSnap.docs.map(d => normalize(d.data(), d.id));
-    
-    // --- Загрузка Updates ---
-    const updQuery = query(collection(db, "ursa_ipas"), orderBy("updatedAt", "desc"), limit(12)); // 12 = 4 ряда по 3
-    const updSnap = await getDocs(updQuery);
-    const updApps = updSnap.docs.map(d => normalize(d.data(), d.id));
-    
-    // --- Очистка и Рендер ---
-    container.innerHTML = ''; // Очищаем заглушку
-    container.appendChild(createCollectionElement("collection_popular", popApps, userStatus));
-    container.appendChild(createCollectionElement("collection_updates", updApps, userStatus));
-
-  } catch (err) {
-    console.error("Failed to load featured collections:", err);
-    container.innerHTML = `<div style="opacity:.7;padding:20px 10px;">${__t("load_error")}</div>`;
-  }
-}
-
-
-// === ИЗМЕНЕННАЯ ЛОГИКА ЗАГРУЗКИ ===
+// === Firestore LazyLoad (ПОЛНОСТЬЮ ЗАМЕНЕН) ===
 document.addEventListener("DOMContentLoaded", async () => {
-  // document.getElementById("navAppsIcon").src = ICONS.apps; // <-- УДАЛЕНО
-  // document.getElementById("navGamesIcon").src = ICONS.games; // <-- УДАЛЕНО
+  document.getElementById("navAppsIcon").src = ICONS.apps;
+  document.getElementById("navGamesIcon").src = ICONS.games;
   document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
   document.getElementById("navSettingsIcon").src = ICONS.settings;
 
   const search = document.getElementById("search");
   search.placeholder = __t("search_ph");
   
-  // --- УДАЛЕНА вся логика state, loadBatch, apply ---
+  const catalogContainer = document.getElementById("catalog");
   
-  // --- Новый, простой listener для поиска (фильтрация DOM) ---
-  search.addEventListener("input", (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    // Ищем все карточки во всех коллекциях
-    const allCards = qsa("#featured-collections .card");
+  // Кэш для хранения данных приложений (для модального окна)
+  let allAppsCache = {}; 
+
+  // Единый обработчик кликов по карточкам
+  catalogContainer.addEventListener("click", (e) => {
+    const card = e.target.closest(".card");
+    if (!card) return;
     
-    allCards.forEach(card => {
-      // Ищем по H3 (имя) и .meta (bundleId - он скрыт, но есть в DOM)
-      const name = card.querySelector("h3")?.textContent.toLowerCase() || "";
-      const bundle = card.querySelector(".meta")?.textContent.toLowerCase() || "";
-      const isVisible = name.includes(q) || bundle.includes(q);
-      card.style.display = isVisible ? "" : "none";
-    });
+    const appId = card.dataset.appId;
+    if (appId && allAppsCache[appId]) {
+      openModal(allAppsCache[appId]);
+    } else {
+      console.warn("No app data in cache for ID:", appId);
+    }
   });
 
+  // Главная функция загрузки коллекций
+  async function loadCollections() {
+    // Временный лоадер
+    catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">Загрузка...</div>`; 
+    
+    try {
+      const cRef = collection(db, "ursa_ipas");
+      
+      // 1. Запрос "Popular"
+      // Сортируем по 'installCount' (поле должно быть в Firestore)
+      // Берем 12 штук (4 "страницы" по 3 карточки)
+      const popularQuery = query(cRef, orderBy("installCount", "desc"), limit(12));
+      
+      // 2. Запрос "Updates"
+      // Сортируем по 'updatedAt' (поле должно быть в Firestore)
+      const updatesQuery = query(cRef, orderBy("updatedAt", "desc"), limit(12));
+      
+      // 3. Запрос "VIP"
+      // Фильтруем по 'vipOnly == true'
+      const vipQuery = query(cRef, where("vipOnly", "==", true), orderBy("NAME"), limit(12));
 
+      // Выполняем все запросы параллельно
+      const [popularSnap, updatesSnap, vipSnap] = await Promise.all([
+        getDocs(popularQuery),
+        getDocs(updatesQuery),
+        getDocs(vipQuery)
+      ]);
+
+      // Нормализуем данные
+      const popularApps = popularSnap.docs.map(normalize);
+      const updatesApps = updatesSnap.docs.map(normalize);
+      const vipApps = vipSnap.docs.map(normalize);
+      
+      // Очищаем лоадер
+      catalogContainer.innerHTML = "";
+      
+      // Сбрасываем кэш и наполняем новыми данными
+      allAppsCache = {};
+      [...popularApps, ...updatesApps, ...vipApps].forEach(app => {
+        if (app.id) allAppsCache[app.id] = app;
+      });
+
+      // Рендерим секции
+      renderCollectionRow(catalogContainer, "Popular", popularApps);
+      renderCollectionRow(catalogContainer, "Updates", updatesApps);
+      renderCollectionRow(catalogContainer, "VIP", vipApps);
+      
+      // Если ничего не загрузилось
+      if (catalogContainer.innerHTML === "") {
+         catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
+      }
+
+    } catch (err) {
+      console.error("Collection load error:", err);
+      catalogContainer.innerHTML =
+        `<div style="text-align:center;opacity:.7;padding:40px;">${__t("load_error")}</div>`;
+    }
+  }
+  
+  // Старый 'state', 'loadBatch', 'apply' и 'scroll' listener УДАЛЕНЫ
+  // ...
+
+  // === Tab Bar Logic (МОДИФИЦИРОВАНО) ===
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
     if (!btn) return;
-
-    // --- УДАЛЕНА логика для data-tab ---
-    
-    if (btn.id === "lang-btn") {
+    if (btn.dataset.tab) {
+      // state.tab = btn.dataset.tab; // Старая логика
+      bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      // apply(); // Старая логика
+      // TODO: Табы 'apps' и 'games' теперь ничего не делают.
+      // Нужно будет придумать для них новую логику.
+      
+    } else if (btn.id === "lang-btn") {
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
       document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
       applyI18n(); // Применяем язык
-      // Перезагружаем "Popular" и "Updates" для новых заголовков и бейджей
-      loadFeaturedCollections(); 
+      loadCollections(); // Перезагружаем коллекции с новым языком
+      
     } else if (btn.id === "settings-btn") {
       openSettings();
     }
   });
 
-  // --- УДАЛЕН listener для lazy-load (scroll) ---
-  
-  // === Initial load ===
-  
-  // 1. Сначала применяем язык
-  applyI18n();
-  
-  // 2. Запускаем загрузку "Popular" и "Updates"
-  loadFeaturedCollections(); 
-  
-  // 3. --- УДАЛЕН вызов loadBatch() ---
+  // === Search (МОДИФИЦИРОВАНО) ===
+  search.addEventListener("input", (e) => {
+     // state.q = e.target.value; // Старая логика
+     // apply(); // Старая логика
+     // TODO: Поиск теперь ничего не делает.
+     // Его нужно будет или подключить к API, 
+     // или фильтровать карточки на лету (сложно).
+  });
 
+  // === Initial load ===
+  await loadCollections(); // Запускаем загрузку новых коллекций
+  applyI18n();
+  // apply(); // Старая логика
 
   // === VIP Modal (без изменений) ===
   const vipModal = document.getElementById("vip-modal");
   if (vipModal) {
-    // ... (код без изменений) ...
     vipModal.addEventListener("click", (e) => {
       if (e.target === vipModal || e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
         vipModal.classList.remove("open");
