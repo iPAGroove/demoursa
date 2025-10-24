@@ -79,11 +79,11 @@ transition: background 0.25s, color 0.25s, transform 0.25s;
 
 /* === CATALOG (ИЗМЕНЕНО) === */
 .catalog {
-  margin-top: 12px;
-  display: flex; 
-  flex-direction: column; 
-  gap: 24px; 
-  padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
+  margin-top: 12px;
+  display: flex; 
+  flex-direction: column; 
+  gap: 24px; 
+  padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
 }
 
 .card {
@@ -122,22 +122,22 @@ transition: transform .25s ease;
 }
 .card:hover .icon { transform: scale(1.06); }
 .icon.lg { width: 76px; height: 76px; border-radius: 18px; }
-h3 { 
-  margin: 0 0 2px; 
-  font-size: 15px; 
-  font-weight: 700; 
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+h3 { 
+  margin: 0 0 2px; 
+  font-size: 15px; 
+  font-weight: 700; 
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.meta { 
-  font-size: 12px; 
-  color: var(--muted); 
-  line-height: 1.3; 
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.meta { 
+  font-size: 12px; 
+  color: var(--muted); 
+  line-height: 1.3; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* === BOTTOM NAV === */
@@ -181,7 +181,7 @@ filter: drop-shadow(0 0 10px var(--accent));
 .modal .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
 .sheet {
 position: absolute; inset: auto 0 0 0; margin: 0 auto;
-max-width: 760px; 
+max-width: 760px; 
 height: 80vh; /* <-- НОВЫЙ РАЗМЕР 80% */
 background: var(--bg);
 border-top: 1px solid var(--border);
@@ -203,96 +203,96 @@ transition: background .25s;
 .close:hover { background: rgba(0,0,0,0.7); }
 
 /* === MODAL HEADER (НОВЫЙ ДИЗАЙН) === */
-.sheet-header { 
-  padding: 24px 16px 16px; 
-  border-bottom: 1px solid var(--border); /* Возвращаем границу для отделения */
+.sheet-header { 
+  padding: 24px 16px 16px; 
+  border-bottom: 1px solid var(--border); /* Возвращаем границу для отделения */
 }
-.app-head { 
-  display: flex; /* <-- ИЗМЕНЕНО */
-  gap: 14px; 
-  align-items: flex-start; /* Иконка вверху */
+.app-head { 
+  display: flex; /* <-- ИЗМЕНЕНО */
+  gap: 14px; 
+  align-items: flex-start; /* Иконка вверху */
 }
 .head-content {
-  flex: 1; /* Занимает все оставшееся место */
-  display: flex;
-  flex-direction: column;
-  gap: 12px; /* Расстояние между тайтлом и кнопками */
+  flex: 1; /* Занимает все оставшееся место */
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Расстояние между тайтлом и кнопками */
 }
 .sheet-header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.3;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 .btns-row {
-  display: flex;
-  gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 .btns-row .btn.small {
-  width: auto; /* <-- Снимаем width: 100% */
-  flex: 1; /* Кнопки делят место поровну */
-  padding: 10px 12px;
-  font-size: 14px;
-  font-weight: 700;
+  width: auto; /* <-- Снимаем width: 100% */
+  flex: 1; /* Кнопки делят место поровну */
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 700;
 }
 .btns-row .btn.small svg {
-  margin-right: 6px;
+  margin-right: 6px;
 }
 .btns-row .vip-lock-message {
-  width: 100%;
-  padding: 10px 12px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffcc00; /* VIP цвет */
-  background: rgba(255, 204, 0, 0.1);
-  border: 1px solid rgba(255, 204, 0, 0.2);
-  border-radius: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffcc00; /* VIP цвет */
+  background: rgba(255, 204, 0, 0.1);
+  border: 1px solid rgba(255, 204, 0, 0.2);
+  border-radius: 10px;
 }
 
 
 /* === MODAL BODY (НОВЫЙ ДИЗАЙН) === */
-.sheet-body { 
-  padding: 12px 16px 16px; 
-  display: flex; /* <-- ИЗМЕНЕНО */
-  flex-direction: column; /* Элементы идут друг под другом */
-  gap: 14px; /* Расстояние между блоками */
-  overflow: auto; 
-  flex: 1; /* Занимает все оставшееся место в .sheet */
+.sheet-body { 
+  padding: 12px 16px 16px; 
+  display: flex; /* <-- ИЗМЕНЕНО */
+  flex-direction: column; /* Элементы идут друг под другом */
+  gap: 14px; /* Расстояние между блоками */
+  overflow: auto; 
+  flex: 1; /* Занимает все оставшееся место в .sheet */
 }
 #app-time-ago {
-  font-size: 13px;
-  color: var(--muted);
-  text-align: center;
-  opacity: 0.8;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  opacity: 0.8;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
 }
 #app-info-line {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background: var(--card);
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--card);
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
 }
 .info-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  text-align: center;
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  flex: 1;
 }
 .info-item span {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 400;
-  text-transform: uppercase;
-  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 .section p { margin: 0 0 10px 0; color: #cfe1ffbf; font-size: 15px; }
 .bullets { margin: 8px 0 0; padding-left: 22px; }
@@ -300,10 +300,10 @@ transition: background .25s;
 
 /* === MODAL FOOTER (СКРЫТ) === */
 .sheet-footer {
-  display: none; /* <-- Кнопки переехали */
-  padding: 12px 16px calc(env(safe-area-inset-bottom)+16px);
-  border-top: 1px solid var(--border);
-  background: var(--bg);
+  display: none; /* <-- Кнопки переехали */
+  padding: 12px 16px calc(env(safe-area-inset-bottom)+16px);
+  border-top: 1px solid var(--border);
+  background: var(--bg);
 }
 
 /* === BUTTONS === */
@@ -337,10 +337,9 @@ box-shadow: 0 -12px 30px rgb(0 0 0 / .5);
 animation: slideUp .3s ease;
 }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.dialog-head {
-display: flex; align-items: center; justify-content: space-between;
-padding: 12px 14px; border-bottom: 1px solid var(--border);
-}
+
+/* .dialog-head (УДАЛЕНО v9.4) */
+
 .dialog-body {
 padding: 12px 14px 18px;
 color: #cfe1ffbf;
@@ -356,38 +355,13 @@ color: var(--text);
 margin-top: 4px;
 }
 
-/* === PROFILE === */
-.profile-card.big {
-max-width: 440px;
-min-height: 70vh;
-padding-bottom: 20px;
-border-radius: 24px 24px 0 0;
-background: var(--bg-elev);
-box-shadow: 0 -12px 30px rgba(0,0,0,.5);
-animation: profileFade .4s ease;
-}
-@keyframes profileFade {
-from { transform: translateY(40px); opacity: 0; }
-to { transform: translateY(0); opacity: 1; }
-}
+/* === PROFILE (УДАЛЕНО v9.4) === */
+/* .profile-center (УДАЛЕНО v9.4) */
+/* .profile-avatar-xl (УДАЛЕНО v9.4) */
+/* .profile-avatar-xl:hover (УДАЛЕНО v9.4) */
+/* .profile-center h3 (УДАЛЕНО v9.4) */
+/* .profile-center p (УДАЛЕНО v9.4) */
 
-.profile-center {
-display: flex; flex-direction: column; align-items: center;
-text-align: center; margin-top: 12px;
-}
-.profile-avatar-xl {
-width: 100px; height: 100px;
-border-radius: 50%; border: 3px solid var(--accent);
-object-fit: cover; margin-bottom: 10px;
-box-shadow: 0 0 20px rgba(0,179,255,.35);
-transition: transform .3s ease, box-shadow .3s ease;
-}
-.profile-avatar-xl:hover {
-transform: scale(1.04);
-box-shadow: 0 0 30px rgba(0,179,255,.6);
-}
-.profile-center h3 { margin: 4px 0 2px; font-size: 18px; font-weight: 700; color: var(--text); }
-.profile-center p { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
 .profile-section { margin-top: 8px; padding: 4px 6px; }
 .status-badge {
 display: inline-block;
@@ -401,243 +375,311 @@ font-weight: 600;
 
 /* === ADAPTIVE (ИЗМЕНЕНО) === */
 @media (min-width: 520px) {
-  .catalog { grid-template-columns: 1fr; } 
+  .catalog { grid-template-columns: 1fr; } 
 }
 
 /* === PROFILE (URSA Neon Glass v2) === */
 .profile-card.big {
-  max-width: 420px;
-  min-height: 64vh;
-  padding: 24px 18px 30px;
-  border-radius: 26px 26px 0 0;
-  background: rgba(18, 23, 34, 0.82);
-  border: 1px solid rgba(0, 179, 255, 0.15);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.55);
-  animation: profileFade 0.4s ease;
+  max-width: 420px;
+  min-height: 64vh;
+  /* padding: 24px 18px 30px; (Переехало в .dialog-body#user-info) */
+  border-radius: 26px 26px 0 0;
+  background: rgba(18, 23, 34, 0.82);
+  border: 1px solid rgba(0, 179, 255, 0.15);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.55);
+  animation: profileFade 0.4s ease;
 }
 
-.profile-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-top: 8px;
+@keyframes profileFade {
+from { transform: translateY(40px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
 }
 
-.profile-avatar-xl {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  border: 3px solid rgba(0, 179, 255, 0.6);
-  object-fit: cover;
-  margin-bottom: 12px;
-  box-shadow: 0 0 25px rgba(0, 179, 255, 0.3);
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
-}
-.profile-avatar-xl:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 40px rgba(0, 179, 255, 0.55);
-}
+/* .profile-center (УДАЛЕНО v9.4) */
+/* .profile-avatar-xl (УДАЛЕНО v9.4) */
+/* .profile-avatar-xl:hover (УДАЛЕНО v9.4) */
+/* .profile-center h3 (УДАЛЕНО v9.4) */
+/* .profile-center p (УДАЛЕНО v9.4) */
 
-.profile-center h3 {
-  margin: 6px 0 2px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-}
-.profile-center p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--muted);
-}
 .status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 4px 10px;
-  margin-top: 6px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  background: linear-gradient(90deg, var(--accent) 0%, #00c8ff 100%);
-  color: #001018;
-  box-shadow: 0 0 14px rgba(0, 179, 255, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 10px;
+  margin-top: 6px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--accent) 0%, #00c8ff 100%);
+  color: #001018;
+  box-shadow: 0 0 14px rgba(0, 179, 255, 0.45);
 }
 .status-badge::before {
-  content: "⭐";
-  font-size: 12px;
-  margin-right: 3px;
+  content: "⭐";
+  font-size: 12px;
+  margin-right: 3px;
 }
 
 .btn.small {
-  font-size: 14px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  width: 100%;
-  margin-top: 10px;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  width: 100%;
+  margin-top: 10px;
 }
 .btn.outline.small {
-  background: rgba(0, 179, 255, 0.08);
-  border: 1px solid rgba(0, 179, 255, 0.5);
-  color: var(--accent);
-  transition: all 0.3s ease;
+  background: rgba(0, 179, 255, 0.08);
+  border: 1px solid rgba(0, 179, 255, 0.5);
+  color: var(--accent);
+  transition: all 0.3s ease;
 }
 .btn.outline.small:hover {
-  background: var(--accent);
-  color: #001018;
+  background: var(--accent);
+  color: #001018;
 }
 
 .profile-section {
-  background: rgba(20, 26, 36, 0.7);
-  border: 1px solid rgba(0, 179, 255, 0.12);
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin-top: 16px;
-  box-shadow: inset 0 0 10px rgba(0, 179, 255, 0.08);
+  background: rgba(20, 26, 36, 0.7);
+  border: 1px solid rgba(0, 179, 255, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 16px;
+  box-shadow: inset 0 0 10px rgba(0, 179, 255, 0.08);
 }
 .profile-section h4 {
-  margin: 0 0 8px;
-  color: var(--accent);
-  font-size: 15px;
-  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
 }
 .profile-section p {
-  margin: 4px 0;
-  font-size: 14px;
-  color: var(--muted);
+  margin: 4px 0;
+  font-size: 14px;
+  color: var(--muted);
 }
 .profile-section button {
-  margin-top: 10px;
-  border-radius: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
 }
 
-.profile-footer {
-  text-align: center;
-  font-size: 13px;
-  opacity: 0.65;
-  margin-top: 14px;
-}
+/* .profile-footer (УДАЛЕНО v9.4) */
 
-.dialog-head strong {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--accent);
-  text-shadow: 0 0 8px rgba(0, 179, 255, 0.35);
-}
-.dialog-head .close {
+/* .dialog-head strong (УДАЛЕНО v9.4) */
+/* .dialog-head .close (УДАЛЕНО v9.4) */
+
+
+/* === НОВЫЙ ДИЗАЙН ПРОФИЛЯ v9.4 === */
+
+/* Позиционируем кнопку "Закрыть" */
+.dialog-card .close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 10;
   background: rgba(0, 0, 0, 0.35);
   color: var(--text);
-  font-size: 18px;
   border: none;
   border-radius: 50%;
   padding: 6px 9px;
   transition: background 0.25s ease;
+  cursor: pointer;
 }
-.dialog-head .close:hover {
+.dialog-card .close:hover {
   background: rgba(0, 179, 255, 0.25);
 }
+
+/* Убираем лишние отступы у body */
+.dialog-card .dialog-body#user-info {
+  padding: 24px 18px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Блок Юзера: Аватар + Инфо */
+.profile-user-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-avatar-l {
+  width: 72px; /* Меньше чем 96px */
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 179, 255, 0.6);
+  object-fit: cover;
+  box-shadow: 0 0 20px rgba(0, 179, 255, 0.25);
+}
+.profile-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.profile-user-meta h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+/* Переопределяем старый .status-badge */
+.profile-user-meta .status-badge {
+  margin-top: 0; 
+}
+
+/* Блок Авторизации */
+.auth-section {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+.auth-section p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 12px;
+  text-align: center;
+  font-weight: 500;
+}
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+.social-btn img {
+  width: 24px;
+  height: 24px;
+  opacity: 0.8;
+}
+.social-btn:hover {
+  transform: scale(1.08);
+  background: var(--bg-elev);
+}
+
+/* Секция VIP */
+.vip-promo {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+.vip-promo .btn.full {
+  margin-top: 0;
+}
+
+
 /* === VIP-LOCKED CARD (НОВЫЙ ДИЗАЙН v3 - БЕЗ БЛЮРА) === */
 .vip-locked {
-  position: relative;
-  pointer-events: auto;
+  position: relative;
+  pointer-events: auto;
 }
 
 /* Золотая неоновая рамка для VIP */
 .vip-locked:before {
-  background: linear-gradient(120deg, #ffcc00, transparent 60%, #ffdd4d);
-  background-size: 200% 200%;
-  animation: borderflow 4s linear infinite;
+  background: linear-gradient(120deg, #ffcc00, transparent 60%, #ffdd4d);
+  background-size: 200% 200%;
+  animation: borderflow 4s linear infinite;
 }
 
 /* Затемняем контент (иконку, текст) */
 .vip-locked > .row {
-  /* filter: blur(1px); (УБРАЛИ БЛЮР) */
-  opacity: 0.5; /* Сделал чуть темнее, чтобы замок выделялся */
-  transition: opacity 0.25s ease;
+  /* filter: blur(1px); (УБРАЛИ БЛЮР) */
+  opacity: 0.5; /* Сделал чуть темнее, чтобы замок выделялся */
+  transition: opacity 0.25s ease;
 }
 
 /* При наведении чуть светлее */
 .vip-locked:hover > .row {
-  /* filter: blur(0.5px); (УБРАЛИ БЛЮР) */
-  opacity: 0.7;
+  /* filter: blur(0.5px); (УБРАЛИ БЛЮР) */
+  opacity: 0.7;
 }
 
 /* Стилизуем сам замок (который в углу) */
 .vip-locked .vip-lock {
-  position: absolute;
-  /* Центрируем замок */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  /* Делаем крупнее */
-  font-size: 32px;
-  color: #ffcc00; /* Золотой */
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 204, 0, 0.5);
-  z-index: 10; /* Поверх всего */
-  transition: transform 0.25s ease;
+  position: absolute;
+  /* Центрируем замок */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Делаем крупнее */
+  font-size: 32px;
+  color: #ffcc00; /* Золотой */
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 204, 0, 0.5);
+  z-index: 10; /* Поверх всего */
+  transition: transform 0.25s ease;
 }
 
 .vip-locked:hover .vip-lock {
-   transform: translate(-50%, -50%) scale(1.1); /* Эффект при наведении */
+   transform: translate(-50%, -50%) scale(1.1); /* Эффект при наведении */
 }
 /* === НОВЫЕ СТИЛИ ДЛЯ КОЛЛЕКЦИЙ === */
 .collection-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .collection-row h2 {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-  padding: 0 4px; 
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  padding: 0 4px; 
 }
 .card-carousel {
-  display: grid;
-  grid-auto-flow: column; 
-  grid-template-rows: repeat(3, auto); 
-  grid-auto-columns: 300px; /* <-- Я поставил 300px, как обсуждали */
-  gap: var(--gap);
-  overflow-x: auto;
-  /* scroll-snap-type: x mandatory; (Убрали) */
-  -webkit-overflow-scrolling: touch; 
-  padding: 4px 0; 
+  display: grid;
+  grid-auto-flow: column; 
+  grid-template-rows: repeat(3, auto); 
+  grid-auto-columns: 300px; /* <-- Я поставил 300px, как обсуждали */
+  gap: var(--gap);
+  overflow-x: auto;
+  /* scroll-snap-type: x mandatory; (Убрали) */
+  -webkit-overflow-scrolling: touch; 
+  padding: 4px 0; 
 }
 .card-carousel::-webkit-scrollbar { display: none; }
 .card-carousel { scrollbar-width: none; }
 .card-carousel .card {
-  width: 100%; 
-  margin: 0;
-  /* scroll-snap-align: start; (Убрали) */
+  width: 100%; 
+  margin: 0;
+  /* scroll-snap-align: start; (Убрали) */
 }
 .card .badge {
-  position: absolute;
-  top: -1px; 
-  right: -1px; 
-  background: var(--accent);
-  color: #001018;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 0 var(--radius) 0 10px; 
-  text-transform: uppercase;
-  z-index: 2;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  position: absolute;
+  top: -1px; 
+  right: -1px; 
+  background: var(--accent);
+  color: #001018;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 0 var(--radius) 0 10px; 
+  text-transform: uppercase;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 .card .badge.new {
-   background: #4caf50; 
-   color: #fff;
+   background: #4caf50; 
+   color: #fff;
 }
 .card .badge.update {
-   background: #ff9800; 
-   color: #fff;
+   background: #ff9800; 
+   color: #fff;
 }
 @media (min-width: 520px) {
-  .card-carousel {
-     grid-auto-columns: 400px; 
-  }
+  .card-carousel {
+     grid-auto-columns: 400px; 
+  }
 }
