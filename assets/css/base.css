@@ -539,26 +539,51 @@ font-weight: 600;
 .dialog-head .close:hover {
   background: rgba(0, 179, 255, 0.25);
 }
+/* === VIP-LOCKED CARD (НОВЫЙ ДИЗАЙН) === */
 .vip-locked {
   position: relative;
-  opacity: 0.6;
+  /* opacity: 0.6; (Убираем, чтобы не было "бедно") */
   pointer-events: auto;
-  transition: opacity 0.25s ease;
 }
 
-.vip-locked:hover {
+/* Золотая неоновая рамка для VIP */
+.vip-locked:before {
+  background: linear-gradient(120deg, #ffcc00, transparent 60%, #ffdd4d);
+  background-size: 200% 200%;
+  animation: borderflow 4s linear infinite;
+}
+
+/* Блюрим контент (иконку, текст) */
+.vip-locked > .row {
+  filter: blur(2px);
+  opacity: 0.6;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+/* При наведении блюр чуть слабее */
+.vip-locked:hover > .row {
+  filter: blur(1px);
   opacity: 0.8;
 }
 
+/* Стилизуем сам замок (который в углу) */
 .vip-locked .vip-lock {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 18px;
-  color: #ffcc00;
-  text-shadow: 0 0 8px rgba(0,0,0,0.7);
+  /* Центрируем замок */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Делаем крупнее */
+  font-size: 32px;
+  color: #ffcc00; /* Золотой */
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 204, 0, 0.5);
+  z-index: 10; /* Поверх всего */
+  transition: transform 0.25s ease;
 }
 
+.vip-locked:hover .vip-lock {
+   transform: translate(-50%, -50%) scale(1.1); /* Эффект при наведении */
+}
 
 /* === НОВЫЕ СТИЛИ ДЛЯ КОЛЛЕКЦИЙ === */
 .collection-row {
