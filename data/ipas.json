@@ -1,0 +1,15 @@
+[
+  {
+    "id": "subwaysurf_3.33.0",
+    "name": "Squad Alpha - Action Shooting",
+    "bundleId": "com.kiloo.subwaysurf",
+    "version": "3.33.0",
+    "minIOS": "13.0",
+    "sizeBytes": 205000000,
+    "iconUrl": "https://cold-na-phx-6.gofile.io/download/direct/1e0a2754-67db-44d6-affd-8583db8efed1/IMG_9434.jpeg",
+    "tags": ["games", "mod"],
+    "features": ["Unlimited Gems", "Unlimited Cash", "High DMG"],
+    "screenshots": ["https://is1-ssl.mzstatic.com/image/thumb/Purple126/v4/9a/85/91/9a8591c3-6114-0fe5-0031-a7a5199a0326/14a77d85-08bd-4402-aebe-ea5012440941_14058.png/392x696bb.png"],
+    "mirrors": [{ "label": "Direct", "url": "https://cdn.ursa/subwaysurf.ipa" }]
+  }
+]
