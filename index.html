@@ -1,294 +1,307 @@
 <!DOCTYPE html>
+
 <html lang="ru">
+
 <head>
+
   <meta charset="utf-8" />
+
   <title>URSA IPA</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+
   <meta name="apple-mobile-web-app-capable" content="yes" />
+
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
   <link rel="apple-touch-icon" href="assets/icons/ursa-touch.png" />
+
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+
   <link rel="manifest" href="manifest.webmanifest">
+
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-  <meta charset="utf-8" />
-  <title>URSA IPA</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="apple-touch-icon" href="assets/icons/ursa-touch.png" />
-  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
-  <link rel="manifest" href="manifest.webmanifest">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
+
 
   <link rel="stylesheet" href="assets/css/base.css" />
+
   <link rel="stylesheet" href="assets/css/ios.css" />
+
   <link id="theme-css" rel="stylesheet" href="assets/css/themes/neon.css" />
-  <link rel="stylesheet" href="assets/css/base.css" />
-  <link rel="stylesheet" href="assets/css/ios.css" />
-  <link id="theme-css" rel="stylesheet" href="assets/css/themes/neon.css" />
+
+
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
 </head>
+
 <body>
+
   <header class="topbar">
+
     <div class="wrap">
+
       <div class="brand"><span>URSA IPA</span></div>
+
     </div>
+
   </header>
-  <header class="topbar">
-    <div class="wrap">
-      <div class="brand"><span>URSA IPA</span></div>
-    </div>
-  </header>
+
+
 
   <section class="search-area">
+
     <div class="wrap search-wrap">
+
       <input id="search" type="search" inputmode="search" data-i18n-placeholder="search_ph" placeholder="Поиск по названию, bundleId…">
+
       <button id="theme-toggle" aria-label="Сменить тему">🎨</button>
+
     </div>
+
   </section>
-  <section class="search-area">
-    <div class="wrap search-wrap">
-      <input id="search" type="search" inputmode="search" data-i18n-placeholder="search_ph" placeholder="Поиск по названию, bundleId…">
-      <button id="theme-toggle" aria-label="Сменить тему">🎨</button>
-    </div>
-  </section>
+
+
 
   <main>
+
     <div class="wrap">
+
       <div id="catalog" class="catalog" role="list"></div>
+
     </div>
+
   </main>
-  <main>
-    <div class="wrap">
-      <div id="catalog" class="catalog" role="list"></div>
-    </div>
-  </main>
+
+
 
   <nav class="tabbar" id="tabbar" role="tablist">
+
     <div class="dock newdock">
+
       <button class="nav-btn active" data-tab="apps"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
+
       <button class="nav-btn" data-tab="games"><img id="navGamesIcon" alt=""><span class="dot"></span></button>
+
       <button class="nav-btn" id="lang-btn"><img id="navLangIcon" alt=""><span class="dot"></span></button>
+
       <button class="nav-btn" id="settings-btn"><img id="navSettingsIcon" alt=""><span class="dot"></span></button>
+
     </div>
+
   </nav>
-  <nav class="tabbar" id="tabbar" role="tablist">
-    <div class="dock newdock">
-      <button class="nav-btn active" data-tab="apps"><img id="navAppsIcon" alt=""><span class="dot"></span></button>
-      <button class="nav-btn" data-tab="games"><img id="navGamesIcon" alt=""><span class="dot"></span></button>
-      <button class="nav-btn" id="lang-btn"><img id="navLangIcon" alt=""><span class="dot"></span></button>
-      <button class="nav-btn" id="settings-btn"><img id="navSettingsIcon" alt=""><span class="dot"></span></button>
-    </div>
-  </nav>
+
+
 
   <div id="modal" class="modal" aria-hidden="true">
+
     <div class="backdrop" data-close></div>
+
     <article class="sheet" role="dialog">
+
       <button class="close" data-close>✕</button>
+
       <header class="sheet-header">
+
         <div class="app-head">
+
           <img id="app-icon" class="icon lg" src="" alt="">
+
           <div class="head-meta">
+
             <h2 id="app-title"></h2>
+
             <div id="app-bundle" class="meta"></div>
+
             <div id="app-info" class="meta"></div>
+
           </div>
+
         </div>
+
       </header>
+
       <section class="sheet-body">
+
         <div id="app-desc" class="section"></div>
+
       </section>
+
       <footer class="sheet-footer">
+
         <div id="dl-buttons" class="btns"></div>
+
       </footer>
+
     </article>
+
   </div>
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <article class="sheet" role="dialog">
-      <button class="close" data-close>✕</button>
-      <header class="sheet-header">
-        <div class="app-head">
-          <img id="app-icon" class="icon lg" src="" alt="">
-                    <div class="head-content"> 
-            <h2 id="app-title"></h2>
-                                              </div>
-        </div>
-      </header>
-      <section class="sheet-body">
-        <div id="app-desc" class="section"></div>
-      </section>
-      <footer class="sheet-footer">
-        <div id="dl-buttons" class="btns"></div>
-      </footer>
-    </article>
-  </div>
+
+
 
   <div id="settings-modal" class="dialog" aria-hidden="true">
+
     <div class="backdrop" data-close></div>
+
     <section class="dialog-card profile-card big">
+
       <header class="dialog-head">
+
         <strong data-i18n="profile_title">Профиль URSA</strong>
+
         <button class="close" data-close>✕</button>
+
       </header>
- <div id="settings-modal" class="dialog" aria-hidden="true">
-  <div class="backdrop" data-close></div>
-  <section class="dialog-card profile-card big">
-    
-    <button class="close" data-close>✕</button> 
+
+
 
       <div class="dialog-body" id="user-info">
-        <div class="profile-center">
-          <img id="user-photo" class="profile-avatar-xl" src="assets/icons/avatar.png" alt="avatar">
-    <div class="dialog-body" id="user-info">
 
-      <div class="profile-user-row">
-        <img id="user-photo" class="profile-avatar-l" src="assets/icons/avatar.png" alt="avatar"> 
-        <div class="profile-user-meta">
+        <div class="profile-center">
+
+          <img id="user-photo" class="profile-avatar-xl" src="assets/icons/avatar.png" alt="avatar">
+
           <h3 id="user-name" data-i18n="guest">Гость</h3>
+
           <p id="user-email" class="muted">—</p>
+
           <span id="user-status" class="status-badge" data-i18n="badge_free">Free</span>
 
+
+
           <button id="auth-action" class="btn small" data-i18n="login_btn">Войти через Google</button>
+
           <button id="vip-upgrade" class="btn outline small" data-i18n="upgrade_btn">🚀 Поднять статус</button>
+
         </div>
-      </div>
+
+
 
         <div class="profile-section">
+
           <h4 data-i18n="cert_section">🔏 Сертификат</h4>
+
           <p><span data-i18n="cert_state">Состояние:</span> <span id="cert-state" data-i18n="cert_state_none">❌ Не загружен</span></p>
+
           <p style="display:none;">Аккаунт: <span id="cert-account">—</span></p>
+
           <p style="display:none;">Срок: <span id="cert-exp">—</span></p>
+
           <button id="cert-upload" class="btn outline full" data-i18n="cert_upload_btn">📤 Добавить / Обновить сертификат</button>
-      <div class="profile-section auth-section">
-        <div id="social-login-container">
-          <p data-i18n="login_btn">Войти через:</p> 
-          <div class="social-icons">
-            <button id="google-login-btn" class="social-btn" title="Google"> 
-              <img src="assets/icons/google.svg" alt="Google">
-            </button>
-            <button class="social-btn" title="Facebook"> 
-              <img src="assets/icons/facebook.svg" alt="Facebook">
-            </button>
-            <button class="social-btn" title="Twitter">
-              <img src="assets/icons/twitter.svg" alt="Twitter">
-            </button>
-          </div>
+
         </div>
-        <button id="logout-btn" class="btn small outline" style="display: none; width: 100%; margin-top: 0;"></button>
-      </div>
+
+
 
         <div class="profile-footer">
+
           <span data-i18n="acc_status">Статус аккаунта:</span> <b id="acc-status" data-i18n="badge_free">Free</b>
+
         </div>
-      <div class="profile-section vip-promo">
-        <button id="vip-upgrade" class="btn full" data-i18n="upgrade_btn">🚀 Поднять статус</button>
+
       </div>
+
     </section>
+
   </div>
+
+
 
   <div id="vip-modal" class="dialog glass" aria-hidden="true">
+
     <div class="backdrop" data-close></div>
+
     <section class="dialog-card vip-card">
+
       <header class="dialog-head">
+
         <strong data-i18n="vip_title">VIP Статус URSA</strong>
+
         <button class="close" data-close>✕</button>
+
       </header>
+
       <div class="dialog-body">
+
         <p class="vip-desc" data-i18n="vip_desc">
+
           🌟 Получите VIP статус и откройте доступ ко всем модам, скрытым функциям и приоритетной подписи IPA.
+
         </p>
+
         <ul class="vip-benefits">
+
           <li data-i18n="vip_benefit1">⭐ Доступ к эксклюзивным модам</li>
+
           <li data-i18n="vip_benefit2">⚡ Приоритетная установка без ожидания</li>
+
           <li data-i18n="vip_benefit3">💬 Поддержка напрямую из Telegram</li>
+
         </ul>
+
         <p class="vip-price" style="margin-top:10px;font-weight:600;" data-i18n="vip_price">Цена: 4.99 USD / месяц</p>
+
         <button id="buy-vip" class="btn full" data-i18n="vip_buy">💳 Купить</button>
-      <div class="profile-section"> 
-        <h4 data-i18n="cert_section">🔏 Сертификат</h4>
-        <p><span data-i18n="cert_state">Состояние:</span> <span id="cert-state" data-i18n="cert_state_none">❌ Не загружен</span></p>
-        <button id="cert-upload" class="btn outline full" data-i18n="cert_upload_btn">📤 Добавить / Обновить сертификат</button>
-        <p style="display:none;">Аккаунт: <span id="cert-account">—</span></p>
-        <p style="display:none;">Срок: <span id="cert-exp">—</span></p>
+
       </div>
+
     </section>
+
   </div>
+
+
 
   <div id="signer-modal" class="dialog" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <section class="dialog-card">
-      <header class="dialog-head">
-        <strong>URSA Signer</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="dialog-body">
-        <p>📄 <span data-i18n="signing_need_cert">Загрузите свой сертификат (.p12) и provisioning (.mobileprovision)</span>:</p>
-        <form id="signer-form">
-          <label>.p12<br><input type="file" id="fileP12" accept=".p12" required></label><br><br>
-          <label>.mobileprovision<br><input type="file" id="fileProv" accept=".mobileprovision" required></label><br><br>
-          <label><span data-i18n="dash">Пароль</span><br><input type="password" id="certPass" placeholder="password (если есть)"></label><br><br>
-          <button type="submit" id="uploadBtn" class="btn" data-i18n="cert_upload_btn">⬆️ Загрузить в Firebase</button>
-        </form>
-        <div id="uploadStatus" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
-      </div>
-    </section>
-  </div>
-  </section>
-</div>
-  <div id="vip-modal" class="dialog glass" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <section class="dialog-card vip-card">
-      <header class="dialog-head">
-        <strong data-i18n="vip_title">VIP Статус URSA</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="dialog-body">
-        <p class="vip-desc" data-i18n="vip_desc">
-          🌟 Получите VIP статус и откройте доступ ко всем модам, скрытым функциям и приоритетной подписи IPA.
-        </p>
-        <ul class="vip-benefits">
-          <li data-i18n="vip_benefit1">⭐ Доступ к эксклюзивным модам</li>
-          <li data-i18n="vip_benefit2">⚡ Приоритетная установка без ожидания</li>
-          <li data-i18n="vip_benefit3">💬 Поддержка напрямую из Telegram</li>
-        </ul>
-        <p class="vip-price" style="margin-top:10px;font-weight:600;" data-i18n="vip_price">Цена: 4.99 USD / месяц</p>
-        <button id="buy-vip" class="btn full" data-i18n="vip_buy">💳 Купить</button>
-      </div>
-    </section>
-  </div>
 
-  <div id="signer-modal" class="dialog" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <section class="dialog-card">
-      <header class="dialog-head">
-        <strong>URSA Signer</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="dialog-body">
-        <p>📄 <span data-i18n="signing_need_cert">Загрузите свой сертификат (.p12) и provisioning (.mobileprovision)</span>:</p>
-        <form id="signer-form">
-          <label>.p12<br><input type="file" id="fileP12" accept=".p12" required></label><br><br>
-          <label>.mobileprovision<br><input type="file" id="fileProv" accept=".mobileprovision" required></label><br><br>
-          <label><span data-i18n="dash">Пароль</span><br><input type="password" id="certPass" placeholder="password (если есть)"></label><br><br>
-          <button type="submit" id="uploadBtn" class="btn" data-i18n="cert_upload_btn">⬆️ Загрузить в Firebase</button>
-        </form>
-        <div id="uploadStatus" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
-      </div>
-    </section>
-  </div>
+    <div class="backdrop" data-close></div>
+
+    <section class="dialog-card">
+
+      <header class="dialog-head">
+
+        <strong>URSA Signer</strong>
+
+        <button class="close" data-close>✕</button>
+
+      </header>
+
+      <div class="dialog-body">
+
+        <p>📄 <span data-i18n="signing_need_cert">Загрузите свой сертификат (.p12) и provisioning (.mobileprovision)</span>:</p>
+
+        <form id="signer-form">
+
+          <label>.p12<br><input type="file" id="fileP12" accept=".p12" required></label><br><br>
+
+          <label>.mobileprovision<br><input type="file" id="fileProv" accept=".mobileprovision" required></label><br><br>
+
+          <label><span data-i18n="dash">Пароль</span><br><input type="password" id="certPass" placeholder="password (если есть)"></label><br><br>
+
+          <button type="submit" id="uploadBtn" class="btn" data-i18n="cert_upload_btn">⬆️ Загрузить в Firebase</button>
+
+        </form>
+
+        <div id="uploadStatus" style="margin-top:10px;font-size:14px;opacity:.8;"></div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+
 
   <script src="assets/js/themes.js?v=9"></script>
+
   <script src="assets/js/ios.js?v=9"></script>
+
   <script type="module" src="assets/js/firebase.js"></script>
+
   <script type="module" src="assets/js/auth.js?v=7.5"></script>
+
   <script type="module" src="assets/js/app.js?v=7.6"></script> <script type="module" src="assets/js/signer_upload.js?v=4.3"></script>
-  <script src="assets/js/themes.js?v=9"></script>
-  <script src="assets/js/ios.js?v=9"></script>
-  <script type="module" src="assets/js/firebase.js"></script>
-  <script type="module" src="assets/js/auth.js?v=7.5"></script>
-  <script type="module" src="assets/js/app.js?v=7.6"></script> <script type="module" src="assets/js/signer_upload.js?v=4.3"></script>
+
 </body>
+
 </html>
