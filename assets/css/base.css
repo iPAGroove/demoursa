@@ -539,7 +539,7 @@ font-weight: 600;
 .dialog-head .close:hover {
   background: rgba(0, 179, 255, 0.25);
 }
-/* === VIP-LOCKED CARD (НОВЫЙ ДИЗАЙН) === */
+/* === VIP-LOCKED CARD (НОВЫЙ ДИЗАЙН v2 - МЕНЬШЕ БЛЮРА) === */
 .vip-locked {
   position: relative;
   /* opacity: 0.6; (Убираем, чтобы не было "бедно") */
@@ -555,14 +555,14 @@ font-weight: 600;
 
 /* Блюрим контент (иконку, текст) */
 .vip-locked > .row {
-  filter: blur(2px);
+  filter: blur(1px); /* <-- СДЕЛАЛ МЕНЬШЕ */
   opacity: 0.6;
   transition: filter 0.25s ease, opacity 0.25s ease;
 }
 
-/* При наведении блюр чуть слабее */
+/* При наведении блюр почти убираем */
 .vip-locked:hover > .row {
-  filter: blur(1px);
+  filter: blur(0.5px); /* <-- СДЕЛАЛ МЕНЬШЕ */
   opacity: 0.8;
 }
 
