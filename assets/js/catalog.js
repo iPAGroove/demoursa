@@ -33,7 +33,7 @@ const state = {
 };
 
 
-// === App Data Normalization (из app.js) ===
+// === App Data Normalization ===
 function normalize(doc) {
     const data = doc.data();
     const tags = Array.isArray(data.tags)
@@ -64,14 +64,19 @@ function normalize(doc) {
 }
 
 
-// === Render Collection Row (из app.js) ===
+// === Render Collection Row (МОДИФИЦИРОВАНО для 9 карточек и кнопки "Смотреть все") ===
 function renderCollectionRow(containerEl, title, apps) {
     if (!apps.length) return;
     const userStatus = localStorage.getItem("ursa_status") || "free";
     const now = Timestamp.now();
     const sevenDaysAgo = Timestamp.fromMillis(now.toMillis() - 7 * 24 * 60 * 60 * 1000);
+    
+    // 💥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Ограничение до 9 карточек для главной страницы
+    const displayedApps = apps.slice(0, 9);
+    const hasMore = apps.length > 9; // Проверяем, есть ли остальные
+
     let cardsHTML = "";
-    apps.forEach((app) => {
+    displayedApps.forEach((app) => {
         if (app.id) window.allAppsCache[app.id] = app;
         let badge = "";
         
@@ -102,25 +107,35 @@ function renderCollectionRow(containerEl, title, apps) {
                 </div>
             </article>`;
     });
+
     const section = document.createElement("section");
     section.className = "collection-row";
     section.innerHTML = `
         <h2>${escapeHTML(title)}</h2>
         <div class="card-carousel">${cardsHTML}</div>
+        ${hasMore ? `
+            <div class="see-all-btn">
+                <button class="btn outline" data-action="see-all" data-collection-title="${escapeHTML(title)}" data-collection-list="${escapeHTML(title.toLowerCase())}">
+                    ${__t("see_all") || "Смотреть все"}
+                </button>
+            </div>
+        ` : ''}
     `;
     containerEl.appendChild(section);
 }
 
 
-// === Load Data from Firestore (из app.js) ===
+// === Load Data from Firestore ===
 async function loadBatch(isInitial = false) {
     if (state.loading || state.end) return;
     state.loading = true;
 
     const cRef = collection(db, "ursa_ipas");
     
+    // Ограничение для первой загрузки (чтобы показать "Смотреть все")
+    // Если поиск активен, загружаем больше
     const currentLimit = isInitial
-        ? 6
+        ? 15 // Загружаем чуть больше 9, чтобы определить, нужна ли кнопка "Смотреть все"
         : (state.q.length > 0 ? 200 : 30);
         
     let queryArgs = [orderBy("updatedAt", "desc"), limit(currentLimit)];
@@ -163,7 +178,7 @@ async function loadBatch(isInitial = false) {
 }
 
 
-// === Load All for Global Search (из app.js) ===
+// === Load All for Global Search ===
 async function loadAllForGlobalSearch() {
     if (state.end) return;
     
@@ -186,7 +201,7 @@ async function loadAllForGlobalSearch() {
 }
 
 
-// === Apply Filters and Render (из app.js) ===
+// === Apply Filters and Render ===
 const apply = () => {
     const q = state.q.trim().toLowerCase();
     const isSearching = q.length > 0;
@@ -225,13 +240,22 @@ const apply = () => {
     const vipList = list.filter(app => app.vipOnly).sort((a, b) => a.name.localeCompare(b.name));
 
     // 3. Рендер
+    // NOTE: Внутри renderCollectionRow происходит ограничение до 9 карточек!
     renderCollectionRow(catalogContainer, "Popular", popularList);
     renderCollectionRow(catalogContainer, "Updates", updatesList);
     renderCollectionRow(catalogContainer, "VIP", vipList);
 };
 
 
-// === Main DOM Ready Logic (из app.js) ===
+// 💡 TODO: Создай функцию для открытия модального окна полной коллекции
+function openCollectionModal(title, collectionList) {
+    console.log(`[TODO] Открытие модального окна для: ${title}`);
+    // Здесь будет логика инициализации новой модалки, поиска и загрузки ВСЕХ приложений.
+    // Это будет следующий шаг!
+}
+
+
+// === Main DOM Ready Logic ===
 document.addEventListener("DOMContentLoaded", async () => {
     const search = document.getElementById("search");
     const bar = document.getElementById("tabbar");
@@ -291,15 +315,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // 4. Обработчик клика по карточке (перенесен сюда из modals.js для доступа к кэшу)
+    // 4. Обработчик клика по карточке И кнопке "Смотреть все"
     catalogContainer.addEventListener("click", (e) => {
         const card = e.target.closest(".card");
-        if (!card) return;
-        const appId = card.dataset.appId;
-        if (appId && window.allAppsCache[appId]) {
-            openModal(window.allAppsCache[appId]);
-        } else {
-            console.warn("No app data in cache for ID:", appId);
+        if (card) {
+            const appId = card.dataset.appId;
+            if (appId && window.allAppsCache[appId]) {
+                openModal(window.allAppsCache[appId]);
+            } else {
+                console.warn("No app data in cache for ID:", appId);
+            }
+            return;
+        }
+        
+        // Обработка кнопки "Смотреть все"
+        const seeAllBtn = e.target.closest('[data-action="see-all"]');
+        if (seeAllBtn) {
+            const title = seeAllBtn.dataset.collectionTitle;
+            const collectionList = seeAllBtn.dataset.collectionList;
+            
+            // 💡 Вызываем функцию, которую создадим на следующем шаге
+            // openCollectionModal(title, collectionList); 
+            console.log(`[CLICK] Смотреть все: ${title}`);
         }
     });
     
