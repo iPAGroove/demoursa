@@ -24,6 +24,7 @@ font: 16px/1.42 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Ro
 -webkit-font-smoothing: antialiased;
 text-rendering: optimizeLegibility;
 transition: background-color 0.35s ease, color 0.35s ease;
+overflow-x: hidden; /* 💥 ФИКС: Предотвращаем горизонтальное растяжение */
 }
 
 * { box-sizing: border-box; }
