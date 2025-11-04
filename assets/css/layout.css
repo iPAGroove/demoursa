@@ -50,7 +50,6 @@
     100% { text-shadow: 0 0 15px var(--accent), 0 0 25px rgba(0, 179, 255, 0.6); }
 }
 
-/* Убеждаемся, что старая keyframe удалена */
 @keyframes draw { from { width: 0 } to { width: 100% } }
 
 
@@ -121,7 +120,7 @@ filter: drop-shadow(0 0 10px var(--accent));
 .newdock .dot { display: none; }
 
 
-/* === CATALOG & CARDS (ОБНОВЛЕНО: Фиксированная сетка) === */
+/* === CATALOG & CARDS (ФИКСИРОВАННАЯ СЕТКА) === */
 
 .catalog {
   /* Наш основной контейнер */
@@ -147,7 +146,7 @@ filter: drop-shadow(0 0 10px var(--accent));
 }
 
 .card-carousel {
-  /* Делаем из карусели адаптивную сетку */
+  /* Адаптивная сетка, теперь не вызывает переполнения */
   display: grid;
   grid-auto-flow: unset;
   grid-template-rows: unset;
