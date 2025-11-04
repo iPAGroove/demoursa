@@ -1,21 +1,22 @@
 /* assets/css/layout.css */
 
-/* === HEADER (КРИТИЧЕСКИЙ ФИКС: Принудительная высота и центрирование) === */
+/* === HEADER (ФИНАЛЬНЫЙ ФИКС: Компактная высота и центрирование) === */
 
 .topbar {
     position: sticky; top: 0; z-index: 50; 
+    /* Прозрачный фон с блюром (эффект "стекла") */
     background: color-mix(in oklab, var(--bg) 95%, #000 5%);
     backdrop-filter: blur(8px) saturate(120%);
     -webkit-backdrop-filter: blur(8px) saturate(120%);
     border-bottom: 1px solid var(--border); 
     
-    /* 💥 ЖЕСТКИЙ ФИКС ВЫСОТЫ: Используем height и flex-end для минимальной высоты */
-    padding: 0; /* Сбрасываем все padding */
-    height: calc(38px + env(safe-area-inset-top)); /* 38px для контента + Safe Area */
+    /* 💥 ФИКС: Сбрасываем padding, используем минимальную высоту */
+    padding: 0; 
+    min-height: calc(38px + env(safe-area-inset-top)); /* 38px для контента + Safe Area */
     
     display: flex; 
     justify-content: center; 
-    align-items: flex-end; /* Прижимаем контент к низу */
+    align-items: center; /* 💥 ТОЧЕЧНЫЙ ФИКС: Центрируем контент по вертикали */
     width: 100%;
 }
 
@@ -24,7 +25,9 @@
     width: 100%;
     padding: 0 14px; 
     text-align: center; 
-    padding-bottom: 4px; 
+    /* 💥 ТОЧЕЧНЫЙ ФИКС: Добавляем padding сверху, чтобы поднять текст от нижней границы шапки */
+    padding-top: calc(env(safe-area-inset-top) + 4px); 
+    padding-bottom: 4px;
 }
 
 .brand {
@@ -34,7 +37,7 @@
     letter-spacing: 2px; 
     color: var(--accent); 
     position: relative;
-    /* Убираем overflow, который может конфликтовать */
+    overflow: hidden; 
     white-space: nowrap;
 }
 
@@ -43,6 +46,7 @@
     color: transparent;
     -webkit-text-stroke: 1px var(--accent);
     position: relative;
+    /* Убираем анимацию и тень */
     text-shadow: none; 
     animation: none; 
 }
@@ -125,7 +129,7 @@
     padding: 8px 4px; 
     max-width: 420px;
     box-shadow: 0 10px 24px rgba(0,0,0,.4);
-    /* 💥 ФИКС: Гарантируем центрирование и безопасную зону, убирая сжатие */
+    /* 💥 ФИКС: Гарантируем центрирование и безопасную зону */
     margin: 0 auto;
     width: calc(100% - 28px); /* 100% минус padding wrap'а (14px*2) */
     max-width: 420px; 
