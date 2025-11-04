@@ -1,6 +1,6 @@
 /* assets/css/layout.css */
 
-/* === HEADER (ФИКС №1: Гарантируем центрирование и корректные отступы) === */
+/* === HEADER (ФИКС №1: Минимальная высота, нет анимации, центрирование) === */
 
 .topbar {
     position: sticky; top: 0; z-index: 50; 
@@ -9,9 +9,9 @@
     backdrop-filter: blur(8px) saturate(120%);
     -webkit-backdrop-filter: blur(8px) saturate(120%);
     border-bottom: 1px solid var(--border); 
-    /* Вертикальный padding + safe area */
-    padding-top: calc(env(safe-area-inset-top) + 8px); 
-    padding-bottom: 8px;
+    /* 💥 ФИКС: Минимальный вертикальный padding для плотного прилегания кверху */
+    padding-top: calc(env(safe-area-inset-top) + 6px); 
+    padding-bottom: 6px;
     display: flex; justify-content: center; align-items: center;
     width: 100%;
 }
@@ -20,7 +20,7 @@
 .topbar .wrap { 
     width: 100%;
     padding: 0 14px; 
-    text-align: center; 
+    text-align: center; /* Гарантируем, что текст центрирован */
 }
 
 .brand {
@@ -39,8 +39,9 @@
     color: transparent;
     -webkit-text-stroke: 1px var(--accent);
     position: relative;
-    text-shadow: 0 0 8px rgba(0, 179, 255, 0.4); 
-    animation: neon-pulse 2s ease-in-out infinite alternate;
+    /* 💥 ФИКС: Убираем анимацию и тень */
+    text-shadow: none; 
+    animation: none; 
 }
 
 .brand span::before {
@@ -50,9 +51,10 @@
     width: 100%; 
     white-space: nowrap; overflow: hidden;
     border-right: none;
-    animation: none;
+    animation: none; /* 💥 ФИКС: Убираем старую анимацию draw */
 }
 
+/* Оставляем keyframes, но они не используются */
 @keyframes neon-pulse { 
     0% { text-shadow: 0 0 6px var(--accent), 0 0 10px rgba(0, 179, 255, 0.2); }
     100% { text-shadow: 0 0 12px var(--accent), 0 0 20px rgba(0, 179, 255, 0.5); }
@@ -120,7 +122,7 @@
     padding: 8px 4px; 
     max-width: 420px;
     box-shadow: 0 10px 24px rgba(0,0,0,.4);
-    /* 💥 ФИКС: Гарантируем центрирование и безопасную зону, убирая жесткий margin-left/right */
+    /* 💥 ФИКС: Гарантируем центрирование и безопасную зону */
     margin: 0 auto;
     width: calc(100% - 28px); /* 100% минус padding wrap'а (14px*2) */
     max-width: 420px; 
@@ -150,7 +152,7 @@
 .newdock .dot { display: none; }
 
 
-/* === CATALOG & CARDS (ФИКС №6: Сетка с правильными отступами) === */
+/* === CATALOG & CARDS (ФИКС: Сетка с правильными отступами) === */
 
 .catalog {
   /* Наш основной контейнер */
