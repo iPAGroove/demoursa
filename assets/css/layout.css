@@ -1,6 +1,6 @@
 /* assets/css/layout.css */
 
-/* === HEADER (ФИКС: Уменьшаем высоту, корректные отступы) === */
+/* === HEADER (ФИКС №1: Уменьшаем высоту, корректные отступы) === */
 
 .topbar {
     position: sticky; top: 0; z-index: 50; 
@@ -8,10 +8,17 @@
     backdrop-filter: blur(8px) saturate(120%);
     -webkit-backdrop-filter: blur(8px) saturate(120%);
     border-bottom: 1px solid var(--border); 
-    /* ФИКС №1: Уменьшаем вертикальный padding */
-    padding: calc(env(safe-area-inset-top) + 8px) 0 8px; 
+    /* ФИКС: Уменьшаем вертикальный padding */
+    padding-top: calc(env(safe-area-inset-top) + 8px); 
+    padding-bottom: 8px;
     display: flex; justify-content: center; align-items: center;
     width: 100%;
+}
+
+/* ФИКС: Применяем горизонтальные отступы к внутреннему контейнеру .wrap */
+.topbar .wrap { 
+    width: 100%;
+    padding: 0 14px; 
 }
 
 .brand {
@@ -52,15 +59,16 @@
 @keyframes draw { from { width: 0 } to { width: 100% } }
 
 
-/* === SEARCH (ФИКС: Убеждаемся, что поиск имеет корректные отступы) === */
+/* === SEARCH (ФИКС: Отступы через .wrap) === */
 
-.search-area { padding: 12px 0 6px; width: 100%; }
+.search-area { padding-top: 12px; padding-bottom: 6px; width: 100%; }
 
+/* ФИКС: Применяем горизонтальные отступы к .search-wrap, который находится внутри .wrap */
 .search-wrap { 
-    /* ФИКС: Для избежания растяжения, используем wrap для padding */
     display: grid; 
     grid-template-columns: 1fr auto; 
     gap: 10px; 
+    padding: 0 14px; 
 }
 
 #search {
@@ -91,11 +99,11 @@
     background: color-mix(in oklab, var(--bg) 88%, #000 12%);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    /* ФИКС: Используем минимальный padding, чтобы дать dock-у центрироваться */
+    /* ФИКС: Вертикальный padding, горизонт. 0 */
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); 
     box-sizing: border-box;
     width: 100%;
-    display: flex; /* Добавим flex для центрирования содержимого */
+    display: flex; 
     justify-content: center;
     transition: background 0.3s ease;
 }
@@ -110,8 +118,10 @@
     padding: 8px 4px; 
     max-width: 420px;
     box-shadow: 0 10px 24px rgba(0,0,0,.4);
-    /* 💥 ФИКС: Используем безопасные отступы и центрируем контейнер */
-    margin: 0 calc(env(safe-area-inset-left) + 12px) 0 calc(env(safe-area-inset-right) + 12px); 
+    /* 💥 ФИКС: Используем padding для safe area, чтобы панель не растягивалась */
+    margin: 0 14px; 
+    padding-left: env(safe-area-inset-left); 
+    padding-right: env(safe-area-inset-right); 
     width: auto;
 }
 
@@ -136,7 +146,7 @@
 .newdock .dot { display: none; }
 
 
-/* === CATALOG & CARDS (ФИКС: Принудительная сетка, устраняем скролл) === */
+/* === CATALOG & CARDS (ФИКС №6: Сетка с правильными отступами) === */
 
 .catalog {
   /* Наш основной контейнер */
@@ -146,6 +156,7 @@
   gap: 30px; 
   padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
   overflow: hidden; 
+  padding: 0 14px; /* 💥 ФИКС №6: Отступы для каталога */
 }
 
 .collection-row {
@@ -159,11 +170,11 @@
   font-weight: 700;
   color: var(--text);
   margin: 0;
-  padding: 0 4px; 
+  padding: 0; 
 }
 
 .card-carousel {
-  /* 💥 ФИКС: Главная страница - это сетка */
+  /* ФИКС: Главная страница - это сетка */
   display: grid;
   grid-auto-flow: unset;
   grid-template-rows: unset;
@@ -186,6 +197,16 @@ display: grid; gap: 8px;
 box-shadow: 0 6px 18px rgba(0,0,0,.35);
 transition: transform .25s ease, box-shadow .25s ease;
 overflow: hidden;
+}
+
+.card:before {
+content: "";
+position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+background: linear-gradient(120deg, var(--accent), transparent 60%, var(--accent));
+background-size: 200% 200%;
+animation: borderflow 4s linear infinite;
+-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+-webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
 }
 
 @keyframes borderflow {
