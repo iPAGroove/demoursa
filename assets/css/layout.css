@@ -10,8 +10,8 @@
     -webkit-backdrop-filter: blur(8px) saturate(120%);
     border-bottom: 1px solid var(--border); 
     /* 💥 ФИКС: Минимальный вертикальный padding для плотного прилегания кверху */
-    padding-top: calc(env(safe-area-inset-top) + 6px); 
-    padding-bottom: 6px;
+    padding-top: calc(env(safe-area-inset-top) + 4px); /* Уменьшено до 4px */
+    padding-bottom: 4px; /* Уменьшено до 4px */
     display: flex; justify-content: center; align-items: center;
     width: 100%;
 }
