@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+
+    <key>PayloadContent</key>
+    <array>
+      <dict>
+        <key>FullScreen</key>
+        <false/>
+        <key>Icon</key>
+        <data>
+iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAAeGVYSWZNTQAqAAAACAAFARIAAwAAAAEAAQAAARoABQAAAAEAAABKARsABQAAAAEAAABSASgAAwAAAAEAAgAAh2kABAAAAAEAAABaAAAAAAAAAEgAAAABAAAASAAAAAEAAqACAAQAAAABAAADIKADAAQAAAABAAADIAAAAAB8ZiiOAABgGElEQVR4nOW9eawtyXkf9vuqus9y7333vvv2mXmzcTTDEbcZcRFJWSNRGyXLoh1HsiIlcP4IEiN7
+        </data>
+        <key>IsRemovable</key>
+        <true/>
+        <key>Label</key>
+        <string>URSA iPA</string>
+        <key>PayloadDescription</key>
+        <string>Добавляет ярлык URSA на главный экран</string>
+        <key>PayloadDisplayName</key>
+        <string>URSA WebClip</string>
+        <key>PayloadIdentifier</key>
+        <string>com.ursa.webclip</string>
+        <key>PayloadType</key>
+        <string>com.apple.webClip</string>
+        <key>PayloadUUID</key>
+        <string>22222222-2222-2222-2222-222222222222</string>
+        <key>PayloadVersion</key>
+        <integer>1</integer>
+        <key>Precomposed</key>
+        <true/>
+        <key>URL</key>
+        <string>https://ursaipa.live</string>
+      </dict>
+    </array>
+
+    <key>PayloadDescription</key>
+    <string>Добавляет ярлык URSA на главный экран</string>
+    <key>PayloadDisplayName</key>
+    <string>URSA Install Profile</string>
+    <key>PayloadIdentifier</key>
+    <string>com.ursa.profile</string>
+    <key>PayloadOrganization</key>
+    <string>URSA IPA</string>
+    <key>PayloadRemovalDisallowed</key>
+    <false/>
+    <key>PayloadScope</key>
+    <string>User</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>44444444-4444-4444-4444-444444444444</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+
+  </dict>
+</plist>

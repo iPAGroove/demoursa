@@ -1,0 +1,23 @@
+{
+  "name": "URSA IPA",
+  "short_name": "URSA",
+  "description": "URSA IPA — моды, патчи и подпись IPA для iOS. Быстро. Просто. Красиво.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f14",
+  "theme_color": "#00b3ff",
+  "icons": [
+    {
+      "src": "assets/icons/ursa-touch.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity", "entertainment"],
+  "lang": "ru-RU",
+  "dir": "ltr",
+  "prefer_related_applications": false
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>URSA Auth</title>
+  <style>
+    :root {
+      --accent: #00eaff;
+      --bg: #000;
+      --glow: 0 0 12px var(--accent), 0 0 24px var(--accent);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--accent);
+      font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      animation: fadeIn 1s ease;
+    }
+
+    #status {
+      font-size: 17px;
+      opacity: 0.9;
+      margin-bottom: 24px;
+      line-height: 1.4;
+      text-shadow: var(--glow);
+      transition: all 0.3s ease;
+      max-width: 90%;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      padding: 13px 28px;
+      font-size: 17px;
+      font-weight: 600;
+      margin: 8px 0;
+      cursor: pointer;
+      box-shadow: 0 0 12px var(--accent);
+      transition: all 0.25s ease;
+      width: 80%;
+      max-width: 280px;
+    }
+    .btn:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 18px var(--accent), 0 0 36px var(--accent);
+    }
+    .btn:active {
+      transform: scale(0.97);
+      opacity: 0.8;
+    }
+
+    #open { display: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="status">🔐 Подготовка к авторизации...</div>
+  <button id="go" class="btn">Войти через Google</button>
+  <button id="open" class="btn">Открыть URSA вручную</button>
+
+  <script type="module">
+    import { auth } from "./assets/js/firebase.js";
+    import {
+      GoogleAuthProvider,
+      signInWithRedirect,
+      signInWithPopup,
+      getRedirectResult
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const status = (msg) => document.getElementById("status").innerText = msg;
+    const goBtn = document.getElementById("go");
+    const openBtn = document.getElementById("open");
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+
+    // === Проверка возврата после redirect ===
+    (async () => {
+      const res = await getRedirectResult(auth);
+      if (res?.user) {
+        const token = await res.user.getIdToken();
+        status("✅ Вход успешен! Открываем URSA...");
+        try {
+          const w = window.open("https://ursaipa.live/?token=" + encodeURIComponent(token), "_blank");
+          if (!w) {
+            status("✅ Вход выполнен! Safari заблокировал автоматическое открытие URSA.");
+            openBtn.style.display = "block";
+            openBtn.onclick = () => window.location.href = "https://ursaipa.live/?token=" + encodeURIComponent(token);
+          }
+        } catch {
+          openBtn.style.display = "block";
+          openBtn.onclick = () => window.location.href = "https://ursaipa.live/?token=" + encodeURIComponent(token);
+        }
+        return;
+      }
+    })();
+
+    // === Вход через popup ===
+    goBtn.onclick = async () => {
+      try {
+        status("🌐 Открываем окно Google...");
+        const res = await signInWithPopup(auth, provider);
+        if (res?.user) {
+          const token = await res.user.getIdToken();
+          status("✅ Поп-ап вход успешен! Открываем URSA...");
+          try {
+            const w = window.open("https://ursaipa.live/?token=" + encodeURIComponent(token), "_blank");
+            if (!w) {
+              status("✅ Вход выполнен! Safari заблокировал открытие URSA.");
+              openBtn.style.display = "block";
+              openBtn.onclick = () => window.location.href = "https://ursaipa.live/?token=" + encodeURIComponent(token);
+            }
+          } catch {
+            openBtn.style.display = "block";
+            openBtn.onclick = () => window.location.href = "https://ursaipa.live/?token=" + encodeURIComponent(token);
+          }
+        } else throw new Error("Popup не вернул пользователя");
+      } catch (e) {
+        console.warn("Popup вход не сработал:", e);
+        status("↪️ Popup заблокирован Safari. Перенаправляем...");
+        await signInWithRedirect(auth, provider);
+      }
+    };
+  </script>
+</body>
+</html>

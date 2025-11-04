@@ -8,116 +8,137 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header class="topbar">
-    <div class="wrap">
-      <div class="brand"><span>URSA IPA Admin</span></div>
-      <nav class="admin-nav">
-        <button id="tab-ipas" class="tab active">📦 IPA</button>
-        <button id="tab-users" class="tab">👤 Пользователи</button>
-      </nav>
-    </div>
-  </header>
 
-  <main class="wrap">
-    <!-- IPA Section -->
-    <section id="ipa-section">
-      <div class="admin-actions">
-        <button id="add-btn" class="btn blue">+ Добавить IPA</button>
-        <input id="search" type="search" placeholder="Поиск по имени, bundleId, тегам…" />
+  <div id="login-screen" class="auth-screen">
+    <div class="brand"><span>URSA IPA Admin</span></div>
+    <p style="color: var(--muted); margin: 16px 0;">Требуется авторизация</p>
+    <button id="login-btn" class="btn blue">Войти с Google</button>
+  </div>
+
+  <div id="denied-screen" class="auth-screen" style="display:none;">
+    <div class="brand"><span>URSA IPA Admin</span></div>
+    <h2>Доступ запрещен</h2>
+    <p>Вашего аккаунта нет в списке администраторов.</p>
+    <br>
+    <button id="logout-btn-denied" class="btn red">Выйти</button>
+  </div>
+
+  <div id="admin-wrapper" style="display:none;">
+    
+    <header class="topbar">
+      <div class="wrap">
+        <div class="header-main">
+          <div class="brand"><span>URSA IPA Admin</span></div>
+          <button id="logout-btn-admin" class="btn small red">Выйти</button>
+        </div>
+        <nav class="admin-nav">
+          <button id="tab-ipas" class="tab active">📦 IPA</button>
+          <button id="tab-users" class="tab">👤 Пользователи</button>
+        </nav>
       </div>
-      <div id="cards" class="cards"></div>
-    </section>
+    </header>
 
-    <!-- USERS Section -->
-    <section id="users-section" style="display:none;">
-      <div class="admin-actions">
-        <input id="user-search" type="search" placeholder="Поиск по email, имени…" />
-      </div>
-      <table class="user-table">
-        <thead>
-          <tr><th>Email</th><th>Имя</th><th>UID</th><th>Статус</th><th>Действие</th></tr>
-        </thead>
-        <tbody id="user-list"></tbody>
-      </table>
-    </section>
-  </main>
+    <main class="wrap">
+      <section id="ipa-section">
+        <div class="admin-actions">
+          <button id="add-btn" class="btn blue">+ Добавить IPA</button>
+          <input id="search" type="search" placeholder="Поиск по имени, bundleId, тегам…" />
+        </div>
+        <div id="cards" class="cards"></div>
+      </section>
 
-  <!-- IPA Modal -->
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <div class="modal-card">
-      <header class="modal-head">
-        <strong id="modal-title">Добавить IPA</strong>
-        <button class="close" data-close>✕</button>
-      </header>
+      <section id="users-section" style="display:none;">
+        <div class="admin-actions">
+          <input id="user-search" type="search" placeholder="Поиск по email, имени…" />
+        </div>
+        <table class="user-table">
+          <thead>
+            <tr><th>Email</th><th>Имя</th><th>UID</th><th>Статус</th><th>Действие</th></tr>
+          </thead>
+          <tbody id="user-list"></tbody>
+        </table>
+      </section>
+    </main>
 
-      <form id="ipa-form" class="modal-body">
-        <fieldset>
-          <legend>Основное</legend>
-          <div class="field-grid">
-            <label>Name <input type="text" name="name" required></label>
-            <label>Bundle ID <input type="text" name="bundleId" required></label>
-            <label>Version <input type="text" name="version" required></label>
-            <label>Minimal iOS <input type="text" name="minIOS"></label>
-            <label>Size (MB) <input type="number" name="sizeBytes"></label>
+    <div id="modal" class="modal" aria-hidden="true">
+      <div class="backdrop" data-close></div>
+      <div class="modal-card">
+        <header class="modal-head">
+          <strong id="modal-title">Добавить IPA</strong>
+          <button class="close" data-close>✕</button>
+        </header>
+        <form id="ipa-form" class="modal-body">
+          <fieldset>
+            <legend>Основное</legend>
+            <div class="field-grid">
+              <label>Name <input type="text" name="name" required></label>
+              <label>Bundle ID <input type="text" name="bundleId" required></label>
+              <label>Version <input type="text" name="version" required></label>
+              <label>Minimal iOS <input type="text" name="minIOS"></label>
+              <label>Size (MB) <input type="number" name="sizeBytes"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Медиа</legend>
+            <label>Icon URL
+              <input type="url" name="iconUrl" id="iconUrl">
+              <img id="icon-preview" class="icon-preview" style="display:none;">
+            </label>
+            <label>Download URL <input type="url" name="downloadUrl"></label>
+          </fieldset>
+          <fieldset>
+            <legend>Функции мода / Hack Features</legend>
+            <label>Features (RU) <textarea name="features_ru" placeholder="через запятую"></textarea></label>
+            <label>Features (EN) <textarea name="features_en" placeholder="comma separated"></textarea></label>
+          </fieldset>
+          <fieldset>
+            <legend>Категория</legend>
+            <div class="tag-buttons">
+              <button type="button" class="tag-btn" data-tag="games">Games</button>
+              <button type="button" class="tag-btn" data-tag="apps">Apps</button>
+            </div>
+            <input type="hidden" name="tag" />
+          </fieldset>
+          <fieldset>
+            <legend>VIP доступ</legend>
+            <label style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" name="vipOnly" id="vipOnly">
+              <span>Доступ только для VIP</span>
+            </label>
+          </fieldset>
+          <div class="modal-actions">
+            <button type="submit" class="btn blue">💾 Сохранить</button>
           </div>
-        </fieldset>
+        </form>
+      </div>
+    </div>
 
-        <fieldset>
-          <legend>Медиа</legend>
-          <label>Icon URL
-            <input type="url" name="iconUrl" id="iconUrl">
-            <img id="icon-preview" class="icon-preview" style="display:none;">
+    <div id="user-modal" class="modal" aria-hidden="true">
+      <div class="backdrop" data-close></div>
+      <div class="modal-card small">
+        <header class="modal-head">
+          <strong>Редактировать пользователя</strong>
+          <button class="close" data-close>✕</button>
+        </header>
+        <div class="modal-body">
+          <p><b>Email:</b> <span id="edit-user-email"></span></p>
+          <p><b>Имя:</b> <span id="edit-user-name"></span></p>
+          <label>Статус:
+            <select id="edit-user-status">
+              <option value="free">Free</option>
+              <option value="vip">VIP</option>
+            </select>
           </label>
-          <label>Download URL <input type="url" name="downloadUrl"></label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Функции мода / Hack Features</legend>
-          <label>Features (RU) <textarea name="features_ru" placeholder="через запятую"></textarea></label>
-          <label>Features (EN) <textarea name="features_en" placeholder="comma separated"></textarea></label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Категория</legend>
-          <div class="tag-buttons">
-            <button type="button" class="tag-btn" data-tag="games">Games</button>
-            <button type="button" class="tag-btn" data-tag="apps">Apps</button>
+          
+          <div class="modal-actions" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <button id="save-user-status" class="btn blue">💾 Сохранить</button>
+            <button type="button" id="save-user-vip-31" class="btn" style="background: var(--vip); color: #000;">⭐ VIP на 31 день</button>
           </div>
-          <input type="hidden" name="tag" />
-        </fieldset>
-
-        <div class="modal-actions">
-          <button type="submit" class="btn blue">💾 Сохранить</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- User Edit Modal -->
-  <div id="user-modal" class="modal" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <div class="modal-card small">
-      <header class="modal-head">
-        <strong>Редактировать пользователя</strong>
-        <button class="close" data-close>✕</button>
-      </header>
-      <div class="modal-body">
-        <p><b>Email:</b> <span id="edit-user-email"></span></p>
-        <p><b>Имя:</b> <span id="edit-user-name"></span></p>
-        <label>Статус:
-          <select id="edit-user-status">
-            <option value="free">Free</option>
-            <option value="vip">VIP</option>
-          </select>
-        </label>
-        <div class="modal-actions">
-          <button id="save-user-status" class="btn blue">💾 Сохранить</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <script type="module" src="admin.js?v=7.6"></script>
+  </div> 
+  <script type="module" src="admin.js?v=8.0"></script>
 </body>
 </html>

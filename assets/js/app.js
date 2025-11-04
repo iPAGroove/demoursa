@@ -599,7 +599,7 @@ if (signerModal) {
 }
 
 
-// === Firestore LazyLoad (МОДИФИЦИРОВАНО v9.3) ===
+// === Firestore LazyLoad (МОДИФИЦИРОВАНО для ГЛОБАЛЬНОГО ПОИСКА) ===
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("navAppsIcon").src = ICONS.apps;
   document.getElementById("navGamesIcon").src = ICONS.games;
@@ -622,52 +622,47 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (actBtn && actBtn.dataset.tab) {
     state.tab = actBtn.dataset.tab;
   }
-
-  // === loadBatch (МОДИФИЦИРОВАНО) ===
-  // Теперь грузит по ТАБУ и использует МАЛЕНЬКИЙ лимит для первой загрузки
-  async function loadBatch() {
-    if (state.loading || state.end) return;
+  
+  // === loadBatch (КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Изменен лимит для скролла) ===
+  async function loadBatch(isInitial = false) { 
+    if (state.loading || state.end) return; 
     state.loading = true;
 
     const cRef = collection(db, "ursa_ipas");
-    const tabTag = state.tab; // "apps" or "games"
-
-    // 6 для первой загрузки, 20 для скролла
-    const currentLimit = state.last ? 20 : 6;
-    let qRef;
-
-    if (state.last) {
-      // Запрос для скролла (с 'startAfter')
-      qRef = query(
-        cRef,
-        where("tags", "array-contains", tabTag),
-        orderBy("updatedAt", "desc"),
-        startAfter(state.last),
-        limit(currentLimit)
-      );
-    } else {
-      // Самый первый запрос (без 'startAfter')
-      qRef = query(
-        cRef,
-        where("tags", "array-contains", tabTag),
-        orderBy("updatedAt", "desc"),
-        limit(currentLimit)
-      );
+    
+    // 💥 ИЗМЕНЕНИЕ ЛИМИТА:
+    const currentLimit = isInitial 
+        ? 6 // Первая загрузка - 6
+        : (state.q.length > 0 ? 200 : 30); // Скролл/таб-переключение - 30. Поиск - 200.
+      
+    let queryArgs = [orderBy("updatedAt", "desc"), limit(currentLimit)];
+    
+    // 💥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Фильтр по тегу применяется ТОЛЬКО при первой загрузке (когда нет скролла и нет поиска).
+    if (state.last === null && !state.q.length) {
+         queryArgs.unshift(where("tags", "array-contains", state.tab));
     }
+    
+    if (state.last) {
+      queryArgs.push(startAfter(state.last));
+    }
+
+    let qRef = query(cRef, ...queryArgs);
 
     try {
       const snap = await getDocs(qRef);
+      
       if (snap.empty) {
         state.end = true;
-        if (state.all.length === 0) { // Если вообще ничего нет
+        if (state.all.length === 0) { 
           catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
         }
-        return;
+        return; 
       }
+      
       const batch = snap.docs.map(normalize);
-      state.all.push(...batch); // Добавляем в кэш
-      state.last = snap.docs[snap.docs.length - 1]; // Сохраняем "курсор"
-      apply(); // Перерисовываем
+      state.all.push(...batch); 
+      state.last = snap.docs[snap.docs.length - 1]; 
+      
     } catch (err) {
       console.error("Firestore error:", err);
       // Выводим ошибку индекса прямо на страницу
@@ -680,39 +675,70 @@ document.addEventListener("DOMContentLoaded", async () => {
       state.loading = false;
     }
   }
+  
+  // === loadAllForGlobalSearch (Загрузка ВСЕЙ коллекции для глобального поиска) ===
+  async function loadAllForGlobalSearch() {
+    if (state.end) return;
+    
+    // Если поиск активен, и мы не в конце, сбрасываем кэш, чтобы загрузить ВСЮ коллекцию с начала
+    // NOTE: Это необходимо, чтобы сбросить фильтр по тагу, если он был применен при первой загрузке.
+    if (state.all.length > 0 && !state.end) {
+        state.all = [];
+        state.last = null;
+        state.end = false;
+    }
 
-  // === apply (МОДИФИЦИРОВАНО) ===
-  // Убрана фильтрация по табу (теперь это в loadBatch)
+    catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">Загрузка ВСЕЙ коллекции для глобального поиска...</div>`;
+    
+    // Принудительно запускаем загрузку, пока не закончатся документы
+    while (!state.end) {
+        if (state.loading) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            continue;
+        }
+        await loadBatch(); 
+        apply(); // Обновляем отображение по мере загрузки
+    }
+  }
+
+
+  // === apply (Логика фильтрации - глобальный/по табу) ===
   const apply = () => {
     const q = state.q.trim().toLowerCase();
+    const isSearching = q.length > 0;
+    
+    let list = state.all;
+    
+    // 1. Фильтруем по поисковому запросу (ГЛОБАЛЬНО, если запрос есть)
+    if (isSearching) {
+         list = list.filter((app) =>
+            (app.name || "").toLowerCase().includes(q) ||
+            (app.bundleId || "").toLowerCase().includes(q) ||
+            (app.features || "").toLowerCase().includes(q)
+        );
+    } else {
+         // 2. Если поиска НЕТ, фильтруем по текущему активному табу
+         list = list.filter((app) => app.tags.includes(state.tab));
+    }
 
-    // 1. Фильтруем ТОЛЬКО по поиску
-    const list = state.all.filter((app) =>
-      q
-        ? (app.name || "").toLowerCase().includes(q) ||
-        (app.bundleId || "").toLowerCase().includes(q) ||
-        (app.features || "").toLowerCase().includes(q)
-        : true // Фильтр по табу больше не нужен!
-    );
-
-    // Очищаем контейнер (только если это не скролл)
-    // В нашем случае `apply` всегда перерисовывает все, что есть в `state.all`
+    // Очищаем контейнер
     catalogContainer.innerHTML = "";
     allAppsCache = {};
 
-    if (!list.length && !state.loading && state.q) {
+    // Условие 1: Ничего не найдено
+    if (!list.length && isSearching) {
       catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("not_found")}</div>`;
       return;
     }
-
-    // Если список пуст, но мы не искали, `loadBatch` сам покажет "empty"
-    if (!list.length) {
-      // Не показываем "не найдено", если идет загрузка
-      if (!state.loading) {
-        catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
-      }
+    
+    // Условие 2: Коллекция пуста (если нет поиска и нет загрузки)
+    if (!list.length && !state.loading && !isSearching) {
+      catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">${__t("empty")}</div>`;
       return;
     }
+    
+    // === Убрана проверка list.length && state.loading, чтобы избежать мерцания лоадера
+    // === если уже есть загруженные данные.
 
     // 2. Сортируем (как и раньше)
     const popularList = [...list].sort((a, b) => (b.installCount || 0) - (a.installCount || 0));
@@ -725,15 +751,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderCollectionRow(catalogContainer, "VIP", vipList);
   };
 
-  // === Search (без изменений) ===
-  search.addEventListener("input", (e) => {
+  // === Search (Принудительный глобальный режим) ===
+  search.addEventListener("input", async (e) => {
     state.q = e.target.value;
+    
+    const isSearching = state.q.length > 0;
+
+    // 💥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Если начат поиск и коллекция не загружена, запускаем ГЛОБАЛЬНУЮ загрузку
+    if (isSearching && !state.end) {
+        await loadAllForGlobalSearch();
+    }
+    
     apply();
-    // (Поиск работает только по уже загруженным карточкам)
   });
 
-  // === Tab Bar (МОДИФИЦИРОВАНО) ===
-  // Теперь сбрасывает кэш при смене таба
+  // === Tab Bar (Сброс только при неполной загрузке) ===
   const bar = document.getElementById("tabbar");
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-btn");
@@ -747,48 +779,50 @@ document.addEventListener("DOMContentLoaded", async () => {
       bar.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
 
-      // === СБРОС СТЕЙТА ===
+      // 💥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Если вся коллекция уже загружена (после глобального поиска), просто фильтруем
+      if (state.end) {
+         apply();
+         return;
+      }
+      
+      // Если коллекция не загружена полностью, сбрасываем кэш и начинаем ленивую загрузку для нового таба
       state.all = [];
       state.last = null;
       state.end = false;
-      state.q = ""; // Сбрасываем поиск
+      state.q = ""; 
       search.value = "";
-      catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">Загрузка ${state.tab}...</div>`; // Лоадер
+      catalogContainer.innerHTML = `<div style="opacity:.7;text-align:center;padding:40px;">Загрузка ${state.tab}...</div>`; 
 
-      // Запускаем загрузку для НОВОГО таба
-      loadBatch();
-      // apply() вызовется сам
-
+      loadBatch(true).then(apply); // === ИЗМЕНЕНИЕ: loadBatch(true) для первой загрузки
+      
     } else if (btn.id === "lang-btn") {
-      // Смена языка (просто перерисовываем то, что есть)
       lang = lang === "ru" ? "en" : "ru";
       localStorage.setItem("ursa_lang", lang);
       document.getElementById("navLangIcon").src = ICONS.lang?.[lang] || ICONS.lang.ru;
       applyI18n();
-      apply(); // Перерисовываем текущий кэш `state.all`
-
+      apply(); 
     } else if (btn.id === "settings-btn") {
       openSettings();
     }
   });
 
-  // === Scroll (без изменений) ===
+  // === Scroll (ИЗМЕНЕНИЕ: Блокируем скролл во время глобального поиска) ===
   window.addEventListener("scroll", () => {
-    // Не грузим при скролле, если идет поиск
-    if (state.q.length > 0) return;
+    // При активном поиске scroll должен быть заблокирован
+    if (state.q.length > 0 || state.loading || state.end) return; 
 
     const scrollY = window.scrollY;
     const scrollH = document.body.scrollHeight;
     const innerH = window.innerHeight;
     if (scrollY + innerH >= scrollH - 300) {
-      loadBatch();
+      loadBatch().then(apply); // === ИЗМЕНЕНИЕ: loadBatch() без аргумента для скролла
     }
   });
 
   // === Initial load ===
-  await loadBatch(); // Запускаем первую (быструю) загрузку
+  await loadBatch(true); // === ИЗМЕНЕНИЕ: loadBatch(true) для первой загрузки
+  apply(); 
   applyI18n();
-  // apply() вызовется автоматически внутри loadBatch()
 
   // === VIP Modal (без изменений) ===
   const vipModal = document.getElementById("vip-modal");
