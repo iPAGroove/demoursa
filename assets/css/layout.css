@@ -1,37 +1,58 @@
 /* assets/css/layout.css */
 
-/* === HEADER === */
+/* === HEADER (ОБНОВЛЕНО: Стеклянный фон, анимация текста) === */
 
 .topbar {
-position: sticky; top: 0; z-index: 50; background: transparent; border: none;
-padding: calc(env(safe-area-inset-top)+8px) 0 8px;
-display: flex; justify-content: center; align-items: center;
+    position: sticky; top: 0; z-index: 50; 
+    /* Прозрачный фон с блюром (эффект "стекла") */
+    background: color-mix(in oklab, var(--bg) 95%, #000 5%);
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    border-bottom: 1px solid var(--border); /* Разделитель */
+    padding: calc(env(safe-area-inset-top) + 12px) 0 12px; /* Увеличенные отступы */
+    display: flex; justify-content: center; align-items: center;
 }
 
 .brand {
-font-family: 'Orbitron', sans-serif;
-font-size: 20px; font-weight: 700; letter-spacing: 2px;
-color: var(--accent); position: relative;
-overflow: hidden; white-space: nowrap;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px; /* Крупнее */
+    font-weight: 700; 
+    letter-spacing: 3px; 
+    color: var(--accent); 
+    position: relative;
+    overflow: hidden; 
+    white-space: nowrap;
 }
 
 .brand span {
-display: inline-block;
-color: transparent;
--webkit-text-stroke: 1px var(--accent);
-position: relative;
+    display: inline-block;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--accent);
+    position: relative;
+    /* Базовая тень и пульсация */
+    text-shadow: 0 0 10px rgba(0, 179, 255, 0.4); 
+    animation: neon-pulse 2s ease-in-out infinite alternate;
 }
 
 .brand span::before {
-content: attr(data-text);
-position: absolute; left: 0; top: 0; color: var(--accent);
--webkit-text-stroke: 0;
-width: 0; white-space: nowrap; overflow: hidden;
-border-right: 2px solid var(--accent);
-animation: draw 2.5s linear forwards;
+    content: attr(data-text);
+    position: absolute; left: 0; top: 0; color: var(--accent);
+    -webkit-text-stroke: 0;
+    width: 100%; /* Убираем эффект набора */
+    white-space: nowrap; overflow: hidden;
+    border-right: none;
+    animation: none; /* Отключаем старую анимацию draw */
 }
 
+/* Новая анимация пульсирующей неоновой тени */
+@keyframes neon-pulse { 
+    0% { text-shadow: 0 0 8px var(--accent), 0 0 12px rgba(0, 179, 255, 0.2); }
+    100% { text-shadow: 0 0 15px var(--accent), 0 0 25px rgba(0, 179, 255, 0.6); }
+}
+
+/* Убеждаемся, что старая keyframe удалена */
 @keyframes draw { from { width: 0 } to { width: 100% } }
+
 
 /* === SEARCH === */
 
@@ -57,6 +78,7 @@ transition: background 0.25s, color 0.25s, transform 0.25s;
 }
 
 #theme-toggle:hover { transform: scale(1.08); background: var(--accent); color: #001018; }
+
 
 /* === BOTTOM NAV === */
 
@@ -98,20 +120,22 @@ filter: drop-shadow(0 0 10px var(--accent));
 
 .newdock .dot { display: none; }
 
-/* === CATALOG & CARDS === */
+
+/* === CATALOG & CARDS (ОБНОВЛЕНО: Фиксированная сетка) === */
 
 .catalog {
-  margin-top: 12px;
-  display: flex; 
-  flex-direction: column; 
-  gap: 24px; 
+  /* Наш основной контейнер */
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px; /* Расстояние между секциями (Popular, Updates, VIP) */
   padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
 }
 
 .collection-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px; /* Расстояние между заголовком и сеткой */
 }
 
 .collection-row h2 {
@@ -123,17 +147,16 @@ filter: drop-shadow(0 0 10px var(--accent));
 }
 
 .card-carousel {
+  /* Делаем из карусели адаптивную сетку */
   display: grid;
-  grid-auto-flow: column; 
-  grid-template-rows: repeat(3, auto); 
-  grid-auto-columns: 300px;
+  grid-auto-flow: unset;
+  grid-template-rows: unset;
+  grid-auto-columns: unset;
+  overflow-x: unset; 
   gap: var(--gap);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch; 
-  padding: 4px 0; 
+  padding: 0;
 }
-.card-carousel::-webkit-scrollbar { display: none; }
-.card-carousel { scrollbar-width: none; }
+
 .card-carousel .card {
   width: 100%; 
   margin: 0;
@@ -207,7 +230,7 @@ transition: transform .25s ease;
    color: #fff;
 }
 
-/* === VIP-LOCKED CARD === */
+/* === VIP-LOCKED CARD (без изменений) === */
 
 .vip-locked {
   position: relative;
@@ -245,10 +268,33 @@ transition: transform .25s ease;
    transform: translate(-50%, -50%) scale(1.1);
 }
 
-/* === ADAPTIVE === */
+/* === НОВЫЙ СТИЛЬ: Кнопка See All === */
+.see-all-btn {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+.see-all-btn .btn.outline {
+    width: auto;
+    padding: 10px 20px;
+}
 
-@media (min-width: 520px) {
-  .card-carousel {
-     grid-auto-columns: 400px; 
-  }
+
+/* === ADAPTIVE (ОБНОВЛЕНО: Принудительная сетка 2-3 колонки) === */
+
+@media (max-width: 520px) {
+    .card-carousel {
+        grid-template-columns: repeat(2, 1fr); /* 2 карточки в ряд на маленьких экранах */
+    }
+}
+@media (min-width: 521px) and (max-width: 719px) { 
+    .card-carousel {
+        /* 2-3 колонки на средних экранах */
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+@media (min-width: 720px) {
+    .card-carousel {
+        grid-template-columns: repeat(3, 1fr); /* 3 колонки в ряд на больших экранах */
+    }
 }
