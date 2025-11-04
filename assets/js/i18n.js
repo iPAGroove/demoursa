@@ -40,6 +40,9 @@ export const I18N = {
         signing_wait: "⏳ Ожидаем завершения...",
         signing_job_error: "Ошибка: Задание не найдено",
         signing_job_failed: "Ошибка подписи:",
+        // +++ ДОБАВЛЕНО ДЛЯ КНОПКИ 'СМОТРЕТЬ ВСЕ' +++
+        see_all: "Смотреть все",
+        // +++ +++++++++++++++++++++++++++++++++++++
         signing_timeout: "Ошибка: Таймаут ожидания (10 мин)",
         modal_version: "Версия",
         modal_size: "Размер",
@@ -103,6 +106,9 @@ export const I18N = {
         signing_wait: "⏳ Waiting for completion...",
         signing_job_error: "Error: Job not found",
         signing_job_failed: "Signing error:",
+        // +++ ДОБАВЛЕНО ДЛЯ КНОПКИ 'СМОТРЕТЬ ВСЕ' +++
+        see_all: "See All",
+        // +++ +++++++++++++++++++++++++++++++++++++
         signing_timeout: "Error: Job timed out (10 min)",
         modal_version: "Version",
         modal_size: "Size",
