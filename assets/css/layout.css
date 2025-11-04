@@ -1,6 +1,6 @@
 /* assets/css/layout.css */
 
-/* === HEADER (ОБНОВЛЕНО: Стеклянный фон, анимация текста) === */
+/* === HEADER (ОБНОВЛЕНО: Исправлены отступы и центрирование) === */
 
 .topbar {
     position: sticky; top: 0; z-index: 50; 
@@ -8,14 +8,15 @@
     background: color-mix(in oklab, var(--bg) 95%, #000 5%);
     backdrop-filter: blur(8px) saturate(120%);
     -webkit-backdrop-filter: blur(8px) saturate(120%);
-    border-bottom: 1px solid var(--border); /* Разделитель */
-    padding: calc(env(safe-area-inset-top) + 12px) 0 12px; /* Увеличенные отступы */
+    border-bottom: 1px solid var(--border); 
+    padding: calc(env(safe-area-inset-top) + 12px) 0 12px; 
     display: flex; justify-content: center; align-items: center;
+    width: 100%; /* ФИКС: Гарантируем 100% ширины */
 }
 
 .brand {
     font-family: 'Orbitron', sans-serif;
-    font-size: 24px; /* Крупнее */
+    font-size: 24px; 
     font-weight: 700; 
     letter-spacing: 3px; 
     color: var(--accent); 
@@ -29,7 +30,6 @@
     color: transparent;
     -webkit-text-stroke: 1px var(--accent);
     position: relative;
-    /* Базовая тень и пульсация */
     text-shadow: 0 0 10px rgba(0, 179, 255, 0.4); 
     animation: neon-pulse 2s ease-in-out infinite alternate;
 }
@@ -38,13 +38,12 @@
     content: attr(data-text);
     position: absolute; left: 0; top: 0; color: var(--accent);
     -webkit-text-stroke: 0;
-    width: 100%; /* Убираем эффект набора */
+    width: 100%; 
     white-space: nowrap; overflow: hidden;
     border-right: none;
-    animation: none; /* Отключаем старую анимацию draw */
+    animation: none;
 }
 
-/* Новая анимация пульсирующей неоновой тени */
 @keyframes neon-pulse { 
     0% { text-shadow: 0 0 8px var(--accent), 0 0 12px rgba(0, 179, 255, 0.2); }
     100% { text-shadow: 0 0 15px var(--accent), 0 0 25px rgba(0, 179, 255, 0.6); }
@@ -53,9 +52,10 @@
 @keyframes draw { from { width: 0 } to { width: 100% } }
 
 
-/* === SEARCH === */
+/* === SEARCH (ОБНОВЛЕНО: Исправлены отступы) === */
 
-.search-area { padding: 12px 0 6px; }
+.search-area { padding: 12px 0 6px; width: 100%; }
+
 .search-wrap { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
 
 #search {
@@ -79,14 +79,15 @@ transition: background 0.25s, color 0.25s, transform 0.25s;
 #theme-toggle:hover { transform: scale(1.08); background: var(--accent); color: #001018; }
 
 
-/* === BOTTOM NAV === */
+/* === BOTTOM NAV (ФИКС: Центрируем и возвращаем корректный вид) === */
 
 .tabbar {
 position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
 background: color-mix(in oklab, var(--bg) 88%, #000 12%);
 border-top: 1px solid var(--border);
 backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-padding: 12px calc(env(safe-area-inset-right)+12px) calc(env(safe-area-inset-bottom)+12px) calc(env(safe-area-inset-left)+12px);
+/* 💥 ФИКС №2: Убираем padding-right/left из-за env() и wrap */
+padding: 12px 0 calc(env(safe-area-inset-bottom)+12px);
 box-sizing: border-box;
 transition: background 0.3s ease;
 }
@@ -95,8 +96,13 @@ transition: background 0.3s ease;
 display: grid; grid-template-columns: repeat(4,1fr); align-items: center;
 background: color-mix(in oklab, var(--bg-elev) 94%, #000 6%);
 border: 1px solid var(--border); border-radius: 26px;
-padding: 8px 4px; margin: 0 auto; max-width: 420px;
+padding: 8px 4px; 
+margin: 0 auto; 
+max-width: 420px;
 box-shadow: 0 10px 24px rgba(0,0,0,.4);
+/* 💥 ФИКС №3: Добавляем отступы здесь, чтобы контейнер не упирался в края */
+margin: 0 calc(env(safe-area-inset-left) + 12px) 0 calc(env(safe-area-inset-right) + 12px); 
+width: auto;
 }
 
 .newdock .nav-btn {
@@ -123,18 +129,17 @@ filter: drop-shadow(0 0 10px var(--accent));
 /* === CATALOG & CARDS (ФИКСИРОВАННАЯ СЕТКА) === */
 
 .catalog {
-  /* Наш основной контейнер */
   margin-top: 20px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 30px; /* Расстояние между секциями (Popular, Updates, VIP) */
+  gap: 30px; 
   padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
 }
 
 .collection-row {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Расстояние между заголовком и сеткой */
+  gap: 16px; 
 }
 
 .collection-row h2 {
@@ -146,7 +151,6 @@ filter: drop-shadow(0 0 10px var(--accent));
 }
 
 .card-carousel {
-  /* Адаптивная сетка, теперь не вызывает переполнения */
   display: grid;
   grid-auto-flow: unset;
   grid-template-rows: unset;
@@ -279,7 +283,7 @@ transition: transform .25s ease;
 }
 
 
-/* === ADAPTIVE (ОБНОВЛЕНО: Принудительная сетка 2-3 колонки) === */
+/* === ADAPTIVE (ФИКС: Принудительная сетка 2-3 колонки) === */
 
 @media (max-width: 520px) {
     .card-carousel {
