@@ -1,15 +1,14 @@
 /* assets/css/layout.css */
 
-/* === HEADER (ФИКС №1: Уменьшаем высоту и исправляем отступы) === */
+/* === HEADER (ФИКС: Уменьшаем высоту, корректные отступы) === */
 
 .topbar {
     position: sticky; top: 0; z-index: 50; 
-    /* Прозрачный фон с блюром */
     background: color-mix(in oklab, var(--bg) 95%, #000 5%);
     backdrop-filter: blur(8px) saturate(120%);
     -webkit-backdrop-filter: blur(8px) saturate(120%);
     border-bottom: 1px solid var(--border); 
-    /* 💥 ФИКС: Уменьшаем вертикальный padding */
+    /* ФИКС №1: Уменьшаем вертикальный padding */
     padding: calc(env(safe-area-inset-top) + 8px) 0 8px; 
     display: flex; justify-content: center; align-items: center;
     width: 100%;
@@ -17,9 +16,9 @@
 
 .brand {
     font-family: 'Orbitron', sans-serif;
-    font-size: 20px; /* Вернем стандартный размер */
+    font-size: 20px; 
     font-weight: 700; 
-    letter-spacing: 2px; /* Вернем стандартный размер */
+    letter-spacing: 2px; 
     color: var(--accent); 
     position: relative;
     overflow: hidden; 
@@ -53,29 +52,21 @@
 @keyframes draw { from { width: 0 } to { width: 100% } }
 
 
-/* === SEARCH (ФИКС №2: Убеждаемся, что поиск и кнопка остаются) === */
+/* === SEARCH (ФИКС: Убеждаемся, что поиск имеет корректные отступы) === */
 
-.search-area { 
-    padding: 12px 0 6px; 
-    /* 💥 ФИКС: Гарантируем, что контейнер поиска имеет правильную ширину */
-    width: 100%; 
-}
+.search-area { padding: 12px 0 6px; width: 100%; }
 
 .search-wrap { 
+    /* ФИКС: Для избежания растяжения, используем wrap для padding */
     display: grid; 
     grid-template-columns: 1fr auto; 
     gap: 10px; 
 }
 
 #search {
-    width: 100%; 
-    appearance: none; 
-    outline: none;
-    padding: 12px 14px; 
-    border-radius: 14px;
-    background: var(--card); 
-    border: 1px solid var(--border); 
-    color: var(--text);
+    width: 100%; appearance: none; outline: none;
+    padding: 12px 14px; border-radius: 14px;
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
 }
 
 #search::placeholder { color: #9fb2cc; }
@@ -100,22 +91,28 @@
     background: color-mix(in oklab, var(--bg) 88%, #000 12%);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    /* 💥 ФИКС: Уменьшаем общий вертикальный padding */
+    /* ФИКС: Используем минимальный padding, чтобы дать dock-у центрироваться */
     padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); 
     box-sizing: border-box;
+    width: 100%;
+    display: flex; /* Добавим flex для центрирования содержимого */
+    justify-content: center;
     transition: background 0.3s ease;
 }
 
 .newdock {
-    display: grid; grid-template-columns: repeat(4,1fr); align-items: center;
+    display: grid; 
+    grid-template-columns: repeat(4,1fr); 
+    align-items: center;
     background: color-mix(in oklab, var(--bg-elev) 94%, #000 6%);
-    border: 1px solid var(--border); border-radius: 26px;
+    border: 1px solid var(--border); 
+    border-radius: 26px;
     padding: 8px 4px; 
     max-width: 420px;
     box-shadow: 0 10px 24px rgba(0,0,0,.4);
-    /* 💥 ФИКС: Центрирование и отступы от краев */
+    /* 💥 ФИКС: Используем безопасные отступы и центрируем контейнер */
     margin: 0 calc(env(safe-area-inset-left) + 12px) 0 calc(env(safe-area-inset-right) + 12px); 
-    width: auto; /* Позволяет max-width работать корректно */
+    width: auto;
 }
 
 .newdock .nav-btn {
@@ -139,7 +136,7 @@
 .newdock .dot { display: none; }
 
 
-/* === CATALOG & CARDS (ФИКС №3: Принудительная сетка, устраняем скролл) === */
+/* === CATALOG & CARDS (ФИКС: Принудительная сетка, устраняем скролл) === */
 
 .catalog {
   /* Наш основной контейнер */
@@ -148,7 +145,7 @@
   grid-template-columns: 1fr;
   gap: 30px; 
   padding-bottom: calc(var(--nav-btn-h) + env(safe-area-inset-bottom) + 32px);
-  overflow: hidden; /* Дополнительный фикс для вертикального контейнера */
+  overflow: hidden; 
 }
 
 .collection-row {
@@ -166,12 +163,12 @@
 }
 
 .card-carousel {
-  /* 💥 ФИКС: Главная страница - это сетка, не карусель */
+  /* 💥 ФИКС: Главная страница - это сетка */
   display: grid;
   grid-auto-flow: unset;
   grid-template-rows: unset;
   grid-auto-columns: unset;
-  overflow-x: hidden; /* Убираем горизонтальный скролл */
+  overflow-x: unset; 
   gap: var(--gap);
   padding: 0;
 }
@@ -190,8 +187,6 @@ box-shadow: 0 6px 18px rgba(0,0,0,.35);
 transition: transform .25s ease, box-shadow .25s ease;
 overflow: hidden;
 }
-
-/* ... (остальные стили карточек и VIP-LOCKED без изменений) ... */
 
 @keyframes borderflow {
 0% { background-position: 0% 50% }
@@ -241,6 +236,8 @@ transition: transform .25s ease;
    color: #fff;
 }
 
+/* === VIP-LOCKED CARD (без изменений) === */
+
 .vip-locked {
   position: relative;
   pointer-events: auto;
@@ -277,6 +274,7 @@ transition: transform .25s ease;
    transform: translate(-50%, -50%) scale(1.1);
 }
 
+/* === НОВЫЙ СТИЛЬ: Кнопка See All === */
 .see-all-btn {
     display: flex;
     justify-content: center;
