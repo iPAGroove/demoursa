@@ -24,13 +24,13 @@ font: 16px/1.42 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Ro
 -webkit-font-smoothing: antialiased;
 text-rendering: optimizeLegibility;
 transition: background-color 0.35s ease, color 0.35s ease;
-overflow-x: hidden; /* 💥 ФИКС: Предотвращаем горизонтальное растяжение */
+overflow-x: hidden; /* 💥 ФИКС №1: Предотвращаем горизонтальное растяжение */
 }
 
 * { box-sizing: border-box; }
 img { display: block; }
 a { color: var(--accent); text-decoration: none; }
-.wrap { max-width: 720px; margin: 0 auto; padding: 0 14px; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 14px; } /* Убедимся, что wrap имеет корректные отступы */
 
 h3 { 
   margin: 0 0 2px; 
@@ -51,7 +51,7 @@ h3 {
   text-overflow: ellipsis;
 }
 
-/* === BUTTONS === */
+/* === BUTTONS (Оставлено без изменений) === */
 
 .btns { display: flex; flex-wrap: wrap; gap: 10px; }
 
@@ -73,7 +73,7 @@ box-shadow: 0 0 18px rgba(0,179,255,.65);
 .btn.full { width: 100%; margin-top: 10px; }
 .btn.small { font-size: 14px; padding: 10px 12px; border-radius: 10px; }
 
-/* === DIALOGS (Общая база для модалок настроек/VIP) === */
+/* === DIALOGS (Оставлено без изменений) === */
 
 .dialog { position: fixed; inset: 0; z-index: 60; display: none; }
 .dialog.open { display: block; }
